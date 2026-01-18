@@ -5,6 +5,8 @@ import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 public class SnapAnglesHelper {
 
@@ -15,7 +17,7 @@ public class SnapAnglesHelper {
     k2026RebuiltAngles(0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0);
 
 
-
+    
     private ArrayList<Rotation2d> mAngles;
     private FieldSnapAngles(double... snapAngles)
     {
@@ -25,6 +27,7 @@ public class SnapAnglesHelper {
         mAngles.add(Rotation2d.fromDegrees(angle + 90));
       }
     }
+
 
     public Rotation2d getNearestSnapAngle(double inputAngleRadians)
     {
@@ -79,18 +82,24 @@ public class SnapAnglesHelper {
   }
 
   private FieldSnapAngles mSnapAngles;
+  private boolean mAllianceRelative;
 
   public SnapAnglesHelper(FieldSnapAngles snapAngles)
   {
     mSnapAngles = snapAngles;
   }
 
+  public SnapAnglesHelper withAllianceRelativeControl(boolean allianceRelativeControl){
+      mAllianceRelative = allianceRelativeControl;
+      return this;
+    }
+
   public DoubleSupplier getXDoubleSupplier(DoubleSupplier xInput, DoubleSupplier yInput){
     return new DoubleSupplier(){
 
       @Override
       public double getAsDouble() {
-        Translation2d inputTranslation2d = new Translation2d(xInput.getAsDouble(), yInput.getAsDouble());
+        Translation2d inputTranslation2d = new Translation2d(xInput.getAsDouble() * getAllianceAxisMult(), yInput.getAsDouble() * getAllianceAxisMult());
         double dist = Math.abs(inputTranslation2d.getDistance(Translation2d.kZero));
         if(dist == 0) return 0.0;
         return new Translation2d(dist, mSnapAngles.getNearestSnapAngle(inputTranslation2d.getAngle().getRadians())).getX();
@@ -103,13 +112,22 @@ public class SnapAnglesHelper {
 
         @Override
         public double getAsDouble() {
-          Translation2d inputTranslation2d = new Translation2d(xInput.getAsDouble(), yInput.getAsDouble());
+          Translation2d inputTranslation2d = new Translation2d(xInput.getAsDouble() * getAllianceAxisMult(), yInput.getAsDouble() *getAllianceAxisMult());
           double dist = Math.abs(inputTranslation2d.getDistance(Translation2d.kZero));
           if(dist == 0) return 0.0;
           return new Translation2d(dist, mSnapAngles.getNearestSnapAngle(inputTranslation2d.getAngle().getRadians())).getY();
   
         }
       };
+  }
+
+  private double getAllianceAxisMult() {
+    if(mAllianceRelative){
+      return (DriverStation.getAlliance().orElseGet(()-> {return Alliance.Blue;}) == Alliance.Red? -1.0: 1.0);
+    }
+    else {
+      return 1.0;
+    }
   }
 
 }

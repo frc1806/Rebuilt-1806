@@ -48,13 +48,13 @@ public class RobotContainer
                                                                 () -> driverXbox.getLeftX() * -1)
                                                             .withControllerRotationAxis(driverXbox::getRightX)
                                                             .deadband(OperatorConstants.DEADBAND)
-                                                            .scaleTranslation(0.8)
+                                                            .scaleTranslation(1.0)
                                                             .allianceRelativeControl(true);
 
   /**
    * Clone's the angular velocity input stream and converts it to a fieldRelative input stream.
    */
-  SnapAnglesHelper snapAnglesHelper = new SnapAnglesHelper(FieldSnapAngles.k2026RebuiltAngles);
+  SnapAnglesHelper snapAnglesHelper = new SnapAnglesHelper(FieldSnapAngles.k2026RebuiltAngles).withAllianceRelativeControl(true);
   SwerveInputStream driveDirectAngle = driveAngularVelocity.copy().withControllerHeadingAxis(snapAnglesHelper.getXDoubleSupplier(() ->driverXbox.getRightX() * -1,
   () -> driverXbox.getRightY() * -1), snapAnglesHelper.getYDoubleSupplier(() ->driverXbox.getRightX() * -1,
   () -> driverXbox.getRightY() * -1)).headingWhile(true);
@@ -98,6 +98,8 @@ public class RobotContainer
                                                                                .translationHeadingOffset(Rotation2d.fromDegrees(
                                                                                    0));
 
+  Command driveSpeen = drivebase.driveSpeen(driveAngularVelocity, new Translation2d(Units.inchesToMeters(13.5 + 12), 0));
+  Command driveBeyblade = drivebase.driveSpeen(driveAngularVelocity, new Translation2d(Units.inchesToMeters(6), 0));
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -173,8 +175,9 @@ public class RobotContainer
       driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
       driverXbox.start().whileTrue(Commands.none());
       driverXbox.back().whileTrue(Commands.none());
-      driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
-      driverXbox.rightBumper().onTrue(Commands.none());
+      //driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
+      driverXbox.leftBumper().whileTrue(driveSpeen);
+      driverXbox.rightBumper().whileTrue(driveBeyblade);
     }
 
   }
