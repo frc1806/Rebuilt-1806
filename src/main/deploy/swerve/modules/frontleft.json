@@ -1,0 +1,24 @@
+{
+  "location": {
+    "front": 11.5,
+    "left": 11.5
+  },
+  "absoluteEncoderOffset": 0,
+  "drive": {
+    "type": "krakenx60",
+    "id": 6
+  },
+  "inverted": {
+    "drive": true,
+    "angle": true
+  },
+  "angle": {
+    "type": "sparkmax_neo",
+    "id": 5
+  },
+  "encoder": {
+    "type": "attached",
+    "id": 0
+  },
+  "absoluteEncoderInverted": true
+}
