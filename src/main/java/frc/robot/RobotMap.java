@@ -11,10 +11,12 @@ public class RobotMap {
      * 31-39 Launcher
      * 41-49 Climber
      */
-    public static int INTAKE = 11;
-    public static int HOPPER = 21;
-    public static int LAUNCHER_LEFT = 31; //ROBOT LEFT
-    public static int LAUNCHER_RIGHT = 32; //ROBOT RIGHT
-    public static int CLIMBER_1 = 41;
-    public static int CLIMBER_2 = 42;
+    public static final int INTAKE = 11;
+    public static final int HOPPER = 21;
+    public static final int LAUNCHER_LEFT = 31; //ROBOT LEFT
+    public static final int LAUNCHER_RIGHT = 32; //ROBOT RIGHT
+    public static final int TRANSFER = 35;
+    public static final int CLIMBER_1 = 41;
+    public static final int CLIMBER_2 = 42;
+
 }
