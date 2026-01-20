@@ -53,7 +53,7 @@ public class Vision
    * April Tag Field Layout of the year.
    */
   public static final AprilTagFieldLayout fieldLayout                     = AprilTagFieldLayout.loadField(
-      AprilTagFields.k2025ReefscapeAndyMark);
+      AprilTagFields.k2026RebuiltWelded); //1806 will be playing on welded fields for all official events. Andymark Fields will be at IRI and Cowtown.
   /**
    * Ambiguity defined as a value between (0,1). Used in {@link Vision#filterPose}.
    */

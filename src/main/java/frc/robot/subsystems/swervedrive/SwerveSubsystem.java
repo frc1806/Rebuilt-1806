@@ -52,6 +52,7 @@ import swervelib.parser.SwerveDriveConfiguration;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
+import yams.mechanisms.swerve.utility.SwerveInputStream;
 
 public class SwerveSubsystem extends SubsystemBase
 {
@@ -729,5 +730,12 @@ public class SwerveSubsystem extends SubsystemBase
   public SwerveDrive getSwerveDrive()
   {
     return swerveDrive;
+  }
+
+  public Command driveSpeen(swervelib.SwerveInputStream driveAngularVelocity, Translation2d translation2d) {
+    return run(() -> {
+      swerveDrive.driveFieldOriented(driveAngularVelocity.get(), translation2d);
+      
+    });
   }
 }
