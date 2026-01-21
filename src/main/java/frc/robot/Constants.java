@@ -68,4 +68,9 @@ public final class Constants
     public static final double FUEL_MOTORS_CURRENT_LIMIT = 40; //TRANSFER & HOPPER
     public static final double FUEL_MOTORS_NOMINAL_VOLTAGE = 8.0; //Motors will output a maximum of 8 volts.
   }
+  public static class CollectorConstants
+  {
+    public static final double Stator = 120;
+    public static final double supply = 60;
+  }
 }
