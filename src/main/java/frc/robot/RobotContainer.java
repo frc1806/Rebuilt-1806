@@ -19,9 +19,14 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.subsystems.LauncherSubSystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.swat.lib.SnapAnglesHelper;
 import frc.robot.swat.lib.SnapAnglesHelper.FieldSnapAngles;
+
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Volts;
 
 import java.io.File;
 import swervelib.SwerveInputStream;
@@ -36,9 +41,20 @@ public class RobotContainer
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   final         CommandXboxController driverXbox = new CommandXboxController(0);
+
+  //Test Modes
+  public enum TestModes{
+    kFlywheelTest,
+    kIntakeTest,
+    kClimberTest,
+    kHopperTest,
+    kCleaningMode
+  }
   // The robot's subsystems and commands are defined here...
   private final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
                                                                                 "swerve"));
+
+  private final LauncherSubSystem launcher = LauncherSubSystem.GetInstance();
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
@@ -149,9 +165,10 @@ public class RobotContainer
                                                                                      Units.degreesToRadians(180))
                                            ));
       driverXbox.start().onTrue(Commands.runOnce(() -> drivebase.resetOdometry(new Pose2d(3, 3, new Rotation2d()))));
-      driverXbox.button(1).whileTrue(drivebase.sysIdDriveMotorCommand());
+      /*driverXbox.button(1).whileTrue(drivebase.sysIdDriveMotorCommand());
       driverXbox.button(2).whileTrue(Commands.runEnd(() -> driveDirectAngleKeyboard.driveToPoseEnabled(true),
                                                      () -> driveDirectAngleKeyboard.driveToPoseEnabled(false)));
+                                                      */
 
 //      driverXbox.b().whileTrue(
 //          drivebase.driveToPose(
@@ -171,8 +188,14 @@ public class RobotContainer
       driverXbox.rightBumper().onTrue(Commands.none());
     } else
     {
-      driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
-      driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
+      
+      //driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
+      //driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
+      driverXbox.y().onTrue(launcher.prepareShotCommand(RPM.of(2600), Degrees.of(0.0), Volts.of(8.0)));
+      driverXbox.y().or(driverXbox.b()).onFalse(Commands.runOnce(launcher::stop));
+      driverXbox.b().onTrue(launcher.prepareShotCommand(RPM.of(7000), Degrees.of(45.0), Volts.of(6.0)));
+      driverXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
+      driverXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
       driverXbox.start().whileTrue(Commands.none());
       driverXbox.back().whileTrue(Commands.none());
       //driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
