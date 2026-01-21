@@ -48,4 +48,9 @@ public final class Constants
     public static final double RIGHT_X_DEADBAND = 0.1;
     public static final double TURN_CONSTANT    = 6;
   }
+
+  {
+    public static final double Stator = 120;
+    public static final double supply = 60;
+  }
 }
