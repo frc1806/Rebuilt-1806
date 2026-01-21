@@ -26,4 +26,18 @@ private Collector(){
 
 }
 
+
+
+public void stop(){
+    mCollectorMotor.stopMotor();
+} 
+
+public void intake(){
+    mCollectorMotor.setVoltage(12.0);
+}
+
+public void outtake(){
+    mCollectorMotor.setVoltage(-12.0);
+}
+
 }
