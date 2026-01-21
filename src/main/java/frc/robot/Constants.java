@@ -70,7 +70,7 @@ public final class Constants
   }
   public static class CollectorConstants
   {
-    public static final double Stator = 120;
-    public static final double supply = 60;
+    public static final double STATOR_CURRENT_LIMIT = 120;
+    public static final double SUPPLY_CURRENT_LIMMIT = 60;
   }
 }
