@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.LauncherSubSystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.swat.lib.SnapAnglesHelper;
@@ -55,6 +56,7 @@ public class RobotContainer
                                                                                 "swerve"));
 
   private final LauncherSubSystem launcher = LauncherSubSystem.GetInstance();
+  private final Collector collector = Collector.GetInstance();
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
@@ -148,6 +150,8 @@ public class RobotContainer
 
     drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
 
+    collector.setDefaultCommand(Commands.run(collector::stop, collector));
+
     if (Robot.isSimulation())
     {
       Pose2d target = new Pose2d(new Translation2d(1, 4),
@@ -179,6 +183,7 @@ public class RobotContainer
     if (DriverStation.isTest())
     {
       drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity); // Overrides drive command above!
+      
 
       driverXbox.x().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
       driverXbox.y().whileTrue(drivebase.driveToDistanceCommand(1.0, 0.2));
@@ -192,10 +197,11 @@ public class RobotContainer
       //driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       //driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
       driverXbox.y().onTrue(launcher.prepareShotCommand(RPM.of(2600), Degrees.of(0.0), Volts.of(8.0)));
-      driverXbox.y().or(driverXbox.b()).onFalse(Commands.runOnce(launcher::stop));
+      driverXbox.y().or(driverXbox.b()).onFalse(Commands.runOnce(launcher::stop, launcher));
       driverXbox.b().onTrue(launcher.prepareShotCommand(RPM.of(7000), Degrees.of(45.0), Volts.of(6.0)));
       driverXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
       driverXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
+      driverXbox.leftTrigger().whileTrue(Commands.run(collector::intake, collector));
       driverXbox.start().whileTrue(Commands.none());
       driverXbox.back().whileTrue(Commands.none());
       //driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
