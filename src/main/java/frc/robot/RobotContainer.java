@@ -130,7 +130,7 @@ public class RobotContainer
       drivebase::getPose,
       drivebase::getRobotVelocity,
       drivebase::drive,
-      new PIDController(3.0, 0.0, 0.0),  // translation
+      new PIDController(1.5, 0.00, 0.1),  // translation
       new PIDController(3.0, 0.0, 0.0),  // rotation
       new PIDController(1.0, 0.0, 0.0)   // cross-track
   ).withDefaultShouldFlip()
