@@ -47,6 +47,7 @@ import swervelib.SwerveController;
 import swervelib.SwerveDrive;
 import swervelib.SwerveDriveTest;
 import swervelib.math.SwerveMath;
+import swervelib.parser.Cache;
 import swervelib.parser.SwerveControllerConfiguration;
 import swervelib.parser.SwerveDriveConfiguration;
 import swervelib.parser.SwerveParser;
@@ -545,6 +546,14 @@ public class SwerveSubsystem extends SubsystemBase
   public void setChassisSpeeds(ChassisSpeeds chassisSpeeds)
   {
     swerveDrive.setChassisSpeeds(chassisSpeeds);
+  }
+
+  /**
+   * Stop by setting chassis speeds of 0.
+   */
+  public void stop()
+  {
+    setChassisSpeeds(new ChassisSpeeds());
   }
 
   /**

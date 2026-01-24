@@ -20,15 +20,11 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
-import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.SparkMaxConfig;
-
-import edu.wpi.first.math.VecBuilder;
+import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
@@ -57,11 +53,11 @@ public class LauncherSubSystem extends SubsystemBase {
 
     //Rollers that move the fuel into to the flywheel
 
-    private SparkMax mTransfer;
+    private SparkFlex mTransfer;
 
     //Hopper Motor
 
-    private SparkMax mHopper;
+    private SparkFlex mHopper;
 
     private CircularBuffer mFlywheelEstimator = new CircularBuffer<Voltage>(Constants.LauncherConstants.SAMPLES_TO_AVERAGE);
 
@@ -97,8 +93,8 @@ public class LauncherSubSystem extends SubsystemBase {
         //Make motors exist
         mFlywheelLeader = new TalonFX(RobotMap.LAUNCHER_LEFT);
         mFlywheelFollower = new TalonFX(RobotMap.LAUNCHER_RIGHT);
-        mTransfer = new SparkMax(RobotMap.TRANSFER, MotorType.kBrushless);
-        mHopper = new SparkMax(RobotMap.HOPPER, MotorType.kBrushless);
+        mTransfer = new SparkFlex(RobotMap.TRANSFER, MotorType.kBrushless);
+        mHopper = new SparkFlex(RobotMap.HOPPER, MotorType.kBrushless);
 
         //SETUP FLYWHEEL MOTORS (Phoenix v6)
         TalonFXConfiguration flywheelLeaderConfig = new TalonFXConfiguration();
@@ -140,7 +136,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
         //BEGIN SETUP OTHER FUEL MOTORS (RevLib)
 
-        SparkMaxConfig fuelMotorsConfig = new SparkMaxConfig();
+        SparkFlexConfig fuelMotorsConfig = new SparkFlexConfig();
         fuelMotorsConfig.smartCurrentLimit(40);
         fuelMotorsConfig.voltageCompensation(8.0);
 

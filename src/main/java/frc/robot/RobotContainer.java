@@ -4,7 +4,7 @@
 
 package frc.robot;
 
-import com.pathplanner.lib.auto.NamedCommands;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -19,6 +19,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.lib.BLine.FollowPath;
+import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.LauncherSubSystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
@@ -118,6 +120,24 @@ public class RobotContainer
 
   Command driveSpeen = drivebase.driveSpeen(driveAngularVelocity, new Translation2d(Units.inchesToMeters(13.5 + 12), 0));
   Command driveBeyblade = drivebase.driveSpeen(driveAngularVelocity, new Translation2d(Units.inchesToMeters(6), 0));
+
+
+
+
+  // 2. Create a reusable path builder
+  FollowPath.Builder pathBuilder = new FollowPath.Builder(
+      drivebase,
+      drivebase::getPose,
+      drivebase::getRobotVelocity,
+      drivebase::drive,
+      new PIDController(3.0, 0.0, 0.0),  // translation
+      new PIDController(3.0, 0.0, 0.0),  // rotation
+      new PIDController(1.0, 0.0, 0.0)   // cross-track
+  ).withDefaultShouldFlip()
+  .withPoseReset(drivebase::resetOdometry);
+
+
+
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -126,7 +146,6 @@ public class RobotContainer
     // Configure the trigger bindings
     configureBindings();
     DriverStation.silenceJoystickConnectionWarning(true);
-    NamedCommands.registerCommand("test", Commands.print("I EXIST"));
   }
 
   /**
@@ -219,7 +238,12 @@ public class RobotContainer
   public Command getAutonomousCommand()
   {
     // An example command will be run in autonomous
-    return drivebase.getAutonomousCommand("New Auto");
+    //return drivebase.getAutonomousCommand("New Auto");
+
+      // 3. Load and follow a path
+  Path myPath = new Path("SweepRight");
+  Command followCommand = pathBuilder.build(new Path("SweepRight")).andThen(pathBuilder.build(new Path("SweepRight2")).andThen(Commands.runOnce(drivebase::stop, drivebase)));
+  return followCommand;
   }
 
   public void setMotorBrake(boolean brake)
