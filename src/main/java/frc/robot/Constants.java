@@ -6,6 +6,7 @@ package frc.robot;
 
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import frc.robot.swat.lib.CanandcolorHSVFilter;
 import swervelib.math.Matter;
 
 /**
@@ -37,6 +38,25 @@ public final class Constants
 
     // Hold time on motor brakes when disabled
     public static final double WHEEL_LOCK_TIME = 10; // seconds
+
+    public static final double CANANDCOLOR_GROUND_THRESHOLD = 0.5; //0 - 1, 1 being further away
+
+    public static final CanandcolorHSVFilter BLUE_FILTER = new CanandcolorHSVFilter(.583, .75, 0.5, 1.0, 0.2, 1.0);
+    public static final CanandcolorHSVFilter RED_FILTER = new CanandcolorHSVFilter(.9166, 0.083, 0.5, 1.0, 0.2, 1.0);
+    
+    public static final double BLUE_MIN_HUE = .583;
+    public static final double BLUE_MAX_HUE = .75;
+    public static final double BLUE_MIN_SAT = 0.5;
+    public static final double BLUE_MAX_SAT = 1.0;
+    public static final double BLUE_MIN_VAL = 0.2;
+    public static final double BLUE_MAX_VAL = 1.0;
+
+    public static final double RED_MIN_HUE = .583;
+    public static final double RED_MAX_HUE = .75;
+    public static final double RED_MIN_SAT = 0.5;
+    public static final double RED_MAX_SAT = 1.0;
+    public static final double RED_MIN_VAL = 0.2;
+    public static final double RED_MAX_VAL = 1.0;
   }
 
   public static class OperatorConstants

@@ -8,6 +8,7 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.estimator.PoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -630,6 +631,29 @@ public class Vision
     }
 
 
+  }
+
+  public Pose2d getBestPhotonvisionPose(){
+    EstimatedRobotPose bestPose = null;
+    for(Cameras camera :Cameras.values()){
+      EstimatedRobotPose potentialPose = camera.getEstimatedGlobalPose().get();
+      if(potentialPose == null){
+        continue;
+      }
+      if(bestPose == null){
+        bestPose = potentialPose;
+      }
+      else{
+        if(potentialPose.targetsUsed.size() > bestPose.targetsUsed.size()){
+          bestPose = potentialPose;
+        }
+        else if((potentialPose.targetsUsed.stream().mapToDouble(target -> target.getPoseAmbiguity()).min().orElse(999)) < (bestPose.targetsUsed.stream().mapToDouble(target -> target.getPoseAmbiguity()).min().orElse(999))){
+          bestPose = potentialPose;
+        }
+      }
+    }
+    Pose3d bestPose3d = bestPose.estimatedPose;
+    return new Pose2d(bestPose3d.getX(), bestPose3d.getY(), bestPose3d.getRotation().toRotation2d());
   }
 
 }

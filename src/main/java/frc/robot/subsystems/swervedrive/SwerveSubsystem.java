@@ -17,6 +17,9 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
+import com.reduxrobotics.sensors.canandcolor.Canandcolor;
+import com.reduxrobotics.sensors.canandcolor.ColorData;
+
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -34,6 +37,8 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
 import frc.robot.subsystems.swervedrive.Vision.Cameras;
+import frc.robot.swat.lib.CanandcolorHSVFilter;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -70,6 +75,10 @@ public class SwerveSubsystem extends SubsystemBase
    * PhotonVision class to keep an accurate odometry.
    */
   private       Vision      vision;
+
+  private Canandcolor mCanandcolor;
+
+  private boolean mNeedOdometryUpdate = false;
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -112,6 +121,9 @@ public class SwerveSubsystem extends SubsystemBase
     }
     setupPathPlanner();
     RobotModeTriggers.autonomous().onTrue(Commands.runOnce(this::zeroGyroWithAlliance));
+
+    mCanandcolor = new Canandcolor(1);
+
   }
 
   /**
@@ -145,6 +157,17 @@ public class SwerveSubsystem extends SubsystemBase
     {
       swerveDrive.updateOdometry();
       vision.updatePoseEstimation(swerveDrive);
+    }
+
+    if(mNeedOdometryUpdate && isOnGround() && !isOnAllianceColor()){
+      Pose2d photonvisionPose = vision.getBestPhotonvisionPose();
+      if(photonvisionPose != null){
+        resetOdometry(photonvisionPose);
+        mNeedOdometryUpdate = false;
+      }
+    }
+    else if(checkIfNeedOdometryReset()){
+      mNeedOdometryUpdate = true;
     }
   }
 
@@ -746,5 +769,18 @@ public class SwerveSubsystem extends SubsystemBase
       swerveDrive.driveFieldOriented(driveAngularVelocity.get(), translation2d);
       
     });
+  }
+
+  public boolean isOnGround(){
+    return mCanandcolor.getProximity() < Constants.DrivebaseConstants.CANANDCOLOR_GROUND_THRESHOLD;
+  }
+
+  public boolean isOnAllianceColor(){
+    ColorData colorData = mCanandcolor.getColor();
+    return Constants.DrivebaseConstants.BLUE_FILTER.isInColorRange(colorData) || Constants.DrivebaseConstants.RED_FILTER.isInColorRange(colorData);
+  }
+
+  public boolean checkIfNeedOdometryReset(){
+    return !isOnGround() || isOnAllianceColor();
   }
 }
