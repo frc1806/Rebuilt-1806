@@ -21,7 +21,7 @@ public static Collector GetInstance(){
 
 private Collector(){
     TalonFXConfiguration rollerConfig = new TalonFXConfiguration().withCurrentLimits(new CurrentLimitsConfigs().withStatorCurrentLimit(Constants.CollectorConstants.STATOR_CURRENT_LIMIT)
-            .withSupplyCurrentLimit(Constants.CollectorConstants.SUPPLY_CURRENT_LIMMIT)).withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
+            .withSupplyCurrentLimit(Constants.CollectorConstants.SUPPLY_CURRENT_LIMMIT)).withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
 
     mCollectorMotor.getConfigurator().apply(rollerConfig);
 
