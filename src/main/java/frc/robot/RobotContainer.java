@@ -215,7 +215,7 @@ public class RobotContainer
       
       //driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       //driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
-      driverXbox.y().onTrue(launcher.prepareShotCommand(RPM.of(2600), Degrees.of(0.0), Volts.of(8.0)));
+      driverXbox.y().onTrue(launcher.prepareShotCommand(RPM.of(2800), Degrees.of(0.0), Volts.of(8.0)));
       driverXbox.y().or(driverXbox.b()).onFalse(Commands.runOnce(launcher::stop, launcher));
       driverXbox.b().onTrue(launcher.prepareShotCommand(RPM.of(7000), Degrees.of(45.0), Volts.of(6.0)));
       driverXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));

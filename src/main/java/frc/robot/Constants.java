@@ -80,7 +80,7 @@ public final class Constants
     public static final double FLYWHEEL_RAMP_KI = 0;
     public static final double FLYWHEEL_RAMP_KD = 0;
     public static final double FLYWHEEL_RAMP_KS = 0.1;
-    public static final double FLYWHEEL_RAMP_KV = 0.12;
+    public static final double FLYWHEEL_RAMP_KV = 0.13;
 
     public static final double FLYWHEEL_PER_MOTOR_SUPPLY_CURRENT_LIMIT = 80;
     public static final double FLYWHEEL_PER_MOTOR_STATOR_CURRENT_LIMIT = 100;

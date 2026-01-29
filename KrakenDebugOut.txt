@@ -1,0 +1,127 @@
+Talon FX Self Test Response
+
+Talon FX vers. C (Device ID 11)
+This device is on the roboRIO's native CAN Bus
+Serial No: 000E16F20E4840000017000115000111
+Firmware Version: 26.1.0.0 (Phoenix 6)
+
+Invert State
+Invert State: PositiveIsCounterClockwise
+
+
+Led State
+   LED   On Color   Off Color   On Time   Off Time
+ - LED 1 - Orange - Off - 0.288000 s - 0.288000 s
+ - LED 2 - Orange - Off - 0.288000 s - 0.288000 s
+Animation of LED
+
+Motor Status
+   Signal   Value
+ - Motor Type - KrakenX60_Integrated
+ - Control Mode - NeutralOut
+ - Bridge - BridgeReq_Coast
+ - Duty Cycle - 0.000000 fractional
+ - Motor Voltage - 0.000000 V
+ - Torque Current - 0.000000 A
+ - Supply Current - 0.000000 A
+ - Supply Voltage - 12.550000 V
+ - Inverted - PositiveIsCounterClockwise
+ - Motor Output Status - Off
+
+Position And Velocity
+   Source   Position   Velocity
+ - Feedback - 0.000000 rotations - 0.000000 rotations per second
+ - Rotor - 0.000000 rotations - 0.000000 rotations per second
+ - Sensor - 0.000000 rotations - 0.000000 rotations per second
+
+Differential Position And Velocity
+ - Average - 0.000000 rotations - 0.000000 rotations per second
+ - Difference - 0.000000 rotations - 0.000000 rotations per second
+
+Peak Output
+   Mode   Forward   Reverse   Differential
+ - Duty Cycle - 1.000000 fractional - -1.000000 fractional - 1.000000 fractional
+ - Voltage - 16.000000 V - -16.000000 V - 16.000000 V
+ - Torque Amps - 800.000000 A - -800.000000 A - 800.000000 A
+
+Limit Switch
+   Signal   Value   Set Position on limit   Value to set position on limit
+ - ForwardLimit - Open - False - 0.000000 rotations
+ - ReverseLimit - Open - False - 0.000000 rotations
+
+Details
+   Signal   Value
+ - System State - Bootup_1
+ - FRC Lock - Frc_Locked
+ - Pro Licensed - Not Licensed
+ - Season Pass Licensed - Not Licensed
+ - Robot Enable - Disabled
+ - Device Enable - Disabled
+ - Neutral Mode - Coast
+ - Feedback Device - RotorSensor
+ - Feedback Device ID - 0
+ - Sensor to Mech Ratio - 1.000000 scalar
+ - Rotor to Sensor Ratio - 1.000000 scalar
+ - Rotor Offset - 0.000000 rotations
+ - Device Temperature - 24.000000 ℃
+ - Processor Temperature - 30.000000 ℃
+ - Ancillary Device Temperature - 27.000000 ℃
+
+PID Reference and Error
+   Name   Reference   Reference Slope   Error
+ - Position - 0.000000 rotations - 0.000000 rotations per second - 0.000000 rotations
+ - Velocity - 0.000000 rotations per second - 0.000000 rotations per second² - 0.000000 rotations per second
+
+PID Output
+   Name   Feed Forward   Proportional Out   Integrated Accum   Derivative Out   Total Out
+ - Percent Supply - 0.000000 fractional - 0.000000 fractional - 0.000000 fractional - 0.000000 fractional - 0.000000 fractional
+ - Motor Voltage - 0.000000 V - 0.000000 V - 0.000000 V - 0.000000 V - 0.000000 V
+ - Torque Current - 0.000000 A - 0.000000 A - 0.000000 A - 0.000000 A - 0.000000 A
+
+Differential PID Reference and Error
+   Name   Reference   Reference Slope   Error
+ - Position - 0.000000 rotations - 0.000000 rotations per second - 0.000000 rotations
+ - Velocity - 0.000000 rotations per second - 0.000000 rotations per second² - 0.000000 rotations per second
+
+Differential PID Output
+   Name   Feed Forward   Proportional Out   Integrated Accum   Derivative Out   Total Out
+ - Percent Supply - 0.000000 fractional - 0.000000 fractional - 0.000000 fractional - 0.000000 fractional - 0.000000 fractional
+ - Motor Voltage - 0.000000 V - 0.000000 V - 0.000000 V - 0.000000 V - 0.000000 V
+ - Torque Current - 0.000000 A - 0.000000 A - 0.000000 A - 0.000000 A - 0.000000 A
+
+Faults
+   Fault   Currently Faulted   Sticky Faulted
+ - Hardware - False - False
+ - Boot During Enable - False - False
+ - Using Unlicensed Feature - False - False
+ - Forward Hard Limit - False - False
+ - Reverse Hard Limit - False - False
+ - Forward Soft Limit - False - False
+ - Reverse Soft Limit - False - False
+ - Remote Sensor Data Invalid - False - False
+ - Missing Remote Limit Switch - False - False
+ - Missing Remote Soft Limit - False - False
+ - Processor Temperature - False - False
+ - Device Temperature - False - False
+ - Bridge Brownout - False - True
+ - Undervoltage - False - False
+ - Supply Overvoltage - False - False
+ - Unstable Supply Voltage - False - False
+ - Stator Current Limit - False - True
+ - Supply Current Limit - False - False
+ - Fused Sensor Out of Sync - False - False
+ - Using Fused CANcoder While Unlicensed - False - False
+ - Remote Sensor Position Overflow - False - False
+ - Remote Sensor Reset - False - False
+ - Missing Differential Talon FX - False - False
+ - Static Brake Disabled - False - False
+
+Manufacturing Info
+   Tag   Value
+ - RCO - 1106.000000
+ - Lot - 12401002
+ - BOM - 1
+Total Operation Time: 97664.000000 seconds
+Press "Blink" to clear sticky faults
+Phoenix Version: 26.1.0
+Build: Jan  7 2026 19:24:04

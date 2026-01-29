@@ -114,7 +114,7 @@ public class LauncherSubSystem extends SubsystemBase {
         flywheelRampPIDConfig.kV = Constants.LauncherConstants.FLYWHEEL_RAMP_KV;
 
         MotorOutputConfigs leaderOutputConfigs = new MotorOutputConfigs();
-        leaderOutputConfigs.Inverted = InvertedValue.CounterClockwise_Positive;
+        leaderOutputConfigs.Inverted = InvertedValue.Clockwise_Positive;
         
         //Apply everything for leader
         flywheelLeaderConfig.CurrentLimits = flywheelCurrentLimitConfigs;
@@ -139,10 +139,12 @@ public class LauncherSubSystem extends SubsystemBase {
         SparkFlexConfig fuelMotorsConfig = new SparkFlexConfig();
         fuelMotorsConfig.smartCurrentLimit(40);
         fuelMotorsConfig.voltageCompensation(8.0);
+        fuelMotorsConfig.inverted(true);
 
         mTransfer.configure(fuelMotorsConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        
+        fuelMotorsConfig.inverted(false);
         mHopper.configure(fuelMotorsConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        
 
         //END SETUP OTHER FUEL MOTORS
 
