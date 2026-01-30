@@ -11,11 +11,17 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
@@ -23,6 +29,7 @@ import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.LauncherSubSystem;
+import frc.robot.subsystems.swervedrive.ClimberSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.swat.lib.SnapAnglesHelper;
 import frc.robot.swat.lib.SnapAnglesHelper.FieldSnapAngles;
@@ -32,6 +39,8 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.io.File;
+import java.util.function.DoubleSupplier;
+
 import swervelib.SwerveInputStream;
 
 /**
@@ -44,6 +53,7 @@ public class RobotContainer
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   final         CommandXboxController driverXbox = new CommandXboxController(0);
+  final         CommandXboxController operatorXbox = new CommandXboxController(1);
 
   //Test Modes
   public enum TestModes{
@@ -51,7 +61,8 @@ public class RobotContainer
     kIntakeTest,
     kClimberTest,
     kHopperTest,
-    kCleaningMode
+    kCleaningMode,
+    kDriveTest
   }
   // The robot's subsystems and commands are defined here...
   private final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
@@ -59,6 +70,9 @@ public class RobotContainer
 
   private final LauncherSubSystem launcher = LauncherSubSystem.GetInstance();
   private final Collector collector = Collector.GetInstance();
+  private final ClimberSubsystem climber = ClimberSubsystem.GetInstance();
+
+  private final SendableChooser<TestModes> mTestModeChooser = new SendableChooser<TestModes>();
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
@@ -146,6 +160,13 @@ public class RobotContainer
     // Configure the trigger bindings
     configureBindings();
     DriverStation.silenceJoystickConnectionWarning(true);
+    //Populate Test Modes
+    for(TestModes testMode : TestModes.values())
+    {
+      mTestModeChooser.addOption(testMode.name(), testMode);
+    }
+    SmartDashboard.putData("test/testmodes",mTestModeChooser);
+    mTestModeChooser.onChange(this::setTestModeBindings);
   }
 
   /**
@@ -155,8 +176,9 @@ public class RobotContainer
    * {@link CommandXboxController Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller PS4}
    * controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight joysticks}.
    */
-  private void configureBindings()
+  public void configureBindings()
   {
+
     Command driveFieldOrientedDirectAngle      = drivebase.driveFieldOriented(driveDirectAngle);
     Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
     Command driveRobotOrientedAngularVelocity  = drivebase.driveFieldOriented(driveRobotOriented);
@@ -170,7 +192,7 @@ public class RobotContainer
     drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
 
     collector.setDefaultCommand(Commands.run(collector::stop, collector));
-
+    climber.setDefaultCommand(Commands.run(climber::stop, climber));
     if (Robot.isSimulation())
     {
       Pose2d target = new Pose2d(new Translation2d(1, 4),
@@ -199,18 +221,10 @@ public class RobotContainer
 //                              );
 
     }
-    if (DriverStation.isTest())
-    {
-      drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity); // Overrides drive command above!
-      
-
-      driverXbox.x().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
-      driverXbox.y().whileTrue(drivebase.driveToDistanceCommand(1.0, 0.2));
-      driverXbox.start().onTrue((Commands.runOnce(drivebase::zeroGyro)));
-      driverXbox.back().whileTrue(drivebase.centerModulesCommand());
-      driverXbox.leftBumper().onTrue(Commands.none());
-      driverXbox.rightBumper().onTrue(Commands.none());
-    } else
+    if(DriverStation.isTest()){
+      setTestModeBindings(mTestModeChooser.getSelected());
+    }
+else
     {
       
       //driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
@@ -228,6 +242,69 @@ public class RobotContainer
       driverXbox.rightBumper().whileTrue(driveBeyblade);
     }
 
+  }
+
+  private void setTestModeBindings(TestModes mode){
+    if (DriverStation.isTest())
+    {
+      //Precaution
+      launcher.stop();
+      drivebase.stop();
+      climber.stop();
+      collector.stop();
+      drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
+      launcher.setDefaultCommand(Commands.run(launcher::stop, launcher));
+      climber.setDefaultCommand(Commands.run(climber::stop, climber));
+      collector.setDefaultCommand(Commands.run(collector::stop, collector));
+
+      System.out.println(mTestModeChooser.getSelected().name());
+      switch(mode){
+        case kCleaningMode:
+
+            drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
+            collector.setDefaultCommand(Commands.run(collector::clean, collector));
+            launcher.setDefaultCommand(Commands.run(launcher::clean, launcher));
+            driverXbox.a().or(operatorXbox.a()).whileTrue(new ParallelCommandGroup(Commands.run(collector::stop, collector), Commands.run(launcher::stop, launcher)));
+          break;
+        case kClimberTest:
+            drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
+            climber.setDefaultCommand(climber.runClimberCommand(
+              new DoubleSupplier() {
+              @Override
+              public double getAsDouble() {
+                return Math.abs(operatorXbox.getLeftY()) > OperatorConstants.DEADBAND? operatorXbox.getLeftY(): 0;
+              };
+            }, 
+            new DoubleSupplier() {
+              @Override
+              public double getAsDouble() {
+                return Math.abs(operatorXbox.getRightY()) > OperatorConstants.DEADBAND? operatorXbox.getRightY(): 0;
+              };
+            }));
+          break;
+        case kFlywheelTest:
+          drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
+          break;
+        case kHopperTest:
+          drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
+          launcher.enableLaunching();
+          driverXbox.a().onTrue(launcher.prepareShotCommand(RPM.of(500), Angle.ofBaseUnits(0, Degrees), Voltage.ofBaseUnits(8, Volts)));
+          driverXbox.a().onFalse(Commands.run(launcher::stop, launcher));
+          break;
+        case kIntakeTest:
+          drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
+          driverXbox.leftTrigger().whileTrue(Commands.run(collector::intake, collector));
+          break;
+        case kDriveTest:
+          drivebase.setDefaultCommand(drivebase.driveFieldOriented(driveDirectAngle));
+          break;
+        default:
+          drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
+          break;
+        
+      }
+
+    } 
   }
 
   /**

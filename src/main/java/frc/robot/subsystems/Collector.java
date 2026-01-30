@@ -34,8 +34,11 @@ public void stop(){
 } 
 
 public void intake(){
-    System.out.println("Running intake");
     mCollectorMotor.setVoltage(12.0);
+}
+
+public void clean(){
+    mCollectorMotor.setVoltage(3.0);
 }
 
 public void outtake(){

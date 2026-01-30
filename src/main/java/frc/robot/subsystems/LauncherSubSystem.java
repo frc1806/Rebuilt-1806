@@ -66,6 +66,7 @@ public class LauncherSubSystem extends SubsystemBase {
         kIdle, //Doin nothin'
         kClosedLoop, //Spinning up, getting samples
         kOpenLoop, // Open Loop
+        kCleaningMode
     }
 
     private LauncherStates mLauncherState = LauncherStates.kIdle;
@@ -279,6 +280,9 @@ public class LauncherSubSystem extends SubsystemBase {
                 mHopper.setVoltage(mFeedSpeed);
                 mTransfer.setVoltage(mFeedSpeed);
                 break;
+            case kCleaningMode:
+                //DO Nothing for cleaning mode, managed externally
+            break;
             case kIdle:  //Intentionally no-break after kIdle, we want kIdle to be effectively the default
             default:
                 //TODO Hood down
@@ -326,6 +330,13 @@ public class LauncherSubSystem extends SubsystemBase {
                 }
             }
         );
+    }
+
+    public void clean(){
+        mLauncherState = LauncherStates.kCleaningMode;
+        mFlywheelLeader.setVoltage(3.0);
+        mHopper.setVoltage(3.0);
+        mTransfer.setVoltage(3.0);
     }
 
 }
