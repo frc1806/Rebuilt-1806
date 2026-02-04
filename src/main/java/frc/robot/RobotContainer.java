@@ -23,6 +23,7 @@ import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.LauncherSubSystem;
+import frc.robot.subsystems.QuadHookFlipClimberSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.swat.lib.SnapAnglesHelper;
 import frc.robot.swat.lib.SnapAnglesHelper.FieldSnapAngles;
@@ -44,6 +45,7 @@ public class RobotContainer
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   final         CommandXboxController driverXbox = new CommandXboxController(0);
+  final         CommandXboxController operatorXbox = new CommandXboxController(1);
 
   //Test Modes
   public enum TestModes{
@@ -59,6 +61,7 @@ public class RobotContainer
 
   private final LauncherSubSystem launcher = LauncherSubSystem.GetInstance();
   private final Collector collector = Collector.GetInstance();
+  private final QuadHookFlipClimberSubsystem climber = QuadHookFlipClimberSubsystem.GetInstance();
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
@@ -171,6 +174,8 @@ public class RobotContainer
 
     collector.setDefaultCommand(Commands.run(collector::stop, collector));
 
+    climber.setDefaultCommand(Commands.run());
+
     if (Robot.isSimulation())
     {
       Pose2d target = new Pose2d(new Translation2d(1, 4),
@@ -226,6 +231,8 @@ public class RobotContainer
       //driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
       driverXbox.leftBumper().whileTrue(driveSpeen);
       driverXbox.rightBumper().whileTrue(driveBeyblade);
+      
+
     }
 
   }
