@@ -10,7 +10,8 @@
       "/SmartDashboard/Motors": "Alerts",
       "/SmartDashboard/PathPlanner": "Alerts",
       "/SmartDashboard/Pigeon 2 (v6) [13]": "Gyro",
-      "/SmartDashboard/Swerve Drive": "Alerts"
+      "/SmartDashboard/Swerve Drive": "Alerts",
+      "/SmartDashboard/test/testmodes": "String Chooser"
     }
   },
   "NetworkTables Info": {
