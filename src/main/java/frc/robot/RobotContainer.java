@@ -74,9 +74,6 @@ public class RobotContainer
 
   private final LauncherSubSystem launcher = LauncherSubSystem.GetInstance();
   private final Collector collector = Collector.GetInstance();
-  private final ClimberSubsystem climber = ClimberSubsystem.GetInstance();
-
-  private final SendableChooser<TestModes> mTestModeChooser = new SendableChooser<TestModes>();
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
@@ -196,7 +193,7 @@ public class RobotContainer
     drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
 
     collector.setDefaultCommand(Commands.run(collector::stop, collector));
-    climber.setDefaultCommand(Commands.run(climber::stop, climber));
+
     if (Robot.isSimulation())
     {
       Pose2d target = new Pose2d(new Translation2d(1, 4),
@@ -244,6 +241,8 @@ else
       //driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
       driverXbox.leftBumper().whileTrue(driveSpeen);
       driverXbox.rightBumper().whileTrue(driveBeyblade);
+      
+
     }
 
   }
