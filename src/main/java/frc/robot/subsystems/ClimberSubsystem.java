@@ -1,4 +1,4 @@
-package frc.robot.subsystems.swervedrive;
+package frc.robot.subsystems;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,6 +32,7 @@ public class ClimberSubsystem extends SubsystemBase{
         climberMotorsconfig.smartCurrentLimit(60);
         
         mClimber1.configure(climberMotorsconfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        climberMotorsconfig.follow(mClimber1.getDeviceId(), true);
         mClimber2.configure(climberMotorsconfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
@@ -42,7 +43,7 @@ public class ClimberSubsystem extends SubsystemBase{
 
     public void runClimber(double power1, double power2){
         mClimber1.set(power1);
-        mClimber2.set(power2);
+        //mClimber2.set(power2);
     }
 
     public Command runClimberCommand(DoubleSupplier firstHook, DoubleSupplier secondHook){

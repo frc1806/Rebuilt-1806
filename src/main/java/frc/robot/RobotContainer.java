@@ -29,8 +29,9 @@ import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.LauncherSubSystem;
-import frc.robot.subsystems.swervedrive.ClimberSubsystem;
+import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+import frc.robot.swat.lib.Shot;
 import frc.robot.swat.lib.SnapAnglesHelper;
 import frc.robot.swat.lib.SnapAnglesHelper.FieldSnapAngles;
 
@@ -51,9 +52,12 @@ import swervelib.SwerveInputStream;
 public class RobotContainer
 {
 
-  // Replace with CommandPS4Controller or CommandJoystick if needed
+  // Replace with CommandPS4Controlleror  CommandJoystick if needed
   final         CommandXboxController driverXbox = new CommandXboxController(0);
   final         CommandXboxController operatorXbox = new CommandXboxController(1);
+
+  public static final Shot CLOSE_SHOT = new Shot(RPM.of(2000), Degrees.of(0.0), Volts.of(8.0), true);
+  public static final Shot PROTECTED_SHOT = new Shot(RPM.of(2800), Degrees.of(43.0), Volts.of(6.0), true);
 
   //Test Modes
   public enum TestModes{
@@ -229,9 +233,9 @@ else
       
       //driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       //driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
-      driverXbox.y().onTrue(launcher.prepareShotCommand(RPM.of(2000), Degrees.of(0.0), Volts.of(8.0)));
+      driverXbox.y().onTrue(launcher.prepareShotCommand(CLOSE_SHOT));
       driverXbox.y().or(driverXbox.b()).onFalse(Commands.runOnce(launcher::stop, launcher));
-      driverXbox.b().onTrue(launcher.prepareShotCommand(RPM.of(2800), Degrees.of(43.0), Volts.of(6.0)));
+      driverXbox.b().onTrue(launcher.prepareShotCommand(PROTECTED_SHOT));
       driverXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
       driverXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
       driverXbox.leftTrigger().whileTrue(Commands.run(collector::intake, collector));
