@@ -35,6 +35,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotMap;
+import frc.robot.swat.lib.Shot;
 
 public class LauncherSubSystem extends SubsystemBase {
     //SINGLETON PATTERN
@@ -330,6 +331,10 @@ public class LauncherSubSystem extends SubsystemBase {
                 }
             }
         );
+    }
+
+    public Command prepareShotCommand(Shot shot){
+        return prepareShotCommand(shot.getFlywheelSpeed(), shot.getHoodAngle(), shot.getFeedSpeed());
     }
 
     public void clean(){

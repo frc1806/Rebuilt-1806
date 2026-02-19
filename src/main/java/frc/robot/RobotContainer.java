@@ -74,6 +74,7 @@ public class RobotContainer
 
   private final LauncherSubSystem launcher = LauncherSubSystem.GetInstance();
   private final Collector collector = Collector.GetInstance();
+  private final ClimberSubsystem climber = ClimberSubsystem.GetInstance();
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
@@ -151,6 +152,7 @@ public class RobotContainer
   ).withDefaultShouldFlip()
   .withPoseReset(drivebase::resetOdometry);
 
+  private SendableChooser<TestModes> mTestModeChooser = new SendableChooser<>();
 
 
   /**
