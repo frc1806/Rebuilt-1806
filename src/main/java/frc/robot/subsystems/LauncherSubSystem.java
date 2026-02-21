@@ -35,6 +35,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotMap;
+import frc.robot.RobotPreferences;
 import frc.robot.swat.lib.Shot;
 
 public class LauncherSubSystem extends SubsystemBase {
@@ -176,7 +177,7 @@ public class LauncherSubSystem extends SubsystemBase {
         }
         mTargetSpeed = speed;
         mFlywheelRequest = new VelocityVoltage(mTargetSpeed.div(Constants.LauncherConstants.FLYWHEEL_GEAR_RATIO)); //Saving RAM by only instantiating this on a change.
-        mTargetAngle = angle;
+        mTargetAngle = angle.plus(Angle.ofBaseUnits(RobotPreferences.GetShooterAngleOffset(), Degrees));
         mFeedSpeed = feedSpeed;
         mLauncherState = LauncherStates.kClosedLoop;
     }
@@ -299,10 +300,12 @@ public class LauncherSubSystem extends SubsystemBase {
         SmartDashboard.putNumber("Launcher/Target RPM", mTargetSpeed.magnitude());
         SmartDashboard.putNumber("Launcher/kF", mKf.magnitude());
         SmartDashboard.putNumber("Launcher/kF Samples", mFlywheelEstimator.size());
+        SmartDashboard.putNumber("Launcher/AngleOffset", RobotPreferences.GetShooterAngleOffset());
         SmartDashboard.putNumber("Launcher/Sim/SimSpeed", mFlywheelSimulation.getAngularVelocityRPM());
         SmartDashboard.putNumber("Launcher/Sim/SimAmps", mFlywheelSimulation.getCurrentDrawAmps());
         SmartDashboard.putNumber("Launcher/Sim/SimInputVolts", mFlywheelSimulation.getInputVoltage());
         SmartDashboard.putNumber("Launcher/Sim/SimKrakenMotorVolts", mFlywheelLeaderSim.getMotorVoltage());
+
 
     }
 
@@ -342,6 +345,14 @@ public class LauncherSubSystem extends SubsystemBase {
         mFlywheelLeader.setVoltage(3.0);
         mHopper.setVoltage(3.0);
         mTransfer.setVoltage(3.0);
+    }
+
+    public void adjustShooterOffsetHigher(){
+        RobotPreferences.SetShooterAngleOffset(RobotPreferences.GetShooterAngleOffset() + .1);
+    }
+    
+    public void adjustShooterOffsetLower(){
+        RobotPreferences.SetShooterAngleOffset(RobotPreferences.GetShooterAngleOffset() - .1);
     }
 
 }

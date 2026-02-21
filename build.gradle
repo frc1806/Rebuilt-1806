@@ -43,6 +43,41 @@ deploy {
 
 def deployArtifact = deploy.targets.roborio.artifacts.frcJava
 
+// Task to backup the current deploy folder from the roborio
+task backupRoborioDeployFolder {
+    group = 'Deploy'
+    description = 'Backs up the current deploy folder from the roborio to local project directory'
+
+    doLast {
+        def timestamp = new Date().format('yyyy-MM-dd-HH-mm-ss')
+        def backupDir = file("src/main/deploy-backup/deploy-${timestamp}")
+        backupDir.mkdirs()
+
+        def teamNumber = project.frc.getTeamNumber()
+        def roborioAddress = "roborio-${teamNumber}-frc.local"
+        def remoteDeployPath = '/home/lvuser/deploy/'
+
+        println "Backing up deploy folder from ${roborioAddress}:${remoteDeployPath} to ${backupDir}"
+
+        try {
+            // Use scp to copy the remote deploy folder to local backup directory
+            exec {
+                commandLine 'scp', '-r', "admin@${roborioAddress}:${remoteDeployPath}", backupDir.absolutePath
+                ignoreExitValue = true
+            }
+            println "Backup completed successfully to ${backupDir}"
+        } catch (Exception e) {
+            println "Warning: Could not backup deploy folder from roborio: ${e.message}"
+            println "Continuing with deployment..."
+        }
+    }
+}
+
+// Make the deploy task depend on the backup task
+tasks.matching { it.name == 'deploy' }.all {
+    dependsOn backupRoborioDeployFolder
+}
+
 // Set to true to use debug for all targets including JNI, which will drastically impact
 // performance.
 wpi.java.debugJni = false
@@ -56,6 +91,10 @@ dependencies {
     annotationProcessor wpi.java.deps.wpilibAnnotations()
     implementation wpi.java.deps.wpilib()
     implementation wpi.java.vendor.java()
+    // Source: https://mvnrepository.com/artifact/org.apache.commons/commons-configuration2
+    implementation("org.apache.commons:commons-configuration2:2.13.0")
+    // Source: https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils
+    implementation("commons-beanutils:commons-beanutils:1.11.0")
 
     roborioDebug wpi.java.deps.wpilibJniDebug(wpi.platforms.roborio)
     roborioDebug wpi.java.vendor.jniDebug(wpi.platforms.roborio)

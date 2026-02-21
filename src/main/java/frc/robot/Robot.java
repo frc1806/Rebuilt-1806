@@ -28,6 +28,7 @@ public class Robot extends TimedRobot
   public Robot()
   {
     instance = this;
+    RobotPreferences.LoadOnBoot();
   }
 
   public static Robot getInstance()

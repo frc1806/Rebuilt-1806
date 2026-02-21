@@ -1,4 +1,13 @@
 {
+  "HALProvider": {
+    "Other Devices": {
+      "navX-Sensor[4]": {
+        "header": {
+          "open": true
+        }
+      }
+    }
+  },
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
@@ -12,9 +21,47 @@
       "/SmartDashboard/Pigeon 2 (v6) [13]": "Gyro",
       "/SmartDashboard/Swerve Drive": "Alerts",
       "/SmartDashboard/test/testmodes": "String Chooser"
+    },
+    "windows": {
+      "/FMSInfo": {
+        "window": {
+          "visible": true
+        }
+      }
     }
   },
+  "NetworkTables": {
+    "FMSInfo": {
+      "open": true
+    },
+    "Robot": {
+      "open": true
+    },
+    "Shuffleboard": {
+      "open": true
+    },
+    "SmartDashboard": {
+      "Alerts": {
+        "open": true
+      },
+      "BatterySim": {
+        "open": true
+      },
+      "Field": {
+        "open": true
+      },
+      "open": true,
+      "swerve": {
+        "open": true
+      }
+    },
+    "combined": true,
+    "properties": true
+  },
   "NetworkTables Info": {
+    "Connections": {
+      "open": true
+    },
     "visible": true
   }
 }

@@ -29,6 +29,7 @@ import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.LauncherSubSystem;
+import frc.robot.subsystems.MatchTimer;
 import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.swat.lib.Shot;
@@ -75,6 +76,8 @@ public class RobotContainer
   private final LauncherSubSystem launcher = LauncherSubSystem.GetInstance();
   private final Collector collector = Collector.GetInstance();
   private final ClimberSubsystem climber = ClimberSubsystem.GetInstance();
+
+  private final MatchTimer matchTimer = new MatchTimer();
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
@@ -140,6 +143,7 @@ public class RobotContainer
 
 
 
+
   // 2. Create a reusable path builder
   FollowPath.Builder pathBuilder = new FollowPath.Builder(
       drivebase,
@@ -170,6 +174,9 @@ public class RobotContainer
     }
     SmartDashboard.putData("test/testmodes",mTestModeChooser);
     mTestModeChooser.onChange(this::setTestModeBindings);
+
+    new Trigger(() -> DriverStation.isTeleopEnabled() && !matchTimer.isRunning()).onTrue(Commands.runOnce(matchTimer::startTimer));
+    new Trigger(() -> DriverStation.isAutonomous() && matchTimer.isRunning()).onTrue(Commands.runOnce(matchTimer::stopTimer));
   }
 
   /**
@@ -181,6 +188,9 @@ public class RobotContainer
    */
   public void configureBindings()
   {
+    
+      driverXbox.povUp().onTrue(Commands.runOnce(launcher::adjustShooterOffsetLower));
+      driverXbox.povDown().onTrue(Commands.runOnce(launcher::adjustShooterOffsetHigher));
 
     Command driveFieldOrientedDirectAngle      = drivebase.driveFieldOriented(driveDirectAngle);
     Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
@@ -243,6 +253,9 @@ else
       //driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
       driverXbox.leftBumper().whileTrue(driveSpeen);
       driverXbox.rightBumper().whileTrue(driveBeyblade);
+
+      driverXbox.povUp().onTrue(Commands.runOnce(launcher::adjustShooterOffsetLower));
+      driverXbox.povDown().onTrue(Commands.runOnce(launcher::adjustShooterOffsetHigher));
       
 
     }
