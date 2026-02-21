@@ -4,8 +4,13 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degree;
+
+import java.security.PublicKey;
+
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
 import frc.robot.swat.lib.CanandcolorHSVFilter;
 import swervelib.math.Matter;
 
@@ -90,10 +95,41 @@ public final class Constants
 
     public static final double HOOD_MIN_ANGLE = 0.0;
     public static final double HOOD_MAX_ANGLE = 45.0;
+
+    public static final double HOOD_MOTOR_KP = 0.0;
+    public static final double HOOD_MOTOR_KI = 0.0;
+    public static final double HOOD_MOTOR_KD = 0.0;
+
+    public static final int SMART_CURRENT_LIMIT = 10;
+    public static final double VOLTAGE_COMPENSATION = 0.0;
+    public static final boolean HOOD_INVERTED = false;
+
+    public static final double HOOD_POSITION_CONVERSION_FACTOR = 0.0;
+
+    public static final Angle HOOD_HOME_POSITION = Angle.ofBaseUnits(0.0, Degree); //DEGREES
+    public static final Angle HOOD_STARTING_POSITION = Angle.ofBaseUnits(-12.0, Degree);
   }
   public static class CollectorConstants
   {
     public static final double STATOR_CURRENT_LIMIT = 120;
-    public static final double SUPPLY_CURRENT_LIMMIT = 60;
+    public static final double SUPPLY_CURRENT_LIMIT = 60;
+    public static final int SLIDER_MOTOR_CURRENT_LIMIT = 30;
+    public static final double SLIDER_MOTOR_VOLTAGE_COMPENSATION = 0.0;
+    public static final boolean SLIDER_MOTOR_INVERTED = false;
+
+    public static final double SLIDER_MOTOR_KP = 0.0;
+    public static final double SLIDER_MOTOR_KI = 0.0;
+    public static final double SLIDER_MOTOR_KD = 0.0;
+
+    public static final double OUT_POSITION = 0.0;
+    public static final double IN_POSITION = 0.0; //#TODO: make this an actual number
+
+    public static final double INTAKE_ZEROING_CURRENT_THRESHOLD = 10; //amps
+
+    public static final double INTAKE_ZEROING_VELOCITY_THRESHOLD = 5;//RPM
+
+    public static final double SLIDER_SHAKE_POWER_FACTOR = .3;
+    public static final double SLIDER_SHAKE_TIME_SCALER = 4;
+
   }
 }

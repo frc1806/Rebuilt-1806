@@ -21,8 +21,12 @@ import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.Angle;
@@ -55,7 +59,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
     //Rollers that move the fuel into to the flywheel
 
-    private SparkFlex mTransfer;
+    private SparkMax mHoodMotor;
 
     //Hopper Motor
 
@@ -96,7 +100,7 @@ public class LauncherSubSystem extends SubsystemBase {
         //Make motors exist
         mFlywheelLeader = new TalonFX(RobotMap.LAUNCHER_LEFT);
         mFlywheelFollower = new TalonFX(RobotMap.LAUNCHER_RIGHT);
-        mTransfer = new SparkFlex(RobotMap.TRANSFER, MotorType.kBrushless);
+        mHoodMotor = new SparkMax(RobotMap.HOOD, MotorType.kBrushless);
         mHopper = new SparkFlex(RobotMap.HOPPER, MotorType.kBrushless);
 
         //SETUP FLYWHEEL MOTORS (Phoenix v6)
@@ -142,9 +146,8 @@ public class LauncherSubSystem extends SubsystemBase {
         SparkFlexConfig fuelMotorsConfig = new SparkFlexConfig();
         fuelMotorsConfig.smartCurrentLimit(40);
         fuelMotorsConfig.voltageCompensation(8.0);
-        fuelMotorsConfig.inverted(true);
 
-        mTransfer.configure(fuelMotorsConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
         fuelMotorsConfig.inverted(false);
         mHopper.configure(fuelMotorsConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         
@@ -152,7 +155,17 @@ public class LauncherSubSystem extends SubsystemBase {
         //END SETUP OTHER FUEL MOTORS
 
         //TODO SETUP HOOD MOTOR
+        SparkMaxConfig hoodMotorConfig = new SparkMaxConfig();
+        hoodMotorConfig.smartCurrentLimit(Constants.LauncherConstants.SMART_CURRENT_LIMIT);
+        hoodMotorConfig.voltageCompensation(Constants.LauncherConstants.VOLTAGE_COMPENSATION);
+        hoodMotorConfig.inverted(Constants.LauncherConstants.HOOD_INVERTED);
+        hoodMotorConfig.encoder.positionConversionFactor(Constants.LauncherConstants.HOOD_POSITION_CONVERSION_FACTOR);
 
+        hoodMotorConfig.closedLoop.pid(Constants.LauncherConstants.HOOD_MOTOR_KP, Constants.LauncherConstants.HOOD_MOTOR_KI, Constants.LauncherConstants.HOOD_MOTOR_KD);
+
+        mHoodMotor.configure(hoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+        
         //SIM
         
         mFlywheelLeaderSim = new TalonFXSimState(mFlywheelLeader);
@@ -177,10 +190,19 @@ public class LauncherSubSystem extends SubsystemBase {
         }
         mTargetSpeed = speed;
         mFlywheelRequest = new VelocityVoltage(mTargetSpeed.div(Constants.LauncherConstants.FLYWHEEL_GEAR_RATIO)); //Saving RAM by only instantiating this on a change.
-        mTargetAngle = angle.plus(Angle.ofBaseUnits(RobotPreferences.GetShooterAngleOffset(), Degrees));
+        mTargetAngle = angle;
         mFeedSpeed = feedSpeed;
         mLauncherState = LauncherStates.kClosedLoop;
     }
+
+        /**
+         * 
+         * @param shot
+         */
+        public void shoot(Shot shot){
+            shoot(shot.getFlywheelSpeed(), shot.getHoodAngle(), shot.getFeedSpeed());
+        }
+
 
     /**
      * Gets the flywheel velocity and scales for the Gear (UP) Ratio
@@ -195,7 +217,7 @@ public class LauncherSubSystem extends SubsystemBase {
      */
     public void stop(){
         mFlywheelLeader.stopMotor();
-        mTransfer.stopMotor();
+        //#jacobtodo
         mHopper.stopMotor();
         mLauncherState = LauncherStates.kIdle;
         mTargetSpeed = RPM.of(0);
@@ -253,9 +275,10 @@ public class LauncherSubSystem extends SubsystemBase {
         //STATE MACHINE
         switch(mLauncherState){
             case kClosedLoop:
+                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.baseUnitMagnitude(), ControlType.kMAXMotionPositionControl);
                 //TODO Set hood to target angle
                 mFlywheelLeader.setControl(mFlywheelRequest); 
-                mTransfer.stopMotor();
+                //#jacobtodo
                 mHopper.stopMotor();
                 if(isAtSpeed())
                 {
@@ -269,6 +292,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
                 break;
             case kOpenLoop:
+                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.baseUnitMagnitude(), ControlType.kMAXMotionPositionControl);
                 //TODO Set hood to target angle
                 mFlywheelLeader.setControl(mFlywheelVoltageOut);
                 if(!isAtSpeed())
@@ -280,16 +304,17 @@ public class LauncherSubSystem extends SubsystemBase {
                     }
                 }
                 mHopper.setVoltage(mFeedSpeed);
-                mTransfer.setVoltage(mFeedSpeed);
+                //#jacobtodo
                 break;
             case kCleaningMode:
+                 mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.baseUnitMagnitude(), ControlType.kMAXMotionPositionControl);
                 //DO Nothing for cleaning mode, managed externally
             break;
             case kIdle:  //Intentionally no-break after kIdle, we want kIdle to be effectively the default
             default:
                 //TODO Hood down
+                mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.baseUnitMagnitude(), ControlType.kMAXMotionPositionControl);
                 mFlywheelLeader.stopMotor();
-                mTransfer.stopMotor();
                 mHopper.stopMotor();
                 break;
             
@@ -300,12 +325,10 @@ public class LauncherSubSystem extends SubsystemBase {
         SmartDashboard.putNumber("Launcher/Target RPM", mTargetSpeed.magnitude());
         SmartDashboard.putNumber("Launcher/kF", mKf.magnitude());
         SmartDashboard.putNumber("Launcher/kF Samples", mFlywheelEstimator.size());
-        SmartDashboard.putNumber("Launcher/AngleOffset", RobotPreferences.GetShooterAngleOffset());
         SmartDashboard.putNumber("Launcher/Sim/SimSpeed", mFlywheelSimulation.getAngularVelocityRPM());
         SmartDashboard.putNumber("Launcher/Sim/SimAmps", mFlywheelSimulation.getCurrentDrawAmps());
         SmartDashboard.putNumber("Launcher/Sim/SimInputVolts", mFlywheelSimulation.getInputVoltage());
         SmartDashboard.putNumber("Launcher/Sim/SimKrakenMotorVolts", mFlywheelLeaderSim.getMotorVoltage());
-
 
     }
 
@@ -336,6 +359,11 @@ public class LauncherSubSystem extends SubsystemBase {
         );
     }
 
+/**
+ * 
+ * @param shot
+ * @return
+ */
     public Command prepareShotCommand(Shot shot){
         return prepareShotCommand(shot.getFlywheelSpeed(), shot.getHoodAngle(), shot.getFeedSpeed());
     }
@@ -344,7 +372,6 @@ public class LauncherSubSystem extends SubsystemBase {
         mLauncherState = LauncherStates.kCleaningMode;
         mFlywheelLeader.setVoltage(3.0);
         mHopper.setVoltage(3.0);
-        mTransfer.setVoltage(3.0);
     }
 
     public void adjustShooterOffsetHigher(){
