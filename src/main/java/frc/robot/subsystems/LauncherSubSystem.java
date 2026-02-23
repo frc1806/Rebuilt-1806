@@ -27,6 +27,7 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.MAXMotionConfig;
 import com.revrobotics.spark.config.SoftLimitConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -178,9 +179,12 @@ public class LauncherSubSystem extends SubsystemBase {
         mHoodMotorConfig.smartCurrentLimit(Constants.LauncherConstants.SMART_CURRENT_LIMIT);
         mHoodMotorConfig.voltageCompensation(Constants.LauncherConstants.VOLTAGE_COMPENSATION);
         mHoodMotorConfig.inverted(Constants.LauncherConstants.HOOD_INVERTED);
-        mHoodMotorConfig.encoder.positionConversionFactor(Constants.LauncherConstants.HOOD_POSITION_CONVERSION_FACTOR);
+        mHoodMotorConfig.encoder.positionConversionFactor(Constants.LauncherConstants.HOOD_POSITION_CONVERSION_FACTOR); //Degrees
+        mHoodMotorConfig.encoder.velocityConversionFactor(Constants.LauncherConstants.HOOD_POSITION_CONVERSION_FACTOR /60.0); //Degrees per second
 
         mHoodMotorConfig.closedLoop.pid(Constants.LauncherConstants.HOOD_MOTOR_KP, Constants.LauncherConstants.HOOD_MOTOR_KI, Constants.LauncherConstants.HOOD_MOTOR_KD);
+        mHoodMotorConfig.closedLoop.maxMotion.cruiseVelocity(180.0);
+        mHoodMotorConfig.closedLoop.maxMotion.maxAcceleration(45.0);
         mHoodMotorSoftLimitConfig = new SoftLimitConfig();
         mHoodMotorSoftLimitConfig.forwardSoftLimit(Constants.LauncherConstants.HOOD_MAX_ANGLE);
         mHoodMotorSoftLimitConfig.forwardSoftLimitEnabled(true);

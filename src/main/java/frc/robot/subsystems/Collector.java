@@ -61,6 +61,8 @@ private Collector(){
     mSliderConfig.encoder.positionConversionFactor(1);
     mSliderConfig.encoder.velocityConversionFactor(1);
     mSliderConfig.closedLoop.pid(Constants.CollectorConstants.SLIDER_MOTOR_KP, Constants.CollectorConstants.SLIDER_MOTOR_KI, Constants.CollectorConstants.SLIDER_MOTOR_KD);
+    mSliderConfig.closedLoop.maxMotion.cruiseVelocity(50.0);
+    mSliderConfig.closedLoop.maxMotion.maxAcceleration(10.0);
 
 
     mSliderMotor.configure(mSliderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
