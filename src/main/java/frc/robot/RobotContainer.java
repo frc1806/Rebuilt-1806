@@ -72,12 +72,13 @@ public class RobotContainer
   // The robot's subsystems and commands are defined here...
   public static final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
                                                                                 "swerve"));
+  public static final MatchTimer matchTimer = new MatchTimer(); //has to be ahead of launcher being init.
 
   public static final LauncherSubSystem launcher = LauncherSubSystem.GetInstance();
   public static final Collector collector = Collector.GetInstance();
   public static final ClimberSubsystem climber = ClimberSubsystem.GetInstance();
 
-  public static final MatchTimer matchTimer = new MatchTimer();
+
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.

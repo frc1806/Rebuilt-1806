@@ -35,6 +35,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
@@ -104,6 +105,7 @@ public class LauncherSubSystem extends SubsystemBase {
     private VoltageOut mFlywheelVoltageOut = new VoltageOut(0.0);
 
     private boolean mEnableLaunch = false;
+    private boolean mVisionEnableLaunch = false;
 
     private static final AngularVelocity kVelocityTolerance = RPM.of(Constants.LauncherConstants.FLYWHEEL_RPM_TOLERANCE);
 
@@ -224,12 +226,16 @@ public class LauncherSubSystem extends SubsystemBase {
         if(!speed.isNear(mTargetSpeed, Constants.LauncherConstants.FLYWHEEL_RPM_TOLERANCE))
         {
             mFlywheelEstimator.clear();
+            mLauncherState = LauncherStates.kClosedLoop;
         }
         mTargetSpeed = speed;
         mFlywheelRequest = new VelocityVoltage(mTargetSpeed.div(Constants.LauncherConstants.FLYWHEEL_GEAR_RATIO)); //Saving RAM by only instantiating this on a change.
         mTargetAngle = angle;
         mFeedSpeed = feedSpeed;
-        mLauncherState = LauncherStates.kClosedLoop;
+        if(mLauncherState != LauncherStates.kClosedLoop && mLauncherState != LauncherStates.kOpenLoop)
+        {
+            mLauncherState = LauncherStates.kClosedLoop;
+        } 
     }
 
         /**
@@ -313,14 +319,12 @@ public class LauncherSubSystem extends SubsystemBase {
         switch(mLauncherState){
             case kClosedLoop:
                 mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kMAXMotionPositionControl);
-                //TODO Set hood to target angle
                 mFlywheelLeader.setControl(mFlywheelRequest); 
-                //#jacobtodo
                 mHopper.stopMotor();
                 if(isAtSpeed())
                 {
                     mFlywheelEstimator.addLast(estimatekF());
-                    if(mFlywheelEstimator.size() == Constants.LauncherConstants.SAMPLES_TO_AVERAGE && mEnableLaunch)
+                    if(mFlywheelEstimator.size() >= Constants.LauncherConstants.SAMPLES_TO_AVERAGE && (mEnableLaunch || getSmartEnableLaunch()))
                     {
                         savekF();
                         mLauncherState = LauncherStates.kOpenLoop;
@@ -330,18 +334,15 @@ public class LauncherSubSystem extends SubsystemBase {
                 break;
             case kOpenLoop:
                 mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kMAXMotionPositionControl);
-                //TODO Set hood to target angle
                 mFlywheelLeader.setControl(mFlywheelVoltageOut);
-                if(!isAtSpeed())
-                {
+                if(!isAtSpeed()){
                     estimatekF();
                     savekF();
-                    if(!mEnableLaunch){
-                        mLauncherState = LauncherStates.kClosedLoop;
-                    }
+                }
+                if(!mEnableLaunch && !getSmartEnableLaunch()){
+                    mLauncherState = LauncherStates.kClosedLoop;
                 }
                 mHopper.setVoltage(mFeedSpeed);
-                //#jacobtodo
                 break;
             case kCleaningMode:
                  mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.in(Degrees), ControlType.kMAXMotionPositionControl);
@@ -364,7 +365,7 @@ public class LauncherSubSystem extends SubsystemBase {
             break;
             case kIdle:  //Intentionally no-break after kIdle, we want kIdle to be effectively the default
             default:
-                mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.baseUnitMagnitude(), ControlType.kMAXMotionPositionControl);
+                mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.in(Degrees), ControlType.kMAXMotionPositionControl);
                 mFlywheelLeader.stopMotor();
                 mHopper.stopMotor();
                 break;
@@ -443,6 +444,14 @@ public class LauncherSubSystem extends SubsystemBase {
         mHoodMotorConfig.apply(mHoodMotorSoftLimitConfig);
         mHoodMotor.configure(mHoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     }
+    
+    public boolean getVisionEnableLaunch(){
+        return Math.abs(Units.radiansToDegrees(mDrivebase.getAngleToTargetRadians())) < Math.max(Constants.DrivebaseConstants.AIM_ANGLE_TOLERANCE - mDrivebase.getDistanceToTarget(), 0.2);
+    }
+
+    public boolean getSmartEnableLaunch(){
+        return getVisionEnableLaunch() && mMatchTimer.getHubState().mIsActive;
+    }
 
     public Command launcherAimAtGoal(){
         return new Command(){
@@ -456,7 +465,6 @@ public class LauncherSubSystem extends SubsystemBase {
 
             @Override
             public void execute(){
-                mEnableLaunch = Math.abs(mDrivebase.getAngleToTargetRadians() - mDrivebase.getPose().getRotation().getRadians()) < Constants.DrivebaseConstants.AIM_ANGLE_TOLERANCE;
                 shoot(VisionShotGenerator.GetGoalShotForDistance(mDrivebase.getDistanceToTarget()));
             };
         };

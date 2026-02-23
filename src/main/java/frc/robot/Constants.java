@@ -69,7 +69,7 @@ public final class Constants
 
     public static final Translation2d BLUE_ALLIANCE_GOAL_AIM = new Translation2d(4.833, 4.00);
     public static final Translation2d RED_ALLIANCE_GOAL_AIM = new Translation2d(11.849, 4.00);
-    public static final double AIM_ANGLE_TOLERANCE = Math.PI / 8;
+    public static final double AIM_ANGLE_TOLERANCE = 5;
 
   }
 
@@ -85,16 +85,16 @@ public final class Constants
 
   public static class LauncherConstants
   {
-    public static final double FLYWHEEL_RPM_TOLERANCE = 100.0;
+    public static final double FLYWHEEL_RPM_TOLERANCE = 800.0;
     public static final double FLYWHEEL_GEAR_RATIO = 1.0; // GEAR UP
     //Fancy 254 style open loop shooting
     public static final int SAMPLES_TO_AVERAGE = 30;
     
-    public static final double FLYWHEEL_RAMP_KP = 0.07;
+    public static final double FLYWHEEL_RAMP_KP = 0.067; // SIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIX SEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVEN
     public static final double FLYWHEEL_RAMP_KI = 0;
     public static final double FLYWHEEL_RAMP_KD = 0;
-    public static final double FLYWHEEL_RAMP_KS = 0.1;
-    public static final double FLYWHEEL_RAMP_KV = 0.13;
+    public static final double FLYWHEEL_RAMP_KS = 0.06;
+    public static final double FLYWHEEL_RAMP_KV = 0.12;
 
     public static final double FLYWHEEL_PER_MOTOR_SUPPLY_CURRENT_LIMIT = 80;
     public static final double FLYWHEEL_PER_MOTOR_STATOR_CURRENT_LIMIT = 100;
@@ -107,7 +107,7 @@ public final class Constants
     public static final double HOOD_MIN_ANGLE = -12.0;
     public static final double HOOD_MAX_ANGLE = 50.0;
 
-    public static final double HOOD_MOTOR_KP = 0.0;
+    public static final double HOOD_MOTOR_KP = 1.0/45.0;
     public static final double HOOD_MOTOR_KI = 0.0;
     public static final double HOOD_MOTOR_KD = 0.0;
 
@@ -128,7 +128,7 @@ public final class Constants
     public static final double SLIDER_MOTOR_VOLTAGE_COMPENSATION = 0.0;
     public static final boolean SLIDER_MOTOR_INVERTED = false;
 
-    public static final double SLIDER_MOTOR_KP = 0.0;
+    public static final double SLIDER_MOTOR_KP = 1.0/25.-0;
     public static final double SLIDER_MOTOR_KI = 0.0;
     public static final double SLIDER_MOTOR_KD = 0.0;
 

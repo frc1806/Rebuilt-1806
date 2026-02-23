@@ -95,9 +95,12 @@ public class MatchTimer extends SubsystemBase{
         return running;
     }
 
-    public HubState getTeleopHubState(){
+    public HubState getHubState(){
         if(!running)
         {
+            if(DriverStation.isAutonomousEnabled()){
+                return new HubState(DriverStation.getMatchTime(), true);
+            }
             return new HubState(-1, false);
         }
         else{
@@ -177,7 +180,7 @@ public class MatchTimer extends SubsystemBase{
         }
 
         if(DriverStation.isTeleop()){
-            HubState teleopHubState = getTeleopHubState();
+            HubState teleopHubState = getHubState();
             robotTable.putValue("Timer/GoalActive", NetworkTableValue.makeBoolean(teleopHubState.mIsActive));
             robotTable.putValue("Timer/TimeRemaining", NetworkTableValue.makeDouble(teleopHubState.mTimeLeftBeforeChange));
         }
