@@ -16,6 +16,7 @@ public class RobotMap {
     public static final int HOPPER = 21;
     public static final int LAUNCHER_LEFT = 31; //ROBOT LEFT
     public static final int LAUNCHER_RIGHT = 32; //ROBOT RIGHT
+    public static final int LAUNCHER_RIGHT_2 = 33;
     public static final int HOOD = 35;
     public static final int CLIMBER_1 = 41;
     public static final int CLIMBER_2 = 42;

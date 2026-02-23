@@ -8,7 +8,6 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.estimator.PoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -339,30 +338,21 @@ public class Vision
     /**
      * Left Camera
      */
-    LEFT_CAM("left",
-             new Rotation3d(0, Math.toRadians(-24.094), Math.toRadians(30)),
-             new Translation3d(Units.inchesToMeters(12.056),
-                               Units.inchesToMeters(10.981),
-                               Units.inchesToMeters(8.44)),
+    TOP_CAM("top",
+             new Rotation3d(0, 0, Math.toRadians(30)),
+             new Translation3d(Units.inchesToMeters(2),
+                               Units.inchesToMeters(-2),
+                               Units.inchesToMeters(20)),
              VecBuilder.fill(4, 4, 8), VecBuilder.fill(0.5, 0.5, 1)),
     /**
      * Right Camera
      */
-    RIGHT_CAM("right",
-              new Rotation3d(0, Math.toRadians(-24.094), Math.toRadians(-30)),
-              new Translation3d(Units.inchesToMeters(12.056),
-                                Units.inchesToMeters(-10.981),
-                                Units.inchesToMeters(8.44)),
-              VecBuilder.fill(4, 4, 8), VecBuilder.fill(0.5, 0.5, 1)),
-    /**
-     * Center Camera
-     */
-    CENTER_CAM("center",
-               new Rotation3d(0, Units.degreesToRadians(18), 0),
-               new Translation3d(Units.inchesToMeters(-4.628),
-                                 Units.inchesToMeters(-10.687),
-                                 Units.inchesToMeters(16.129)),
-               VecBuilder.fill(4, 4, 8), VecBuilder.fill(0.5, 0.5, 1));
+    BOTTOM_CAM("bottom",
+              new Rotation3d(0, Math.toRadians(0), Math.toRadians(30)),
+              new Translation3d(Units.inchesToMeters(12.5),
+                                Units.inchesToMeters(0),
+                                Units.inchesToMeters(4.0)),
+              VecBuilder.fill(4, 4, 8), VecBuilder.fill(0.5, 0.5, 1));
 
     /**
      * Latency alert to use when high latency is detected.
@@ -636,7 +626,7 @@ public class Vision
   public Pose2d getBestPhotonvisionPose(){
     EstimatedRobotPose bestPose = null;
     for(Cameras camera :Cameras.values()){
-      EstimatedRobotPose potentialPose = camera.getEstimatedGlobalPose().get();
+      EstimatedRobotPose potentialPose = camera.getEstimatedGlobalPose().orElse(null);
       if(potentialPose == null){
         continue;
       }
@@ -652,8 +642,13 @@ public class Vision
         }
       }
     }
-    Pose3d bestPose3d = bestPose.estimatedPose;
-    return new Pose2d(bestPose3d.getX(), bestPose3d.getY(), bestPose3d.getRotation().toRotation2d());
+    if(bestPose != null)
+    {
+      Pose3d bestPose3d = bestPose.estimatedPose;
+      return new Pose2d(bestPose3d.getX(), bestPose3d.getY(), bestPose3d.getRotation().toRotation2d());
+    }
+    return null;
+
   }
 
 }

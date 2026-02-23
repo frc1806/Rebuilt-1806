@@ -17,9 +17,6 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
-import com.reduxrobotics.sensors.canandcolor.Canandcolor;
-import com.reduxrobotics.sensors.canandcolor.ColorData;
-
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -28,6 +25,9 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.NetworkTableValue;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -37,8 +37,6 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
 import frc.robot.subsystems.swervedrive.Vision.Cameras;
-import frc.robot.swat.lib.CanandcolorHSVFilter;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -52,13 +50,11 @@ import swervelib.SwerveController;
 import swervelib.SwerveDrive;
 import swervelib.SwerveDriveTest;
 import swervelib.math.SwerveMath;
-import swervelib.parser.Cache;
 import swervelib.parser.SwerveControllerConfiguration;
 import swervelib.parser.SwerveDriveConfiguration;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
-import yams.mechanisms.swerve.utility.SwerveInputStream;
 
 public class SwerveSubsystem extends SubsystemBase
 {
@@ -70,7 +66,7 @@ public class SwerveSubsystem extends SubsystemBase
   /**
    * Enable vision odometry updates while driving.
    */
-  private final boolean     visionDriveTest = false;
+  private final boolean     visionDriveTest = true;
   /**
    * PhotonVision class to keep an accurate odometry.
    */
@@ -78,6 +74,9 @@ public class SwerveSubsystem extends SubsystemBase
 
 
   private boolean mNeedOdometryUpdate = false;
+  private double mLastOdometryUpdate = 0.0;
+
+  private NetworkTable mVisionTable = NetworkTableInstance.getDefault().getTable("Vision");
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -157,16 +156,33 @@ public class SwerveSubsystem extends SubsystemBase
       vision.updatePoseEstimation(swerveDrive);
     }
 
-    if(mNeedOdometryUpdate && !checkIfNeedOdometryReset()){
+    if(mNeedOdometryUpdate && !checkIfNeedOdometryResetDueToTip()){
       Pose2d photonvisionPose = vision.getBestPhotonvisionPose();
       if(photonvisionPose != null){
         resetOdometry(photonvisionPose);
         mNeedOdometryUpdate = false;
       }
     }
-    else if(checkIfNeedOdometryReset()){
+    else if(checkIfNeedOdometryResetDueToTip() || checkIfOdometryStale()){
       mNeedOdometryUpdate = true;
     }
+
+    mVisionTable.putValue("distance_to_goal", NetworkTableValue.makeDouble(getDistanceToTarget()));
+    mVisionTable.putValue("angle_to_goal", NetworkTableValue.makeDouble(Units.radiansToDegrees(getAngleToTargetRadians())));
+    mVisionTable.putValue("time_since_odometry_update", NetworkTableValue.makeDouble(Timer.getFPGATimestamp() -mLastOdometryUpdate));
+    
+  }
+
+  public Translation2d getRobotToGoal(){
+    return (isRedAlliance()?Constants.DrivebaseConstants.RED_ALLIANCE_GOAL_AIM:Constants.DrivebaseConstants.BLUE_ALLIANCE_GOAL_AIM).minus(getPose().getTranslation());
+  }
+
+  public double getDistanceToTarget(){
+    return Math.abs(Math.hypot(getRobotToGoal().getX(), getRobotToGoal().getY()));
+  }
+
+  public double getAngleToTargetRadians(){
+    return Math.atan2(getRobotToGoal().getY(), getRobotToGoal().getX()) - getPose().getRotation().getRadians();
   }
 
   @Override
@@ -547,6 +563,7 @@ public class SwerveSubsystem extends SubsystemBase
   public void resetOdometry(Pose2d initialHolonomicPose)
   {
     swerveDrive.resetOdometry(initialHolonomicPose);
+    mLastOdometryUpdate = Timer.getFPGATimestamp();
   }
 
   /**
@@ -600,7 +617,7 @@ public class SwerveSubsystem extends SubsystemBase
    *
    * @return true if the red alliance, false if blue. Defaults to false if none is available.
    */
-  private boolean isRedAlliance()
+  public boolean isRedAlliance()
   {
     var alliance = DriverStation.getAlliance();
     return alliance.isPresent() ? alliance.get() == DriverStation.Alliance.Red : false;
@@ -771,7 +788,12 @@ public class SwerveSubsystem extends SubsystemBase
 
 
 
-  public boolean checkIfNeedOdometryReset(){
+  public boolean checkIfNeedOdometryResetDueToTip(){
     return Math.abs(swerveDrive.getGyroRotation3d().getY()) > 15 || Math.abs(swerveDrive.getGyroRotation3d().getZ()) > 15;
   }
+
+  public boolean checkIfOdometryStale(){
+    return Timer.getFPGATimestamp() - mLastOdometryUpdate > Constants.DrivebaseConstants.ODOMETRY_STALE_TIME;
+  }
+
 }

@@ -5,6 +5,9 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volt;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
@@ -28,6 +31,7 @@ import com.revrobotics.spark.config.SoftLimitConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.Angle;
@@ -37,11 +41,16 @@ import edu.wpi.first.util.CircularBuffer;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.RobotContainer;
 import frc.robot.RobotMap;
 import frc.robot.RobotPreferences;
+import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.swat.lib.Shot;
+import frc.robot.swat.lib.VisionShotGenerator;
 
 public class LauncherSubSystem extends SubsystemBase {
     //SINGLETON PATTERN
@@ -50,6 +59,9 @@ public class LauncherSubSystem extends SubsystemBase {
         return S_LAUNCHER;
     }
 
+    private SwerveSubsystem mDrivebase = RobotContainer.drivebase;
+    private MatchTimer mMatchTimer = RobotContainer.matchTimer;
+
     //Variable Declaration and instantiation if applicable
 
     //Flywheel Motors
@@ -57,6 +69,7 @@ public class LauncherSubSystem extends SubsystemBase {
     private TalonFX mFlywheelLeader; 
 
     private TalonFX mFlywheelFollower; 
+    private TalonFX mFlywheelFollowerTwo;
 
     //Rollers that move the fuel into to the flywheel
 
@@ -84,9 +97,9 @@ public class LauncherSubSystem extends SubsystemBase {
     //Stored Target Values
     private AngularVelocity mTargetSpeed = RPM.of(0);
     private VelocityVoltage mFlywheelRequest = new VelocityVoltage(mTargetSpeed);
-    private Angle mTargetAngle = Angle.ofBaseUnits(0, Degrees);
-    private Voltage mFeedSpeed = Voltage.ofBaseUnits(0.0, Volt);
-    private Voltage mKf = Voltage.ofBaseUnits(0, Volt);
+    private Angle mTargetAngle = Degrees.of(0);
+    private Voltage mFeedSpeed = Volt.of(0);
+    private Voltage mKf = Volt.of(0);
     private VoltageOut mFlywheelVoltageOut = new VoltageOut(0.0);
 
     private boolean mEnableLaunch = false;
@@ -96,14 +109,16 @@ public class LauncherSubSystem extends SubsystemBase {
     //Simulation
     private TalonFXSimState mFlywheelLeaderSim;
     private TalonFXSimState mFlywheelFollowerSim;
-    private FlywheelSim mFlywheelSimulation = new FlywheelSim(LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(2), 0.0002, 1.0/Constants.LauncherConstants.FLYWHEEL_GEAR_RATIO ), DCMotor.getKrakenX60(2));
+    private TalonFXSimState mFlywheelFollowerTwoSim;
+    private FlywheelSim mFlywheelSimulation = new FlywheelSim(LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(3), 0.0002, 1.0/Constants.LauncherConstants.FLYWHEEL_GEAR_RATIO ), DCMotor.getKrakenX60(3));
 
     //Constructor is private for singleton pattern
     private LauncherSubSystem(){
         System.out.println("Constructor for Launcher!!!!!!");
         //Make motors exist
-        mFlywheelLeader = new TalonFX(RobotMap.LAUNCHER_LEFT);
-        mFlywheelFollower = new TalonFX(RobotMap.LAUNCHER_RIGHT);
+        mFlywheelLeader = new TalonFX(RobotMap.LAUNCHER_RIGHT);
+        mFlywheelFollower = new TalonFX(RobotMap.LAUNCHER_LEFT);
+        mFlywheelFollowerTwo = new TalonFX(RobotMap.LAUNCHER_RIGHT_2);
         mHoodMotor = new SparkMax(RobotMap.HOOD, MotorType.kBrushless);
         mHopper = new SparkFlex(RobotMap.HOPPER, MotorType.kBrushless);
 
@@ -139,7 +154,7 @@ public class LauncherSubSystem extends SubsystemBase {
         flywheelFollowerConfig.Slot0 = flywheelRampPIDConfig;
         flywheelFollowerConfig.Feedback = flywheelEncoderConfigs;
         mFlywheelFollower.getConfigurator().apply(flywheelFollowerConfig);
-        
+        mFlywheelFollowerTwo.getConfigurator().apply(flywheelFollowerConfig);
         //Make follower follow
         mFlywheelFollower.setControl(new Follower(mFlywheelLeader.getDeviceID(), MotorAlignmentValue.Opposed));
 
@@ -184,6 +199,10 @@ public class LauncherSubSystem extends SubsystemBase {
         mFlywheelFollowerSim = new TalonFXSimState(mFlywheelFollower);
         mFlywheelFollowerSim.setSupplyVoltage(12.0);
         mFlywheelFollowerSim.setMotorType(com.ctre.phoenix6.sim.TalonFXSimState.MotorType.KrakenX60);
+        mFlywheelFollowerTwoSim = new TalonFXSimState(mFlywheelFollowerTwo);
+        mFlywheelFollowerTwoSim.setSupplyVoltage(12.0);
+        mFlywheelFollowerTwoSim.setMotorType(com.ctre.phoenix6.sim.TalonFXSimState.MotorType.KrakenX60);
+
 
         if(Constants.LauncherConstants.HOOD_AUTO_ZERO){
             zeroHood();
@@ -289,7 +308,7 @@ public class LauncherSubSystem extends SubsystemBase {
         //STATE MACHINE
         switch(mLauncherState){
             case kClosedLoop:
-                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.baseUnitMagnitude(), ControlType.kMAXMotionPositionControl);
+                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kMAXMotionPositionControl);
                 //TODO Set hood to target angle
                 mFlywheelLeader.setControl(mFlywheelRequest); 
                 //#jacobtodo
@@ -306,7 +325,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
                 break;
             case kOpenLoop:
-                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.baseUnitMagnitude(), ControlType.kMAXMotionPositionControl);
+                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kMAXMotionPositionControl);
                 //TODO Set hood to target angle
                 mFlywheelLeader.setControl(mFlywheelVoltageOut);
                 if(!isAtSpeed())
@@ -321,7 +340,7 @@ public class LauncherSubSystem extends SubsystemBase {
                 //#jacobtodo
                 break;
             case kCleaningMode:
-                 mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.baseUnitMagnitude(), ControlType.kMAXMotionPositionControl);
+                 mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.in(Degrees), ControlType.kMAXMotionPositionControl);
                 //DO Nothing for cleaning mode, managed externally
             break;
             case kZeroHood:
@@ -349,8 +368,10 @@ public class LauncherSubSystem extends SubsystemBase {
         }
 
         SmartDashboard.putNumber("Launcher/RPM", getFlywheelVelocity().magnitude());
+        SmartDashboard.putNumber("Launcher/Angle", mHoodMotor.getEncoder().getPosition());
         SmartDashboard.putString("Launcher/State", mLauncherState.name());
         SmartDashboard.putNumber("Launcher/Target RPM", mTargetSpeed.magnitude());
+        SmartDashboard.putNumber("Launcher/TargetAngle", mTargetAngle.in(Degrees));
         SmartDashboard.putNumber("Launcher/kF", mKf.magnitude());
         SmartDashboard.putNumber("Launcher/kF Samples", mFlywheelEstimator.size());
         SmartDashboard.putNumber("Launcher/Sim/SimSpeed", mFlywheelSimulation.getAngularVelocityRPM());
@@ -367,6 +388,7 @@ public class LauncherSubSystem extends SubsystemBase {
         mFlywheelSimulation.update(0.02);
         mFlywheelLeaderSim.setRotorVelocity((mFlywheelSimulation.getAngularVelocityRPM() / Constants.LauncherConstants.FLYWHEEL_GEAR_RATIO) / 60.0);
         mFlywheelFollowerSim.setRotorVelocity((mFlywheelSimulation.getAngularVelocityRPM() / Constants.LauncherConstants.FLYWHEEL_GEAR_RATIO) / 60.0);
+        mFlywheelFollowerTwoSim.setRotorVelocity((mFlywheelSimulation.getAngularVelocityRPM() / Constants.LauncherConstants.FLYWHEEL_GEAR_RATIO) / 60.0);
     }
 
     /**
@@ -377,13 +399,13 @@ public class LauncherSubSystem extends SubsystemBase {
      * @return a Command that will start ramping the flywheel.
      */
     public Command prepareShotCommand(AngularVelocity speed, Angle angle, Voltage feedSpeed){
-        return runOnce(
+        return (Commands.run(
             new Runnable(){
                 @Override
                 public void run() {
                     shoot(speed, angle, feedSpeed);
                 }
-            }
+            }, this)
         );
     }
 
@@ -418,4 +440,21 @@ public class LauncherSubSystem extends SubsystemBase {
         mHoodMotor.configure(mHoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
+    public Command launcherAimAtGoal(){
+        return new Command(){
+
+ @Override
+            public Set<Subsystem> getRequirements() {
+                HashSet<Subsystem> reqs = new HashSet<>();
+                reqs.add(RobotContainer.launcher);
+                return reqs;
+            }
+
+            @Override
+            public void execute(){
+                mEnableLaunch = Math.abs(mDrivebase.getAngleToTargetRadians() - mDrivebase.getPose().getRotation().getRadians()) < Constants.DrivebaseConstants.AIM_ANGLE_TOLERANCE;
+                shoot(VisionShotGenerator.GetGoalShotForDistance(mDrivebase.getDistanceToTarget()));
+            };
+        };
+    }
 }

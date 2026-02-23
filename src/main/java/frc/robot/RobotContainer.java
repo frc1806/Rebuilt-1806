@@ -70,14 +70,14 @@ public class RobotContainer
     kDriveTest
   }
   // The robot's subsystems and commands are defined here...
-  private final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
+  public static final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
                                                                                 "swerve"));
 
-  private final LauncherSubSystem launcher = LauncherSubSystem.GetInstance();
-  private final Collector collector = Collector.GetInstance();
-  private final ClimberSubsystem climber = ClimberSubsystem.GetInstance();
+  public static final LauncherSubSystem launcher = LauncherSubSystem.GetInstance();
+  public static final Collector collector = Collector.GetInstance();
+  public static final ClimberSubsystem climber = ClimberSubsystem.GetInstance();
 
-  private final MatchTimer matchTimer = new MatchTimer();
+  public static final MatchTimer matchTimer = new MatchTimer();
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
@@ -89,7 +89,6 @@ public class RobotContainer
                                                             .deadband(OperatorConstants.DEADBAND)
                                                             .scaleTranslation(1.0)
                                                             .allianceRelativeControl(true);
-
   /**
    * Clone's the angular velocity input stream and converts it to a fieldRelative input stream.
    */
@@ -101,6 +100,11 @@ public class RobotContainer
     SwerveInputStream driveDirectAngleSlow = driveAngularVelocity.copy().scaleTranslation(.5).withControllerHeadingAxis(snapAnglesHelper.getXDoubleSupplier(() ->driverXbox.getRightX() * -1,
   () -> driverXbox.getRightY() * -1), snapAnglesHelper.getYDoubleSupplier(() ->driverXbox.getRightX() * -1,
   () -> driverXbox.getRightY() * -1)).headingWhile(true);
+
+
+  SwerveInputStream driveGoalAim = driveAngularVelocity.copy().withControllerHeadingAxis(
+    ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_GOAL_AIM:Constants.DrivebaseConstants.BLUE_ALLIANCE_GOAL_AIM).minus(drivebase.getPose().getTranslation()).getY(), 
+    ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_GOAL_AIM:Constants.DrivebaseConstants.BLUE_ALLIANCE_GOAL_AIM).minus(drivebase.getPose().getTranslation()).getX()).headingWhile(true);
 
   /**
    * Clone's the angular velocity input stream and converts it to a robotRelative input stream.
@@ -201,10 +205,12 @@ public class RobotContainer
     Command driveFieldOrientedAnglularVelocityKeyboard = drivebase.driveFieldOriented(driveAngularVelocityKeyboard);
     Command driveSetpointGenKeyboard = drivebase.driveWithSetpointGeneratorFieldRelative(
         driveDirectAngleKeyboard);
+    Command driveGoalAimCommand = drivebase.driveFieldOriented(driveGoalAim);
 
     drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
 
     collector.setDefaultCommand(Commands.run(collector::stop, collector));
+    launcher.setDefaultCommand(Commands.run(launcher::stop, launcher));
 
     if (Robot.isSimulation())
     {
@@ -256,6 +262,7 @@ else
 
       driverXbox.povUp().onTrue(Commands.runOnce(launcher::adjustShooterOffsetLower));
       driverXbox.povDown().onTrue(Commands.runOnce(launcher::adjustShooterOffsetHigher));
+      driverXbox.a().whileTrue(driveGoalAimCommand.alongWith(launcher.launcherAimAtGoal()));
       
 
     }

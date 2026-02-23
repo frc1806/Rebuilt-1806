@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.Degree;
 
 import java.security.PublicKey;
 
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
@@ -62,6 +63,14 @@ public final class Constants
     public static final double RED_MAX_SAT = 1.0;
     public static final double RED_MIN_VAL = 0.2;
     public static final double RED_MAX_VAL = 1.0;
+
+
+    public static final double ODOMETRY_STALE_TIME = 2.0;
+
+    public static final Translation2d BLUE_ALLIANCE_GOAL_AIM = new Translation2d(4.833, 4.00);
+    public static final Translation2d RED_ALLIANCE_GOAL_AIM = new Translation2d(11.849, 4.00);
+    public static final double AIM_ANGLE_TOLERANCE = Math.PI / 8;
+
   }
 
   public static class OperatorConstants
@@ -77,7 +86,7 @@ public final class Constants
   public static class LauncherConstants
   {
     public static final double FLYWHEEL_RPM_TOLERANCE = 100.0;
-    public static final double FLYWHEEL_GEAR_RATIO = 1.8; // GEAR UP
+    public static final double FLYWHEEL_GEAR_RATIO = 1.0; // GEAR UP
     //Fancy 254 style open loop shooting
     public static final int SAMPLES_TO_AVERAGE = 30;
     
