@@ -76,7 +76,6 @@ public class SwerveSubsystem extends SubsystemBase
    */
   private       Vision      vision;
 
-  private Canandcolor mCanandcolor;
 
   private boolean mNeedOdometryUpdate = false;
 
@@ -122,7 +121,6 @@ public class SwerveSubsystem extends SubsystemBase
     setupPathPlanner();
     RobotModeTriggers.autonomous().onTrue(Commands.runOnce(this::zeroGyroWithAlliance));
 
-    mCanandcolor = new Canandcolor(1);
 
   }
 
@@ -159,7 +157,7 @@ public class SwerveSubsystem extends SubsystemBase
       vision.updatePoseEstimation(swerveDrive);
     }
 
-    if(mNeedOdometryUpdate && isOnGround() && !isOnAllianceColor()){
+    if(mNeedOdometryUpdate && !checkIfNeedOdometryReset()){
       Pose2d photonvisionPose = vision.getBestPhotonvisionPose();
       if(photonvisionPose != null){
         resetOdometry(photonvisionPose);
@@ -771,16 +769,9 @@ public class SwerveSubsystem extends SubsystemBase
     });
   }
 
-  public boolean isOnGround(){
-    return mCanandcolor.getProximity() < Constants.DrivebaseConstants.CANANDCOLOR_GROUND_THRESHOLD;
-  }
 
-  public boolean isOnAllianceColor(){
-    ColorData colorData = mCanandcolor.getColor();
-    return Constants.DrivebaseConstants.BLUE_FILTER.isInColorRange(colorData) || Constants.DrivebaseConstants.RED_FILTER.isInColorRange(colorData);
-  }
 
   public boolean checkIfNeedOdometryReset(){
-    return !isOnGround() || isOnAllianceColor();
+    return Math.abs(swerveDrive.getGyroRotation3d().getY()) > 15 || Math.abs(swerveDrive.getGyroRotation3d().getZ()) > 15;
   }
 }

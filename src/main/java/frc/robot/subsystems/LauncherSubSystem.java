@@ -24,6 +24,7 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.SoftLimitConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
@@ -60,6 +61,8 @@ public class LauncherSubSystem extends SubsystemBase {
     //Rollers that move the fuel into to the flywheel
 
     private SparkMax mHoodMotor;
+    private SparkMaxConfig mHoodMotorConfig;
+    private SoftLimitConfig mHoodMotorSoftLimitConfig;
 
     //Hopper Motor
 
@@ -72,7 +75,8 @@ public class LauncherSubSystem extends SubsystemBase {
         kIdle, //Doin nothin'
         kClosedLoop, //Spinning up, getting samples
         kOpenLoop, // Open Loop
-        kCleaningMode
+        kCleaningMode,
+        kZeroHood
     }
 
     private LauncherStates mLauncherState = LauncherStates.kIdle;
@@ -155,15 +159,21 @@ public class LauncherSubSystem extends SubsystemBase {
         //END SETUP OTHER FUEL MOTORS
 
         //TODO SETUP HOOD MOTOR
-        SparkMaxConfig hoodMotorConfig = new SparkMaxConfig();
-        hoodMotorConfig.smartCurrentLimit(Constants.LauncherConstants.SMART_CURRENT_LIMIT);
-        hoodMotorConfig.voltageCompensation(Constants.LauncherConstants.VOLTAGE_COMPENSATION);
-        hoodMotorConfig.inverted(Constants.LauncherConstants.HOOD_INVERTED);
-        hoodMotorConfig.encoder.positionConversionFactor(Constants.LauncherConstants.HOOD_POSITION_CONVERSION_FACTOR);
+        mHoodMotorConfig = new SparkMaxConfig();
+        mHoodMotorConfig.smartCurrentLimit(Constants.LauncherConstants.SMART_CURRENT_LIMIT);
+        mHoodMotorConfig.voltageCompensation(Constants.LauncherConstants.VOLTAGE_COMPENSATION);
+        mHoodMotorConfig.inverted(Constants.LauncherConstants.HOOD_INVERTED);
+        mHoodMotorConfig.encoder.positionConversionFactor(Constants.LauncherConstants.HOOD_POSITION_CONVERSION_FACTOR);
 
-        hoodMotorConfig.closedLoop.pid(Constants.LauncherConstants.HOOD_MOTOR_KP, Constants.LauncherConstants.HOOD_MOTOR_KI, Constants.LauncherConstants.HOOD_MOTOR_KD);
+        mHoodMotorConfig.closedLoop.pid(Constants.LauncherConstants.HOOD_MOTOR_KP, Constants.LauncherConstants.HOOD_MOTOR_KI, Constants.LauncherConstants.HOOD_MOTOR_KD);
+        mHoodMotorSoftLimitConfig = new SoftLimitConfig();
+        mHoodMotorSoftLimitConfig.forwardSoftLimit(Constants.LauncherConstants.HOOD_MAX_ANGLE);
+        mHoodMotorSoftLimitConfig.forwardSoftLimitEnabled(true);
+        mHoodMotorSoftLimitConfig.reverseSoftLimit(Constants.LauncherConstants.HOOD_MIN_ANGLE);
+        mHoodMotorSoftLimitConfig.reverseSoftLimitEnabled(true);
+        mHoodMotorConfig.apply(mHoodMotorSoftLimitConfig);
 
-        mHoodMotor.configure(hoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        mHoodMotor.configure(mHoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         
         //SIM
@@ -174,6 +184,10 @@ public class LauncherSubSystem extends SubsystemBase {
         mFlywheelFollowerSim = new TalonFXSimState(mFlywheelFollower);
         mFlywheelFollowerSim.setSupplyVoltage(12.0);
         mFlywheelFollowerSim.setMotorType(com.ctre.phoenix6.sim.TalonFXSimState.MotorType.KrakenX60);
+
+        if(Constants.LauncherConstants.HOOD_AUTO_ZERO){
+            zeroHood();
+        }
     }
 
     /**
@@ -310,9 +324,23 @@ public class LauncherSubSystem extends SubsystemBase {
                  mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.baseUnitMagnitude(), ControlType.kMAXMotionPositionControl);
                 //DO Nothing for cleaning mode, managed externally
             break;
+            case kZeroHood:
+                mHoodMotor.set(-.1);
+                mFlywheelLeader.set(0);
+                mHopper.set(0);
+                if(Math.abs(mHoodMotor.getOutputCurrent()) > 2 && Math.abs(mHoodMotor.getEncoder().getVelocity()) < 2.0)
+                {
+                    mHoodMotor.getEncoder().setPosition(0);
+                    mHoodMotor.set(0);
+                    mLauncherState = LauncherStates.kIdle;
+                    mHoodMotorSoftLimitConfig.forwardSoftLimitEnabled(true);
+                    mHoodMotorSoftLimitConfig.reverseSoftLimitEnabled(true);
+                    mHoodMotorConfig.apply(mHoodMotorSoftLimitConfig);
+                    mHoodMotor.configure(mHoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+                }
+            break;
             case kIdle:  //Intentionally no-break after kIdle, we want kIdle to be effectively the default
             default:
-                //TODO Hood down
                 mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.baseUnitMagnitude(), ControlType.kMAXMotionPositionControl);
                 mFlywheelLeader.stopMotor();
                 mHopper.stopMotor();
@@ -380,6 +408,14 @@ public class LauncherSubSystem extends SubsystemBase {
     
     public void adjustShooterOffsetLower(){
         RobotPreferences.SetShooterAngleOffset(RobotPreferences.GetShooterAngleOffset() - .1);
+    }
+
+    public void zeroHood(){
+        mLauncherState = LauncherStates.kZeroHood;
+        mHoodMotorSoftLimitConfig.forwardSoftLimitEnabled(false);
+        mHoodMotorSoftLimitConfig.reverseSoftLimitEnabled(false);
+        mHoodMotorConfig.apply(mHoodMotorSoftLimitConfig);
+        mHoodMotor.configure(mHoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
 }

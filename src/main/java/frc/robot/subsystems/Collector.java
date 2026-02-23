@@ -10,6 +10,7 @@ import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.SoftLimitConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 
 import edu.wpi.first.wpilibj.Timer;
@@ -23,6 +24,8 @@ public class Collector extends SubsystemBase {
 private TalonFX mCollectorMotor = new TalonFX(RobotMap.INTAKE);
 
 private SparkFlex mSliderMotor = new SparkFlex(RobotMap.SLIDER, MotorType.kBrushless);
+private SparkFlexConfig mSliderConfig = new SparkFlexConfig();
+private SoftLimitConfig mSliderSoftLimitConfig = new SoftLimitConfig();
 
 private static Collector S_COLLECTOR = new Collector();
 public static Collector GetInstance(){
@@ -46,19 +49,24 @@ private Collector(){
 
     mCollectorMotor.getConfigurator().apply(rollerConfig);
 
-    SparkFlexConfig sliderMotorConfig = new SparkFlexConfig();
-    sliderMotorConfig.smartCurrentLimit(Constants.CollectorConstants.SLIDER_MOTOR_CURRENT_LIMIT);
-    sliderMotorConfig.voltageCompensation(Constants.CollectorConstants.SLIDER_MOTOR_VOLTAGE_COMPENSATION);
-    sliderMotorConfig.inverted(Constants.CollectorConstants.SLIDER_MOTOR_INVERTED);
+    mSliderConfig.smartCurrentLimit(Constants.CollectorConstants.SLIDER_MOTOR_CURRENT_LIMIT);
+    mSliderConfig.voltageCompensation(Constants.CollectorConstants.SLIDER_MOTOR_VOLTAGE_COMPENSATION);
+    mSliderConfig.inverted(Constants.CollectorConstants.SLIDER_MOTOR_INVERTED);
+    mSliderSoftLimitConfig.forwardSoftLimit(0);
+    mSliderSoftLimitConfig.forwardSoftLimitEnabled(false);
+    mSliderSoftLimitConfig.reverseSoftLimitEnabled(false);
+    mSliderSoftLimitConfig.reverseSoftLimit(Constants.CollectorConstants.IN_POSITION);
+    mSliderConfig.apply(mSliderSoftLimitConfig);
 
-    sliderMotorConfig.encoder.positionConversionFactor(1);
-    sliderMotorConfig.encoder.velocityConversionFactor(1);
+    mSliderConfig.encoder.positionConversionFactor(1);
+    mSliderConfig.encoder.velocityConversionFactor(1);
+    mSliderConfig.closedLoop.pid(Constants.CollectorConstants.SLIDER_MOTOR_KP, Constants.CollectorConstants.SLIDER_MOTOR_KI, Constants.CollectorConstants.SLIDER_MOTOR_KD);
 
 
-    mSliderMotor.configure(sliderMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    mSliderMotor.configure(mSliderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
 
-    sliderMotorConfig.closedLoop.pid(Constants.CollectorConstants.SLIDER_MOTOR_KP, Constants.CollectorConstants.SLIDER_MOTOR_KI, Constants.CollectorConstants.SLIDER_MOTOR_KD);
+    mSliderConfig.closedLoop.pid(Constants.CollectorConstants.SLIDER_MOTOR_KP, Constants.CollectorConstants.SLIDER_MOTOR_KI, Constants.CollectorConstants.SLIDER_MOTOR_KD);
 
 
 }
@@ -105,10 +113,14 @@ public void outtake(){
 
             case kZeroExtending:
                 mSliderMotor.set(.3);
-                if(mSliderMotor.getOutputCurrent() > Constants.CollectorConstants.INTAKE_ZEROING_CURRENT_THRESHOLD && Math.abs(mSliderMotor.getEncoder().getVelocity()) < Constants.CollectorConstants.INTAKE_ZEROING_VELOCITY_THRESHOLD){
+                if(Math.abs(mSliderMotor.getOutputCurrent()) > Constants.CollectorConstants.INTAKE_ZEROING_CURRENT_THRESHOLD && Math.abs(mSliderMotor.getEncoder().getVelocity()) < Constants.CollectorConstants.INTAKE_ZEROING_VELOCITY_THRESHOLD){
                     mSliderMotor.getEncoder().setPosition(0);
                     mSliderState = SliderStates.kIdle;
                     mSliderMotor.set(0);
+                    mSliderSoftLimitConfig.forwardSoftLimitEnabled(true);
+                    mSliderSoftLimitConfig.reverseSoftLimitEnabled(true);
+                    mSliderConfig.apply(mSliderSoftLimitConfig);
+                    mSliderMotor.configure(mSliderConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
                 }
                 mSliderMotor.getEncoder().getVelocity();
                 break;
@@ -128,6 +140,10 @@ public void outtake(){
     }
 
     public void zeroExtending (){
+        mSliderSoftLimitConfig.forwardSoftLimitEnabled(false);
+        mSliderSoftLimitConfig.reverseSoftLimitEnabled(false);
+        mSliderConfig.apply(mSliderSoftLimitConfig);
+        mSliderMotor.configure(mSliderConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
         mSliderState = SliderStates.kZeroExtending;
     }
 }

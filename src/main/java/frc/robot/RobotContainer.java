@@ -175,7 +175,7 @@ public class RobotContainer
     SmartDashboard.putData("test/testmodes",mTestModeChooser);
     mTestModeChooser.onChange(this::setTestModeBindings);
 
-    new Trigger(() -> DriverStation.isTeleopEnabled() && !matchTimer.isRunning()).onTrue(Commands.runOnce(matchTimer::startTimer));
+    new Trigger(() -> DriverStation.isTeleopEnabled() && (!matchTimer.isRunning() || matchTimer.isTeleopTimerExpired())).onTrue(Commands.runOnce(matchTimer::startTimer));
     new Trigger(() -> DriverStation.isAutonomous() && matchTimer.isRunning()).onTrue(Commands.runOnce(matchTimer::stopTimer));
   }
 
@@ -344,5 +344,9 @@ else
   public void setMotorBrake(boolean brake)
   {
     drivebase.setMotorBrake(brake);
+  }
+
+  public void disabledPeriodic(){
+    matchTimer.writeToNetworkTables();;
   }
 }

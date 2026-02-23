@@ -81,6 +81,10 @@ public class MatchTimer extends SubsystemBase{
         running = true;
     }
 
+    public synchronized boolean isTeleopTimerExpired(){
+        return teleopTimeLeft<0;
+    }
+
     public synchronized void stopTimer(){
         teleopTimeLeft = -1;
         lastUpdateTimeStamp = Timer.getFPGATimestamp();
