@@ -115,10 +115,10 @@ public final class Constants
     public static final double VOLTAGE_COMPENSATION = 0.0;
     public static final boolean HOOD_INVERTED = false;
 
-    public static final double HOOD_POSITION_CONVERSION_FACTOR = 0.0;
+    public static final double HOOD_POSITION_CONVERSION_FACTOR = 360.0/187.5;
 
-    public static final Angle HOOD_HOME_POSITION = Angle.ofBaseUnits(0.0, Degree); //DEGREES
-    public static final Angle HOOD_STARTING_POSITION = Angle.ofBaseUnits(-12.0, Degree);
+    public static final Angle HOOD_HOME_POSITION =Degree.of(0); //DEGREES
+    public static final Angle HOOD_STARTING_POSITION = Degree.of(0);
   }
   public static class CollectorConstants
   {
@@ -141,6 +141,8 @@ public final class Constants
 
     public static final double SLIDER_SHAKE_POWER_FACTOR = .3;
     public static final double SLIDER_SHAKE_TIME_SCALER = 4;
+
+    public static final double SLIDER_SAFE_EXTENSION_MIN = -10;
 
   }
 }

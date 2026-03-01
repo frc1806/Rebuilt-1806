@@ -91,7 +91,8 @@ public class LauncherSubSystem extends SubsystemBase {
         kClosedLoop, //Spinning up, getting samples
         kOpenLoop, // Open Loop
         kCleaningMode,
-        kZeroHood
+        kZeroHood,
+        kTestHood
     }
 
     private LauncherStates mLauncherState = LauncherStates.kIdle;
@@ -170,7 +171,7 @@ public class LauncherSubSystem extends SubsystemBase {
         fuelMotorsConfig.voltageCompensation(8.0);
 
 
-        fuelMotorsConfig.inverted(false);
+        fuelMotorsConfig.inverted(true);
         mHopper.configure(fuelMotorsConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         
 
@@ -349,10 +350,10 @@ public class LauncherSubSystem extends SubsystemBase {
                 //DO Nothing for cleaning mode, managed externally
             break;
             case kZeroHood:
-                mHoodMotor.set(-.1);
+                mHoodMotor.set(-.3);
                 mFlywheelLeader.set(0);
                 mHopper.set(0);
-                if(Math.abs(mHoodMotor.getOutputCurrent()) > 2 && Math.abs(mHoodMotor.getEncoder().getVelocity()) < 2.0)
+                if(Math.abs(mHoodMotor.getOutputCurrent()) > 2 && Math.abs(mHoodMotor.getEncoder().getVelocity()) < 0.01)
                 {
                     mHoodMotor.getEncoder().setPosition(0);
                     mHoodMotor.set(0);
@@ -363,6 +364,11 @@ public class LauncherSubSystem extends SubsystemBase {
                     mHoodMotor.configure(mHoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
                 }
             break;
+            case kTestHood:
+                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.baseUnitMagnitude(), ControlType.kMAXMotionPositionControl);
+                mFlywheelLeader.stopMotor();
+                mHopper.stopMotor();
+                break;
             case kIdle:  //Intentionally no-break after kIdle, we want kIdle to be effectively the default
             default:
                 mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.in(Degrees), ControlType.kMAXMotionPositionControl);
@@ -379,6 +385,7 @@ public class LauncherSubSystem extends SubsystemBase {
         SmartDashboard.putNumber("Launcher/TargetAngle", mTargetAngle.in(Degrees));
         SmartDashboard.putNumber("Launcher/kF", mKf.magnitude());
         SmartDashboard.putNumber("Launcher/kF Samples", mFlywheelEstimator.size());
+        SmartDashboard.putNumber("Launcher/HoodMotorAmps", mHoodMotor.getOutputCurrent());
         SmartDashboard.putNumber("Launcher/Sim/SimSpeed", mFlywheelSimulation.getAngularVelocityRPM());
         SmartDashboard.putNumber("Launcher/Sim/SimAmps", mFlywheelSimulation.getCurrentDrawAmps());
         SmartDashboard.putNumber("Launcher/Sim/SimInputVolts", mFlywheelSimulation.getInputVoltage());
@@ -468,5 +475,20 @@ public class LauncherSubSystem extends SubsystemBase {
                 shoot(VisionShotGenerator.GetGoalShotForDistance(mDrivebase.getDistanceToTarget()));
             };
         };
+    }
+
+    public void testHood15(){
+        mTargetAngle = Degrees.of(15);
+        mLauncherState = LauncherStates.kTestHood;
+    }
+
+    public void testHood30(){
+        mTargetAngle = Degrees.of(30);
+        mLauncherState = LauncherStates.kTestHood;
+    }
+
+    public void testHood45(){
+        mTargetAngle = Degrees.of(45);
+        mLauncherState = LauncherStates.kTestHood;
     }
 }

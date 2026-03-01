@@ -30,7 +30,6 @@ import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.LauncherSubSystem;
 import frc.robot.subsystems.MatchTimer;
-import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.swat.lib.Shot;
 import frc.robot.swat.lib.SnapAnglesHelper;
@@ -67,7 +66,8 @@ public class RobotContainer
     kClimberTest,
     kHopperTest,
     kCleaningMode,
-    kDriveTest
+    kDriveTest,
+    kHoodTestMode
   }
   // The robot's subsystems and commands are defined here...
   public static final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
@@ -76,8 +76,6 @@ public class RobotContainer
 
   public static final LauncherSubSystem launcher = LauncherSubSystem.GetInstance();
   public static final Collector collector = Collector.GetInstance();
-  public static final ClimberSubsystem climber = ClimberSubsystem.GetInstance();
-
 
 
   /**
@@ -274,15 +272,19 @@ else
     if (DriverStation.isTest())
     {
       //Precaution
-      launcher.stop();
+      //launcher.stop();
       drivebase.stop();
-      climber.stop();
       collector.stop();
       drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
-      launcher.setDefaultCommand(Commands.run(launcher::stop, launcher));
-      climber.setDefaultCommand(Commands.run(climber::stop, climber));
+      //launcher.setDefaultCommand(Commands.run(launcher::stop, launcher));
       collector.setDefaultCommand(Commands.run(collector::stop, collector));
 
+
+      if(mode == null){
+        System.out.println("Tried to bind null test mode.");
+        return;
+        
+      }
       System.out.println(mTestModeChooser.getSelected().name());
       switch(mode){
         case kCleaningMode:
@@ -292,7 +294,7 @@ else
             launcher.setDefaultCommand(Commands.run(launcher::clean, launcher));
             driverXbox.a().or(operatorXbox.a()).whileTrue(new ParallelCommandGroup(Commands.run(collector::stop, collector), Commands.run(launcher::stop, launcher)));
           break;
-        case kClimberTest:
+        case kClimberTest:/*
             drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
             climber.setDefaultCommand(climber.runClimberCommand(
               new DoubleSupplier() {
@@ -306,7 +308,7 @@ else
               public double getAsDouble() {
                 return Math.abs(operatorXbox.getRightY()) > OperatorConstants.DEADBAND? operatorXbox.getRightY(): 0;
               };
-            }));
+            }));*/
           break;
         case kFlywheelTest:
           drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
@@ -314,16 +316,25 @@ else
         case kHopperTest:
           drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
           launcher.enableLaunching();
-          driverXbox.a().onTrue(launcher.prepareShotCommand(RPM.of(500), Angle.ofBaseUnits(0, Degrees), Voltage.ofBaseUnits(8, Volts)));
+          driverXbox.a().onTrue(launcher.prepareShotCommand(RPM.of(500), Degrees.of(0), Voltage.ofBaseUnits(8, Volts)));
           driverXbox.a().onFalse(Commands.run(launcher::stop, launcher));
           break;
         case kIntakeTest:
           drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
           driverXbox.leftTrigger().whileTrue(Commands.run(collector::intake, collector));
+          driverXbox.a().onTrue(Commands.runOnce(collector::zeroExtending));
+          driverXbox.b().onTrue(Commands.runOnce(collector::retract));
           break;
         case kDriveTest:
           drivebase.setDefaultCommand(drivebase.driveFieldOriented(driveDirectAngle));
           break;
+        case kHoodTestMode:
+            //drivebase.setDefaultCommand(Commands.run(drivebase::stop));
+            driverXbox.a().onTrue(Commands.runOnce(launcher::testHood15));
+            driverXbox.b().onTrue(Commands.runOnce(launcher::testHood30));
+            driverXbox.y().onTrue(Commands.runOnce(launcher::testHood45));
+            driverXbox.x().onTrue(Commands.runOnce(launcher::zeroHood));
+            break;
         default:
           drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
           break;

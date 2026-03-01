@@ -13,10 +13,14 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SoftLimitConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.NetworkTableValue;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotMap;
+import frc.robot.Constants.CollectorConstants;
 import frc.robot.subsystems.LauncherSubSystem.LauncherStates;
 
 public class Collector extends SubsystemBase {
@@ -26,6 +30,8 @@ private TalonFX mCollectorMotor = new TalonFX(RobotMap.INTAKE);
 private SparkFlex mSliderMotor = new SparkFlex(RobotMap.SLIDER, MotorType.kBrushless);
 private SparkFlexConfig mSliderConfig = new SparkFlexConfig();
 private SoftLimitConfig mSliderSoftLimitConfig = new SoftLimitConfig();
+
+private NetworkTable mRobotTable = NetworkTableInstance.getDefault().getTable("Robot");
 
 private static Collector S_COLLECTOR = new Collector();
 public static Collector GetInstance(){
@@ -81,7 +87,13 @@ public void stop(){
 } 
 
 public void intake(){
-    mCollectorMotor.setVoltage(12.0);
+    if(mSliderMotor.getEncoder().getPosition() > CollectorConstants.SLIDER_SAFE_EXTENSION_MIN){
+        mCollectorMotor.setVoltage(12.0);
+    }
+    else{
+        mCollectorMotor.setVoltage(0);
+    }
+    
 }
 
 public void clean(){
@@ -127,6 +139,9 @@ public void outtake(){
                 mSliderMotor.getEncoder().getVelocity();
                 break;
         }
+
+        mRobotTable.putValue("Collector/Angle", NetworkTableValue.makeDouble(mSliderMotor.getEncoder().getPosition()));
+        mRobotTable.putValue("Collector/CollectorCurrent", NetworkTableValue.makeDouble(mSliderMotor.getOutputCurrent()));
     }
 
     public void extend (){

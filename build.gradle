@@ -54,7 +54,8 @@ task backupRoborioDeployFolder {
         backupDir.mkdirs()
 
         def teamNumber = project.frc.getTeamNumber()
-        def roborioAddress = "roborio-${teamNumber}-frc.local"
+        //def roborioAddress = "roborio-${teamNumber}-frc.local"
+        def roborioAddress = "10.18.6.2"
         def remoteDeployPath = '/home/lvuser/deploy/'
 
         println "Backing up deploy folder from ${roborioAddress}:${remoteDeployPath} to ${backupDir}"
