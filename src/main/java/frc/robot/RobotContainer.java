@@ -209,7 +209,7 @@ public class RobotContainer
     drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
 
     collector.setDefaultCommand(Commands.run(collector::stop, collector));
-    launcher.setDefaultCommand(Commands.run(launcher::stop, launcher));
+    //launcher.setDefaultCommand(Commands.run(launcher::stop, launcher));
 
     if (Robot.isSimulation())
     {
@@ -242,13 +242,13 @@ public class RobotContainer
     if(DriverStation.isTest()){
       setTestModeBindings(mTestModeChooser.getSelected());
     }
-else
+    else
     {
       
       //driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       //driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
       driverXbox.y().onTrue(launcher.prepareShotCommand(CLOSE_SHOT));
-      driverXbox.y().or(driverXbox.b()).onFalse(Commands.runOnce(launcher::stop, launcher));
+      driverXbox.y().or(driverXbox.b().or(driverXbox.a())).onFalse(Commands.runOnce(launcher::stop, launcher));
       driverXbox.b().onTrue(launcher.prepareShotCommand(PROTECTED_SHOT));
       driverXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
       driverXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
@@ -330,10 +330,10 @@ else
           break;
         case kHoodTestMode:
             //drivebase.setDefaultCommand(Commands.run(drivebase::stop));
-            driverXbox.a().onTrue(Commands.runOnce(launcher::testHood15));
-            driverXbox.b().onTrue(Commands.runOnce(launcher::testHood30));
-            driverXbox.y().onTrue(Commands.runOnce(launcher::testHood45));
-            driverXbox.x().onTrue(Commands.runOnce(launcher::zeroHood));
+            driverXbox.a().onTrue(Commands.runOnce(launcher::testHood15, launcher));
+            driverXbox.b().onTrue(Commands.runOnce(launcher::testHood30, launcher));
+            driverXbox.y().onTrue(Commands.runOnce(launcher::testHood45, launcher));
+            driverXbox.x().onTrue(Commands.runOnce(launcher::zeroHood, launcher));
             break;
         default:
           drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
