@@ -94,25 +94,25 @@ public final class Constants
     public static final double FLYWHEEL_RAMP_KI = 0;
     public static final double FLYWHEEL_RAMP_KD = 0;
     public static final double FLYWHEEL_RAMP_KS = 0.06;
-    public static final double FLYWHEEL_RAMP_KV = 0.12;
+    public static final double FLYWHEEL_RAMP_KV = 0.13;
 
     public static final double FLYWHEEL_PER_MOTOR_SUPPLY_CURRENT_LIMIT = 80;
     public static final double FLYWHEEL_PER_MOTOR_STATOR_CURRENT_LIMIT = 100;
 
-    public static final double FUEL_MOTORS_CURRENT_LIMIT = 40; //TRANSFER & HOPPER
-    public static final double FUEL_MOTORS_NOMINAL_VOLTAGE = 8.0; //Motors will output a maximum of 8 volts.
+    public static final double FUEL_MOTORS_CURRENT_LIMIT = 60; //TRANSFER & HOPPER
+    public static final double FUEL_MOTORS_NOMINAL_VOLTAGE = 10.0; //Motors will output a maximum of 8 volts.
 
     public static final boolean HOOD_AUTO_ZERO = false;
 
-    public static final double HOOD_MIN_ANGLE = -12.0;
+    public static final double HOOD_MIN_ANGLE = 0.0;
     public static final double HOOD_MAX_ANGLE = 50.0;
 
-    public static final double HOOD_MOTOR_KP = 1.0/45.0;
+    public static final double HOOD_MOTOR_KP = 1.0/10.0;
     public static final double HOOD_MOTOR_KI = 0.0;
     public static final double HOOD_MOTOR_KD = 0.0;
 
-    public static final int SMART_CURRENT_LIMIT = 10;
-    public static final double VOLTAGE_COMPENSATION = 0.0;
+    public static final int SMART_CURRENT_LIMIT = 12;
+    public static final double VOLTAGE_COMPENSATION = 8.0;
     public static final boolean HOOD_INVERTED = false;
 
     public static final double HOOD_POSITION_CONVERSION_FACTOR = 360.0/187.5;
@@ -125,17 +125,17 @@ public final class Constants
     public static final double STATOR_CURRENT_LIMIT = 120;
     public static final double SUPPLY_CURRENT_LIMIT = 60;
     public static final int SLIDER_MOTOR_CURRENT_LIMIT = 30;
-    public static final double SLIDER_MOTOR_VOLTAGE_COMPENSATION = 0.0;
-    public static final boolean SLIDER_MOTOR_INVERTED = false;
+    public static final double SLIDER_MOTOR_VOLTAGE_COMPENSATION = 8.0;
+    public static final boolean SLIDER_MOTOR_INVERTED = true;
 
-    public static final double SLIDER_MOTOR_KP = 1.0/25.-0;
+    public static final double SLIDER_MOTOR_KP = 1.0/25.0;
     public static final double SLIDER_MOTOR_KI = 0.0;
     public static final double SLIDER_MOTOR_KD = 0.0;
 
-    public static final double OUT_POSITION = 0.0;
-    public static final double IN_POSITION = 0.0; //#TODO: make this an actual number
+    public static final double OUT_POSITION = 39.0;
+    public static final double IN_POSITION =  0.0;
 
-    public static final double INTAKE_ZEROING_CURRENT_THRESHOLD = 10; //amps
+    public static final double INTAKE_ZEROING_CURRENT_THRESHOLD = 5; //amps
 
     public static final double INTAKE_ZEROING_VELOCITY_THRESHOLD = 5;//RPM
 

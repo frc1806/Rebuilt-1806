@@ -319,7 +319,7 @@ public class LauncherSubSystem extends SubsystemBase {
         //STATE MACHINE
         switch(mLauncherState){
             case kClosedLoop:
-                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kMAXMotionPositionControl);
+                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
                 mFlywheelLeader.setControl(mFlywheelRequest); 
                 mHopper.stopMotor();
                 if(isAtSpeed())
@@ -334,7 +334,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
                 break;
             case kOpenLoop:
-                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kMAXMotionPositionControl);
+                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
                 mFlywheelLeader.setControl(mFlywheelVoltageOut);
                 if(!isAtSpeed()){
                     estimatekF();
@@ -346,14 +346,14 @@ public class LauncherSubSystem extends SubsystemBase {
                 mHopper.setVoltage(mFeedSpeed);
                 break;
             case kCleaningMode:
-                 mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.in(Degrees), ControlType.kMAXMotionPositionControl);
+                 mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.in(Degrees), ControlType.kPosition);
                 //DO Nothing for cleaning mode, managed externally
             break;
             case kZeroHood:
                 mHoodMotor.set(-.3);
                 mFlywheelLeader.set(0);
                 mHopper.set(0);
-                if(Math.abs(mHoodMotor.getOutputCurrent()) > 2 && Math.abs(mHoodMotor.getEncoder().getVelocity()) < 0.01)
+                if(Math.abs(mHoodMotor.getOutputCurrent()) > 2 && Math.abs(mHoodMotor.getEncoder().getVelocity()) < 0.1)
                 {
                     mHoodMotor.getEncoder().setPosition(0);
                     mHoodMotor.set(0);
@@ -365,13 +365,13 @@ public class LauncherSubSystem extends SubsystemBase {
                 }
             break;
             case kTestHood:
-                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.baseUnitMagnitude(), ControlType.kMAXMotionPositionControl);
+                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
                 mFlywheelLeader.stopMotor();
                 mHopper.stopMotor();
                 break;
             case kIdle:  //Intentionally no-break after kIdle, we want kIdle to be effectively the default
             default:
-                mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.in(Degrees), ControlType.kMAXMotionPositionControl);
+                mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.in(Degrees), ControlType.kPosition);
                 mFlywheelLeader.stopMotor();
                 mHopper.stopMotor();
                 break;

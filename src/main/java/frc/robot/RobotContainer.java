@@ -56,8 +56,8 @@ public class RobotContainer
   final         CommandXboxController driverXbox = new CommandXboxController(0);
   final         CommandXboxController operatorXbox = new CommandXboxController(1);
 
-  public static final Shot CLOSE_SHOT = new Shot(RPM.of(2000), Degrees.of(0.0), Volts.of(8.0), true);
-  public static final Shot PROTECTED_SHOT = new Shot(RPM.of(2800), Degrees.of(43.0), Volts.of(6.0), true);
+  public static final Shot CLOSE_SHOT = new Shot(RPM.of(2000), Degrees.of(0.0), Volts.of(10.0), true);
+  public static final Shot PROTECTED_SHOT = new Shot(RPM.of(2800), Degrees.of(20.0), Volts.of(10.0), true);
 
   //Test Modes
   public enum TestModes{
@@ -208,7 +208,7 @@ public class RobotContainer
 
     drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
 
-    collector.setDefaultCommand(Commands.run(collector::stop, collector));
+    //collector.setDefaultCommand(Commands.run(collector::stop, collector));
     //launcher.setDefaultCommand(Commands.run(launcher::stop, launcher));
 
     if (Robot.isSimulation())
@@ -277,7 +277,7 @@ public class RobotContainer
       collector.stop();
       drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
       //launcher.setDefaultCommand(Commands.run(launcher::stop, launcher));
-      collector.setDefaultCommand(Commands.run(collector::stop, collector));
+      //collector.setDefaultCommand(Commands.run(collector::stop, collector));
 
 
       if(mode == null){
@@ -312,6 +312,11 @@ public class RobotContainer
           break;
         case kFlywheelTest:
           drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
+          driverXbox.y().onTrue(launcher.prepareShotCommand(CLOSE_SHOT));
+          driverXbox.y().or(driverXbox.b().or(driverXbox.a())).onFalse(Commands.runOnce(launcher::stop, launcher));
+          driverXbox.b().onTrue(launcher.prepareShotCommand(PROTECTED_SHOT).alongWith(Commands.run(collector::intake, collector)));
+          driverXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
+          driverXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
           break;
         case kHopperTest:
           drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
@@ -322,8 +327,11 @@ public class RobotContainer
         case kIntakeTest:
           drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
           driverXbox.leftTrigger().whileTrue(Commands.run(collector::intake, collector));
-          driverXbox.a().onTrue(Commands.runOnce(collector::zeroExtending));
-          driverXbox.b().onTrue(Commands.runOnce(collector::retract));
+          driverXbox.a().onTrue(Commands.runOnce(collector::extend, collector));
+          driverXbox.b().onTrue(Commands.runOnce(collector::retract, collector));
+          driverXbox.y().whileTrue(Commands.run(collector::shake, collector));
+          driverXbox.povUp().onTrue(Commands.runOnce(collector::setBreakMode));
+          driverXbox.povDown().onTrue(Commands.runOnce(collector::setCoastMode));
           break;
         case kDriveTest:
           drivebase.setDefaultCommand(drivebase.driveFieldOriented(driveDirectAngle));

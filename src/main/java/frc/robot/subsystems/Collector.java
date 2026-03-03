@@ -12,6 +12,7 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SoftLimitConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -58,11 +59,13 @@ private Collector(){
     mSliderConfig.smartCurrentLimit(Constants.CollectorConstants.SLIDER_MOTOR_CURRENT_LIMIT);
     mSliderConfig.voltageCompensation(Constants.CollectorConstants.SLIDER_MOTOR_VOLTAGE_COMPENSATION);
     mSliderConfig.inverted(Constants.CollectorConstants.SLIDER_MOTOR_INVERTED);
-    mSliderSoftLimitConfig.forwardSoftLimit(0);
+    mSliderSoftLimitConfig.forwardSoftLimit(Constants.CollectorConstants.OUT_POSITION);
     mSliderSoftLimitConfig.forwardSoftLimitEnabled(false);
     mSliderSoftLimitConfig.reverseSoftLimitEnabled(false);
     mSliderSoftLimitConfig.reverseSoftLimit(Constants.CollectorConstants.IN_POSITION);
     mSliderConfig.apply(mSliderSoftLimitConfig);
+    mSliderConfig.idleMode(IdleMode.kBrake);
+
 
     mSliderConfig.encoder.positionConversionFactor(1);
     mSliderConfig.encoder.velocityConversionFactor(1);
@@ -109,7 +112,7 @@ public void outtake(){
     public void periodic() {
         switch (mSliderState) {
             case kExtending:
-                mSliderMotor.getClosedLoopController().setSetpoint(Constants.CollectorConstants.OUT_POSITION, ControlType.kMAXMotionPositionControl);
+                mSliderMotor.getClosedLoopController().setSetpoint(Constants.CollectorConstants.OUT_POSITION, ControlType.kPosition);
                 break;
 
             default:
@@ -118,11 +121,12 @@ public void outtake(){
                 break;
 
             case kRetracting:
-                mSliderMotor.getClosedLoopController().setSetpoint(Constants.CollectorConstants.IN_POSITION, ControlType.kMAXMotionPositionControl);
+                mSliderMotor.getClosedLoopController().setSetpoint(Constants.CollectorConstants.IN_POSITION, ControlType.kPosition);
                 break;
 
             case kShake:
                 mSliderMotor.set(Constants.CollectorConstants.SLIDER_SHAKE_POWER_FACTOR * Math.sin(Timer.getFPGATimestamp()* Constants.CollectorConstants.SLIDER_SHAKE_TIME_SCALER));
+                mCollectorMotor.set(.8);
                 break;
 
             case kZeroExtending:
@@ -140,8 +144,9 @@ public void outtake(){
                 break;
         }
 
-        mRobotTable.putValue("Collector/Angle", NetworkTableValue.makeDouble(mSliderMotor.getEncoder().getPosition()));
+        mRobotTable.putValue("Collector/Position", NetworkTableValue.makeDouble(mSliderMotor.getEncoder().getPosition()));
         mRobotTable.putValue("Collector/CollectorCurrent", NetworkTableValue.makeDouble(mSliderMotor.getOutputCurrent()));
+        mRobotTable.putValue("Collector/CollectorState", NetworkTableValue.makeString(mSliderState.name()));
     }
 
     public void extend (){
@@ -154,6 +159,17 @@ public void outtake(){
 
     public void shake (){
         mSliderState = SliderStates.kShake;
+    }
+
+    public void setCoastMode(){
+        mSliderConfig.idleMode(IdleMode.kCoast);
+        mSliderMotor.configure(mSliderConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    }
+
+    public void setBreakMode(){
+        mSliderConfig.idleMode(IdleMode.kCoast);
+        mSliderMotor.configure(mSliderConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        
     }
 
     public void zeroExtending (){
