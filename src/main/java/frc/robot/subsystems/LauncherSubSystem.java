@@ -214,6 +214,11 @@ public class LauncherSubSystem extends SubsystemBase {
         if(Constants.LauncherConstants.HOOD_AUTO_ZERO){
             zeroHood();
         }
+
+        SmartDashboard.putNumber("Launcher/ShotTuning/Angle", 15.0);
+        SmartDashboard.putNumber("Launcher/ShotTuning/FlywheelRPM", 2800);
+        SmartDashboard.putNumber("Launcher/ShotTuning/FeedSpeed", 8.0);
+        SmartDashboard.putBoolean("Launcher/ShotTuning/PreciseShot", true);
     }
 
     /**
@@ -428,6 +433,10 @@ public class LauncherSubSystem extends SubsystemBase {
  */
     public Command prepareShotCommand(Shot shot){
         return prepareShotCommand(shot.getFlywheelSpeed(), shot.getHoodAngle(), shot.getFeedSpeed());
+    }
+
+    public Command prepareDashboardShot(){
+        return prepareShotCommand(RPM.of(SmartDashboard.getNumber("Launcher/ShotTuning/FlywheelRPM", 1500)), Degrees.of(SmartDashboard.getNumber("Launcher/ShotTuning/Angle", 25)),  Volt.of(SmartDashboard.getNumber("Launcher/ShotTuning/FeedSpeed", 8.0)));
     }
 
     public void clean(){

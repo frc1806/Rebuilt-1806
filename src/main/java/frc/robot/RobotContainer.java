@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
@@ -59,6 +60,7 @@ public class RobotContainer
   public static final Shot CLOSE_SHOT = new Shot(RPM.of(2000), Degrees.of(0.0), Volts.of(10.0), true);
   public static final Shot PROTECTED_SHOT = new Shot(RPM.of(2800), Degrees.of(20.0), Volts.of(10.0), true);
 
+
   //Test Modes
   public enum TestModes{
     kFlywheelTest,
@@ -69,6 +71,7 @@ public class RobotContainer
     kDriveTest,
     kHoodTestMode
   }
+
   // The robot's subsystems and commands are defined here...
   public static final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
                                                                                 "swerve"));
@@ -161,6 +164,28 @@ public class RobotContainer
 
   private SendableChooser<TestModes> mTestModeChooser = new SendableChooser<>();
 
+  
+  Command driveGoalAimCommand = drivebase.driveFieldOriented(driveGoalAim);
+  
+  public enum Autonomous{
+      DO_NOTHING(),
+      VISION_SHOOT_ONLY()
+    ;
+
+    private Command autonomousCommand;
+    public void setAutonomousCommand(Command command){
+      autonomousCommand = command;
+    }
+
+    public Command getCommand(){
+      return autonomousCommand;
+    }
+  }
+
+
+
+  private SendableChooser<Autonomous> mAutonomousChooser = new SendableChooser<>();
+
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -175,11 +200,23 @@ public class RobotContainer
     {
       mTestModeChooser.addOption(testMode.name(), testMode);
     }
+    buildAutonomousCommands();
+    for(Autonomous autnomous : Autonomous.values()){
+      mAutonomousChooser.addOption(autnomous.name(), autnomous);
+    }
+
     SmartDashboard.putData("test/testmodes",mTestModeChooser);
     mTestModeChooser.onChange(this::setTestModeBindings);
 
     new Trigger(() -> DriverStation.isTeleopEnabled() && (!matchTimer.isRunning() || matchTimer.isTeleopTimerExpired())).onTrue(Commands.runOnce(matchTimer::startTimer));
     new Trigger(() -> DriverStation.isAutonomous() && matchTimer.isRunning()).onTrue(Commands.runOnce(matchTimer::stopTimer));
+  }
+
+  public void buildAutonomousCommands(){
+    Autonomous.DO_NOTHING.setAutonomousCommand(new WaitCommand(15));
+    Autonomous.VISION_SHOOT_ONLY.setAutonomousCommand(drivebase.driveFieldOriented(driveGoalAim).alongWith(launcher.launcherAimAtGoal()));   
+    Path myPath = new Path("SweepRight");
+    Command followCommand = pathBuilder.build(new Path("SweepRight")).andThen(pathBuilder.build(new Path("SweepRight2")).andThen(Commands.runOnce(drivebase::stop, drivebase)));
   }
 
   /**
@@ -204,7 +241,7 @@ public class RobotContainer
     Command driveFieldOrientedAnglularVelocityKeyboard = drivebase.driveFieldOriented(driveAngularVelocityKeyboard);
     Command driveSetpointGenKeyboard = drivebase.driveWithSetpointGeneratorFieldRelative(
         driveDirectAngleKeyboard);
-    Command driveGoalAimCommand = drivebase.driveFieldOriented(driveGoalAim);
+
 
     drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
 
@@ -359,13 +396,7 @@ public class RobotContainer
    */
   public Command getAutonomousCommand()
   {
-    // An example command will be run in autonomous
-    //return drivebase.getAutonomousCommand("New Auto");
-
-      // 3. Load and follow a path
-  Path myPath = new Path("SweepRight");
-  Command followCommand = pathBuilder.build(new Path("SweepRight")).andThen(pathBuilder.build(new Path("SweepRight2")).andThen(Commands.runOnce(drivebase::stop, drivebase)));
-  return followCommand;
+    return mAutonomousChooser.getSelected().getCommand();
   }
 
   public void setMotorBrake(boolean brake)

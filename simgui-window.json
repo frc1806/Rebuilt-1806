@@ -27,17 +27,17 @@
     "###/FMSInfo": {
       "Collapsed": "0",
       "Pos": "152,-1",
-      "Size": "181,167"
+      "Size": "169,167"
     },
     "###FMS": {
       "Collapsed": "0",
       "Pos": "6,675",
-      "Size": "169,184"
+      "Size": "283,140"
     },
     "###Joysticks": {
       "Collapsed": "0",
       "Pos": "312,581",
-      "Size": "796,234"
+      "Size": "796,73"
     },
     "###NetworkTables": {
       "Collapsed": "0",
@@ -72,7 +72,7 @@
     "Robot State": {
       "Collapsed": "0",
       "Pos": "5,20",
-      "Size": "99,35"
+      "Size": "99,116"
     }
   }
 }
