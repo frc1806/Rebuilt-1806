@@ -20,5 +20,7 @@ public class RobotMap {
     public static final int HOOD = 35;
     public static final int CLIMBER_1 = 41;
     public static final int CLIMBER_2 = 42;
+    public static final int CLIMBER_3 = 43;
+    public static final int CLIMBER_4 = 44;
     
 }

@@ -26,8 +26,10 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.swervedrive.RunClimberCommand;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
+import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.LauncherSubSystem;
 import frc.robot.subsystems.MatchTimer;
@@ -79,6 +81,7 @@ public class RobotContainer
 
   public static final LauncherSubSystem launcher = LauncherSubSystem.GetInstance();
   public static final Collector collector = Collector.GetInstance();
+  public static final ClimberSubsystem climber = new ClimberSubsystem();
 
 
   /**
@@ -299,6 +302,11 @@ public class RobotContainer
       driverXbox.povUp().onTrue(Commands.runOnce(launcher::adjustShooterOffsetLower));
       driverXbox.povDown().onTrue(Commands.runOnce(launcher::adjustShooterOffsetHigher));
       driverXbox.a().whileTrue(driveGoalAimCommand.alongWith(launcher.launcherAimAtGoal()));
+
+      operatorXbox.a().onTrue(Commands.runOnce(collector::extend));
+      operatorXbox.y().onTrue(Commands.runOnce(collector::retract));
+      operatorXbox.x().onTrue(Commands.runOnce(launcher::zeroHood));
+      climber.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY(), () -> operatorXbox.getRightY()));
       
 
     }
@@ -331,7 +339,8 @@ public class RobotContainer
             launcher.setDefaultCommand(Commands.run(launcher::clean, launcher));
             driverXbox.a().or(operatorXbox.a()).whileTrue(new ParallelCommandGroup(Commands.run(collector::stop, collector), Commands.run(launcher::stop, launcher)));
           break;
-        case kClimberTest:/*
+        case kClimberTest:
+            climber.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY(), () -> operatorXbox.getRightY()));/*
             drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
             climber.setDefaultCommand(climber.runClimberCommand(
               new DoubleSupplier() {

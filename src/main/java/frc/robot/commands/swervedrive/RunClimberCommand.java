@@ -1,0 +1,29 @@
+package frc.robot.commands.swervedrive;
+
+import java.util.function.DoubleSupplier;
+
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Robot;
+import frc.robot.RobotContainer;
+
+public class RunClimberCommand extends Command{
+
+    DoubleSupplier frontHookDoubleSupplier;
+    DoubleSupplier rearDoubleSupplier;
+
+    public RunClimberCommand(DoubleSupplier frontHookOutput, DoubleSupplier rearHookOutput){
+
+        frontHookDoubleSupplier = frontHookOutput;
+        rearDoubleSupplier = rearHookOutput;
+    }
+
+    @Override
+    public void execute(){
+        RobotContainer.climber.manualControl(frontHookDoubleSupplier.getAsDouble(), rearDoubleSupplier.getAsDouble());
+    }
+
+    @Override
+    public void end(boolean interrupted){
+        RobotContainer.climber.manualControl(0, 0);
+    }
+}
