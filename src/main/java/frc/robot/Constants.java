@@ -145,4 +145,10 @@ public final class Constants
     public static final double SLIDER_SAFE_EXTENSION_MIN = -10;
 
   }
+
+  public static class ClimberConstants
+  {
+    public static final double CLIMBER_STATOR_CURRENT_LIMIT = 120.0;
+    public static final double CLIMBER_SUPPLY_CURRENT_LIMIT = 80.0;
+  }
 }

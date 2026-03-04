@@ -89,6 +89,10 @@ public void stop(){
     mSliderState = SliderStates.kIdle;
 } 
 
+public void stopIntake(){
+    mCollectorMotor.stopMotor();
+}
+
 public void intake(){
     if(mSliderMotor.getEncoder().getPosition() > CollectorConstants.SLIDER_SAFE_EXTENSION_MIN){
         mCollectorMotor.setVoltage(12.0);

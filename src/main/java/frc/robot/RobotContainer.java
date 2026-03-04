@@ -60,7 +60,7 @@ public class RobotContainer
   final         CommandXboxController operatorXbox = new CommandXboxController(1);
 
   public static final Shot CLOSE_SHOT = new Shot(RPM.of(2000), Degrees.of(0.0), Volts.of(10.0), true);
-  public static final Shot PROTECTED_SHOT = new Shot(RPM.of(2800), Degrees.of(20.0), Volts.of(10.0), true);
+  public static final Shot PROTECTED_SHOT = new Shot(RPM.of(3400), Degrees.of(20.0), Volts.of(10.0), true);
 
 
   //Test Modes
@@ -293,6 +293,7 @@ public class RobotContainer
       driverXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
       driverXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
       driverXbox.leftTrigger().whileTrue(Commands.run(collector::intake, collector));
+      driverXbox.leftTrigger().onFalse(Commands.runOnce(collector::stopIntake, collector));
       driverXbox.start().whileTrue(Commands.none());
       driverXbox.back().whileTrue(Commands.none());
       //driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());

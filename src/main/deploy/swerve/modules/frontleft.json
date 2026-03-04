@@ -9,7 +9,7 @@
     "id": 6
   },
   "inverted": {
-    "drive": true,
+    "drive": false,
     "angle": true
   },
   "angle": {

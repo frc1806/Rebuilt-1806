@@ -12,7 +12,7 @@ public class RunClimberCommand extends Command{
     DoubleSupplier rearDoubleSupplier;
 
     public RunClimberCommand(DoubleSupplier frontHookOutput, DoubleSupplier rearHookOutput){
-
+        addRequirements(RobotContainer.climber);
         frontHookDoubleSupplier = frontHookOutput;
         rearDoubleSupplier = rearHookOutput;
     }
