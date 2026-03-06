@@ -20,6 +20,7 @@ import edu.wpi.first.networktables.NetworkTableValue;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.RobotContainer;
 import frc.robot.RobotMap;
 import frc.robot.Constants.CollectorConstants;
 import frc.robot.subsystems.LauncherSubSystem.LauncherStates;
@@ -116,7 +117,7 @@ public void outtake(){
     public void periodic() {
         switch (mSliderState) {
             case kExtending:
-                mSliderMotor.getClosedLoopController().setSetpoint(Constants.CollectorConstants.OUT_POSITION, ControlType.kPosition);
+                mSliderMotor.getClosedLoopController().setSetpoint(Math.min(Constants.CollectorConstants.OUT_POSITION, Math.max( 0.0, (Constants.CollectorConstants.OUT_POSITION - (12.0* RobotContainer.launcher.getLaunchingTime() + (4 * Math.sin(RobotContainer.launcher.getLaunchingTime())))))), ControlType.kPosition);
                 break;
 
             default:

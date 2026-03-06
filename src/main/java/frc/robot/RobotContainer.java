@@ -21,11 +21,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
+import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.swervedrive.ClimberL1GoToAngleCommand;
 import frc.robot.commands.swervedrive.RunClimberCommand;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
@@ -59,8 +62,8 @@ public class RobotContainer
   final         CommandXboxController driverXbox = new CommandXboxController(0);
   final         CommandXboxController operatorXbox = new CommandXboxController(1);
 
-  public static final Shot CLOSE_SHOT = new Shot(RPM.of(2000), Degrees.of(0.0), Volts.of(10.0), true);
-  public static final Shot PROTECTED_SHOT = new Shot(RPM.of(3400), Degrees.of(20.0), Volts.of(10.0), true);
+  public static final Shot CLOSE_SHOT = new Shot(RPM.of(2800), Degrees.of(10.0), Volts.of(10.0), true);
+  public static final Shot PROTECTED_SHOT = new Shot(RPM.of(3800), Degrees.of(20.0), Volts.of(10.0), true);
 
 
   //Test Modes
@@ -169,10 +172,14 @@ public class RobotContainer
 
   
   Command driveGoalAimCommand = drivebase.driveFieldOriented(driveGoalAim);
+
+
   
   public enum Autonomous{
       DO_NOTHING(),
-      VISION_SHOOT_ONLY()
+      VISION_SHOOT_ONLY(),
+      BASIC_AUTONOMOUS(),
+      CLIMB_AUTO(),
     ;
 
     private Command autonomousCommand;
@@ -208,6 +215,8 @@ public class RobotContainer
       mAutonomousChooser.addOption(autnomous.name(), autnomous);
     }
 
+    SmartDashboard.putData("auto/autonomousChooser", mAutonomousChooser);
+
     SmartDashboard.putData("test/testmodes",mTestModeChooser);
     mTestModeChooser.onChange(this::setTestModeBindings);
 
@@ -218,8 +227,16 @@ public class RobotContainer
   public void buildAutonomousCommands(){
     Autonomous.DO_NOTHING.setAutonomousCommand(new WaitCommand(15));
     Autonomous.VISION_SHOOT_ONLY.setAutonomousCommand(drivebase.driveFieldOriented(driveGoalAim).alongWith(launcher.launcherAimAtGoal()));   
-    Path myPath = new Path("SweepRight");
-    Command followCommand = pathBuilder.build(new Path("SweepRight")).andThen(pathBuilder.build(new Path("SweepRight2")).andThen(Commands.runOnce(drivebase::stop, drivebase)));
+    //Path myPath = new Path("SweepRight");
+    //Command followCommand = pathBuilder.build(new Path("SweepRight")).andThen(pathBuilder.build(new Path("SweepRight2")).andThen(Commands.runOnce(drivebase::stop, drivebase)));
+    Command basicAuto = pathBuilder.build(new Path("BasicPath")).alongWith(Commands.runOnce(collector::extend, collector)).andThen(Commands.runOnce(launcher::enableLaunching)).andThen(launcher.prepareShotCommand(PROTECTED_SHOT)).andThen(new WaitCommand(10)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching));
+    Autonomous.BASIC_AUTONOMOUS.setAutonomousCommand(basicAuto);
+    Command climbFollowCommand = pathBuilder.build(new Path("CenterClimb"));
+    Command centerClimbAutoCommand = Commands.runOnce(launcher::enableLaunching).andThen(launcher.prepareShotCommand(PROTECTED_SHOT)).andThen(new WaitCommand(10)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching))
+                                      .andThen(climbFollowCommand.alongWith(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_GRAB_ANGLE))).andThen(new ParallelDeadlineGroup(new WaitCommand(1.0), drivebase.driveCommand(() -> 0.2, () -> 0.0, () -> 0.0))
+                                      .andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_l1_HOOK_ANGLE)).andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE).alongWith(drivebase.driveCommand(() -> -0.2, () -> 0.0, () -> 0.0))))
+                                      .andThen(new ParallelDeadlineGroup(new WaitCommand(10.0), new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE)));
+    Autonomous.CLIMB_AUTO.setAutonomousCommand(centerClimbAutoCommand);
   }
 
   /**
@@ -236,6 +253,7 @@ public class RobotContainer
       driverXbox.povDown().onTrue(Commands.runOnce(launcher::adjustShooterOffsetHigher));
 
     Command driveFieldOrientedDirectAngle      = drivebase.driveFieldOriented(driveDirectAngle);
+    Command driveFieldOrientedDirectAngleSlow = drivebase.driveFieldOriented(driveDirectAngleSlow);
     Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
     Command driveRobotOrientedAngularVelocity  = drivebase.driveFieldOriented(driveRobotOriented);
     Command driveSetpointGen = drivebase.driveWithSetpointGeneratorFieldRelative(
@@ -284,7 +302,7 @@ public class RobotContainer
     }
     else
     {
-      
+      climber.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY(), () -> operatorXbox.getRightY()));
       //driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       //driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
       driverXbox.y().onTrue(launcher.prepareShotCommand(CLOSE_SHOT));
@@ -297,8 +315,9 @@ public class RobotContainer
       driverXbox.start().whileTrue(Commands.none());
       driverXbox.back().whileTrue(Commands.none());
       //driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
-      driverXbox.leftBumper().whileTrue(driveSpeen);
-      driverXbox.rightBumper().whileTrue(driveBeyblade);
+      driverXbox.leftBumper().whileTrue(Commands.runOnce(collector::outtake));
+      driverXbox.leftBumper().onFalse(Commands.runOnce(collector::stopIntake));
+      driverXbox.rightBumper().whileTrue(driveFieldOrientedDirectAngleSlow);
 
       driverXbox.povUp().onTrue(Commands.runOnce(launcher::adjustShooterOffsetLower));
       driverXbox.povDown().onTrue(Commands.runOnce(launcher::adjustShooterOffsetHigher));
@@ -307,7 +326,10 @@ public class RobotContainer
       operatorXbox.a().onTrue(Commands.runOnce(collector::extend));
       operatorXbox.y().onTrue(Commands.runOnce(collector::retract));
       operatorXbox.x().onTrue(Commands.runOnce(launcher::zeroHood));
-      climber.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY(), () -> operatorXbox.getRightY()));
+      operatorXbox.povUp().onTrue(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_INTAKE_DEFLECT_ANGLE));
+      operatorXbox.povDown().onTrue(new ClimberL1GoToAngleCommand(0));
+      operatorXbox.povLeft().onTrue(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_GRAB_ANGLE));
+      operatorXbox.povRight().onTrue(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE));
       
 
     }

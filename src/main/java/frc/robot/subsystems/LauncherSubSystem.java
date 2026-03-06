@@ -31,6 +31,7 @@ import com.revrobotics.spark.config.MAXMotionConfig;
 import com.revrobotics.spark.config.SoftLimitConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -40,6 +41,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.util.CircularBuffer;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -78,6 +80,7 @@ public class LauncherSubSystem extends SubsystemBase {
     private SparkMax mHoodMotor;
     private SparkMaxConfig mHoodMotorConfig;
     private SoftLimitConfig mHoodMotorSoftLimitConfig;
+    private double mStartLaunchingTime =0;
 
     //Hopper Motor
 
@@ -181,6 +184,7 @@ public class LauncherSubSystem extends SubsystemBase {
         mHoodMotorConfig = new SparkMaxConfig();
         mHoodMotorConfig.smartCurrentLimit(Constants.LauncherConstants.SMART_CURRENT_LIMIT);
         mHoodMotorConfig.voltageCompensation(Constants.LauncherConstants.VOLTAGE_COMPENSATION);
+        mHoodMotorConfig.idleMode(IdleMode.kBrake);
         mHoodMotorConfig.inverted(Constants.LauncherConstants.HOOD_INVERTED);
         mHoodMotorConfig.encoder.positionConversionFactor(Constants.LauncherConstants.HOOD_POSITION_CONVERSION_FACTOR); //Degrees
         mHoodMotorConfig.encoder.velocityConversionFactor(Constants.LauncherConstants.HOOD_POSITION_CONVERSION_FACTOR /60.0); //Degrees per second
@@ -334,6 +338,7 @@ public class LauncherSubSystem extends SubsystemBase {
                     {
                         savekF();
                         mLauncherState = LauncherStates.kOpenLoop;
+                        mStartLaunchingTime = Timer.getFPGATimestamp();
                     }
                 }
 
@@ -499,5 +504,14 @@ public class LauncherSubSystem extends SubsystemBase {
     public void testHood45(){
         mTargetAngle = Degrees.of(45);
         mLauncherState = LauncherStates.kTestHood;
+    }
+
+    public double getLaunchingTime(){
+        if(mLauncherState != LauncherStates.kOpenLoop){
+            return 0.0;
+        }
+        else{
+            return Timer.getFPGATimestamp() - mStartLaunchingTime;
+        }
     }
 }

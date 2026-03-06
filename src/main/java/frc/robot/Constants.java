@@ -132,8 +132,8 @@ public final class Constants
     public static final double SLIDER_MOTOR_KI = 0.0;
     public static final double SLIDER_MOTOR_KD = 0.0;
 
-    public static final double OUT_POSITION = 39.0;
-    public static final double IN_POSITION =  0.0;
+    public static final double OUT_POSITION = 43.0;
+    public static final double IN_POSITION =  0.75;
 
     public static final double INTAKE_ZEROING_CURRENT_THRESHOLD = 5; //amps
 
@@ -150,5 +150,16 @@ public final class Constants
   {
     public static final double CLIMBER_STATOR_CURRENT_LIMIT = 120.0;
     public static final double CLIMBER_SUPPLY_CURRENT_LIMIT = 80.0;
+    public static final double CLIMBER_L1_GEAR_RATIO = (22.0/14.0)*5.0*5.0*9.0;
+    public static final double CLIMBER_L1_DEG_PER_ROT = 360.0 / CLIMBER_L1_GEAR_RATIO;
+    public static final double CLIMBER_L1_KP = 4.0;
+    public static final double CLIMBER_L1_KI = 0;
+    public static final double CLIMBER_L1_KD = 0;
+
+    public static final double CLIMBER_L1_INTAKE_DEFLECT_ANGLE = 165.0;
+    public static final double CLIMBER_L1_GRAB_ANGLE = 140.0;
+    public static final double CLIMBER_l1_HOOK_ANGLE = 120.0;
+    public static final double CLIMBER_L1_CLIMB_ANGLE = 90.0;
+
   }
 }
