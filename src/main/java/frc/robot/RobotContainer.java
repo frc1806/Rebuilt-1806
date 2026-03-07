@@ -162,8 +162,8 @@ public class RobotContainer
       drivebase::getPose,
       drivebase::getRobotVelocity,
       drivebase::drive,
-      new PIDController(1.5, 0.00, 0.1),  // translation
-      new PIDController(3.0, 0.0, 0.0),  // rotation
+      new PIDController(1.0, 0.00, 0.1),  // translation
+      new PIDController(0.8, 0.0, 0.0),  // rotation
       new PIDController(1.0, 0.0, 0.0)   // cross-track
   ).withDefaultShouldFlip()
   .withPoseReset(drivebase::resetOdometry);
@@ -180,6 +180,8 @@ public class RobotContainer
       VISION_SHOOT_ONLY(),
       BASIC_AUTONOMOUS(),
       CLIMB_AUTO(),
+      RIGHT_CLIMB(),
+      AMBITION()
     ;
 
     private Command autonomousCommand;
@@ -237,6 +239,18 @@ public class RobotContainer
                                       .andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_l1_HOOK_ANGLE)).andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE).alongWith(drivebase.driveCommand(() -> -0.2, () -> 0.0, () -> 0.0))))
                                       .andThen(new ParallelDeadlineGroup(new WaitCommand(10.0), new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE)));
     Autonomous.CLIMB_AUTO.setAutonomousCommand(centerClimbAutoCommand);
+
+    Command rightClimbFollowCommand = pathBuilder.build(new Path("RightClimb"));
+    Command rightClimbAutoCommand = Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching))
+                                      .andThen(climbFollowCommand.alongWith(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_GRAB_ANGLE))).andThen(new ParallelDeadlineGroup(new WaitCommand(1.0), drivebase.driveCommand(() -> 0.2, () -> 0.0, () -> 0.0))
+                                      .andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_l1_HOOK_ANGLE)).andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE).alongWith(drivebase.driveCommand(() -> -0.2, () -> 0.0, () -> 0.0))))
+                                      .andThen(new ParallelDeadlineGroup(new WaitCommand(10.0), new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE)));
+    Autonomous.RIGHT_CLIMB.setAutonomousCommand(rightClimbAutoCommand);
+
+    Command ambitionFollowCommand = pathBuilder.build(new Path("Ambition"));
+    Command ambitionAutoCommand = Commands.runOnce(collector::extend).andThen(new ParallelDeadlineGroup(ambitionFollowCommand, Commands.runOnce(collector::intake)).andThen(Commands.runOnce(collector::stopIntake)).andThen(Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop))));
+
+
   }
 
   /**

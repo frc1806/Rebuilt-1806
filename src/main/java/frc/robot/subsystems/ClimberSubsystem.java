@@ -20,12 +20,12 @@ import frc.robot.RobotMap;
 
 public class ClimberSubsystem extends SubsystemBase{
 
-    private TalonFX mClimberFrontLead, mClimberFrontFollower, mClimberRearLead; //mClimberRearFollower;
+    private TalonFX mClimberFrontLead, mClimberFrontFollower;//, mClimberRearLead; //mClimberRearFollower;
 
     public ClimberSubsystem(){
         mClimberFrontLead = new TalonFX(RobotMap.CLIMBER_1);
         mClimberFrontFollower = new TalonFX(RobotMap.CLIMBER_2);
-        mClimberRearLead = new TalonFX(RobotMap.CLIMBER_3);
+        //mClimberRearLead = new TalonFX(RobotMap.CLIMBER_3);
         //mClimberRearFollower = new TalonFX(RobotMap.CLIMBER_4);
 
         CurrentLimitsConfigs climberCurrentLimitConfig = new CurrentLimitsConfigs();
@@ -38,7 +38,7 @@ public class ClimberSubsystem extends SubsystemBase{
 
         mClimberFrontLead.getConfigurator().apply(climberCurrentLimitConfig);
         mClimberFrontFollower.getConfigurator().apply(climberCurrentLimitConfig);
-        mClimberRearLead.getConfigurator().apply(climberCurrentLimitConfig);
+       //mClimberRearLead.getConfigurator().apply(climberCurrentLimitConfig);
         //mClimberRearFollower.getConfigurator().apply(climberCurrentLimitConfig);
         
         MotorOutputConfigs leaderOutputConfigs = new MotorOutputConfigs();
@@ -48,7 +48,7 @@ public class ClimberSubsystem extends SubsystemBase{
         mFrontLeadOpenLoopRampsConfigs.VoltageOpenLoopRampPeriod = 0.25;
 
         mClimberFrontLead.getConfigurator().apply(leaderOutputConfigs);
-        mClimberRearLead.getConfigurator().apply(leaderOutputConfigs);
+        //mClimberRearLead.getConfigurator().apply(leaderOutputConfigs);
 
         Slot0Configs l1Slot0Configs = new Slot0Configs();
         l1Slot0Configs.kP = Constants.ClimberConstants.CLIMBER_L1_KP;
@@ -68,7 +68,7 @@ public class ClimberSubsystem extends SubsystemBase{
 
     public void manualControl(double frontOutput, double rearOutput){
         mClimberFrontLead.set(frontOutput * 0.5);
-        mClimberRearLead.set(rearOutput * 0.5);
+        //mClimberRearLead.set(rearOutput * 0.5);
     }
 
     public double getL1Angle(){
@@ -77,7 +77,7 @@ public class ClimberSubsystem extends SubsystemBase{
 
     public void l1GoToAngle(double angle){
         mClimberFrontLead.setControl(new PositionVoltage(angle * (1/ Constants.ClimberConstants.CLIMBER_L1_DEG_PER_ROT)));
-        mClimberRearLead.set(0);
+        //mClimberRearLead.set(0);
     }
 
     public void zeroL1(){
