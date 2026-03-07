@@ -62,7 +62,7 @@ public class RobotContainer
   final         CommandXboxController driverXbox = new CommandXboxController(0);
   final         CommandXboxController operatorXbox = new CommandXboxController(1);
 
-  public static final Shot CLOSE_SHOT = new Shot(RPM.of(2800), Degrees.of(10.0), Volts.of(10.0), true);
+  public static final Shot CLOSE_SHOT = new Shot(RPM.of(2800), Degrees.of(0.0), Volts.of(10.0), true);
   public static final Shot PROTECTED_SHOT = new Shot(RPM.of(3800), Degrees.of(20.0), Volts.of(10.0), true);
 
 
@@ -232,7 +232,7 @@ public class RobotContainer
     Command basicAuto = pathBuilder.build(new Path("BasicPath")).alongWith(Commands.runOnce(collector::extend, collector)).andThen(Commands.runOnce(launcher::enableLaunching)).andThen(launcher.prepareShotCommand(PROTECTED_SHOT)).andThen(new WaitCommand(10)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching));
     Autonomous.BASIC_AUTONOMOUS.setAutonomousCommand(basicAuto);
     Command climbFollowCommand = pathBuilder.build(new Path("CenterClimb"));
-    Command centerClimbAutoCommand = Commands.runOnce(launcher::enableLaunching).andThen(launcher.prepareShotCommand(PROTECTED_SHOT)).andThen(new WaitCommand(10)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching))
+    Command centerClimbAutoCommand = Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching))
                                       .andThen(climbFollowCommand.alongWith(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_GRAB_ANGLE))).andThen(new ParallelDeadlineGroup(new WaitCommand(1.0), drivebase.driveCommand(() -> 0.2, () -> 0.0, () -> 0.0))
                                       .andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_l1_HOOK_ANGLE)).andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE).alongWith(drivebase.driveCommand(() -> -0.2, () -> 0.0, () -> 0.0))))
                                       .andThen(new ParallelDeadlineGroup(new WaitCommand(10.0), new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE)));

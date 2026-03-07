@@ -81,11 +81,12 @@ public final class Constants
     public static final double LEFT_Y_DEADBAND = 0.1;
     public static final double RIGHT_X_DEADBAND = 0.1;
     public static final double TURN_CONSTANT    = 6;
+    public static final double SNAP_ANGLE_RADIUS = 0.6;
   }
 
   public static class LauncherConstants
   {
-    public static final double FLYWHEEL_RPM_TOLERANCE = 800.0;
+    public static final double FLYWHEEL_RPM_TOLERANCE = 300.0;
     public static final double FLYWHEEL_GEAR_RATIO = 1.0; // GEAR UP
     //Fancy 254 style open loop shooting
     public static final int SAMPLES_TO_AVERAGE = 30;
@@ -99,7 +100,7 @@ public final class Constants
     public static final double FLYWHEEL_PER_MOTOR_SUPPLY_CURRENT_LIMIT = 80;
     public static final double FLYWHEEL_PER_MOTOR_STATOR_CURRENT_LIMIT = 100;
 
-    public static final double FUEL_MOTORS_CURRENT_LIMIT = 60; //TRANSFER & HOPPER
+    public static final double FUEL_MOTORS_CURRENT_LIMIT = 80; //TRANSFER & HOPPER
     public static final double FUEL_MOTORS_NOMINAL_VOLTAGE = 10.0; //Motors will output a maximum of 8 volts.
 
     public static final boolean HOOD_AUTO_ZERO = false;

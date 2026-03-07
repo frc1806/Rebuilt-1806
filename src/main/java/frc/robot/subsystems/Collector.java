@@ -117,7 +117,7 @@ public void outtake(){
     public void periodic() {
         switch (mSliderState) {
             case kExtending:
-                mSliderMotor.getClosedLoopController().setSetpoint(Math.min(Constants.CollectorConstants.OUT_POSITION, Math.max( 0.0, (Constants.CollectorConstants.OUT_POSITION - (12.0* RobotContainer.launcher.getLaunchingTime() + (4 * Math.sin(RobotContainer.launcher.getLaunchingTime())))))), ControlType.kPosition);
+                mSliderMotor.getClosedLoopController().setSetpoint(Math.min(Constants.CollectorConstants.OUT_POSITION, Math.max( 0.0, (Constants.CollectorConstants.OUT_POSITION - (16.0* RobotContainer.launcher.getLaunchingTime() + (6 * Math.sin(4 * Math.PI * RobotContainer.launcher.getLaunchingTime())))))), ControlType.kPosition);
                 break;
 
             default:

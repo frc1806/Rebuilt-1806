@@ -400,6 +400,7 @@ public class LauncherSubSystem extends SubsystemBase {
         SmartDashboard.putNumber("Launcher/Sim/SimAmps", mFlywheelSimulation.getCurrentDrawAmps());
         SmartDashboard.putNumber("Launcher/Sim/SimInputVolts", mFlywheelSimulation.getInputVoltage());
         SmartDashboard.putNumber("Launcher/Sim/SimKrakenMotorVolts", mFlywheelLeaderSim.getMotorVoltage());
+        SmartDashboard.putNumber("Launcher/HopperAmps", mHopper.getOutputCurrent());
 
     }
 

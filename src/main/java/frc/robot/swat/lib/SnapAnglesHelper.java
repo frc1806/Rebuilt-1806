@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import frc.robot.Constants;
 
 public class SnapAnglesHelper {
 
@@ -103,9 +104,9 @@ public class SnapAnglesHelper {
       public double getAsDouble() {
         Translation2d inputTranslation2d = new Translation2d(xInput.getAsDouble() * getAllianceAxisMult(), yInput.getAsDouble() * getAllianceAxisMult());
         double dist = Math.abs(inputTranslation2d.getDistance(Translation2d.kZero));
-        if(dist == 0 && mTranslation2d == null) return 0.0;
-        if(dist == 0) return mTranslation2d.getX();
-        mTranslation2d = new Translation2d(dist, mSnapAngles.getNearestSnapAngle(inputTranslation2d.getAngle().getRadians()));
+        if(dist < Constants.OperatorConstants.SNAP_ANGLE_RADIUS && mTranslation2d == null) return 0.0;
+        if(dist < Constants.OperatorConstants.SNAP_ANGLE_RADIUS) return mTranslation2d.getX();
+        mTranslation2d = new Translation2d(1.0, mSnapAngles.getNearestSnapAngle(inputTranslation2d.getAngle().getRadians()));
         return mTranslation2d.getX();
       }
     };
@@ -118,9 +119,9 @@ public class SnapAnglesHelper {
         public double getAsDouble() {
           Translation2d inputTranslation2d = new Translation2d(xInput.getAsDouble() * getAllianceAxisMult(), yInput.getAsDouble() *getAllianceAxisMult());
           double dist = Math.abs(inputTranslation2d.getDistance(Translation2d.kZero));
-          if(dist == 0 && mTranslation2d == null) return 0.0;
-          if(dist == 0) return mTranslation2d.getY();
-          mTranslation2d = new Translation2d(dist, mSnapAngles.getNearestSnapAngle(inputTranslation2d.getAngle().getRadians()));
+          if(dist < Constants.OperatorConstants.SNAP_ANGLE_RADIUS && mTranslation2d == null) return 0.0;
+          if(dist < Constants.OperatorConstants.SNAP_ANGLE_RADIUS) return mTranslation2d.getY();
+          mTranslation2d = new Translation2d(1.0, mSnapAngles.getNearestSnapAngle(inputTranslation2d.getAngle().getRadians()));
           return mTranslation2d.getY();
   
         }
