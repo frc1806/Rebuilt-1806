@@ -84,5 +84,9 @@ public class ClimberSubsystem extends SubsystemBase{
         mClimberFrontLead.setPosition(0.0);
     }
 
+    public void stop(){
+        mClimberFrontLead.stopMotor();
+    }
+
 
 }
