@@ -23,17 +23,13 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
-import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.MAXMotionConfig;
 import com.revrobotics.spark.config.SoftLimitConfig;
-import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
@@ -84,7 +80,16 @@ public class LauncherSubSystem extends SubsystemBase {
 
     //Hopper Motor
 
-    private SparkFlex mHopper;
+    private TalonFX mHopper;
+
+    private TalonFX mTransfer;
+
+
+
+
+
+
+
 
     private CircularBuffer mFlywheelEstimator = new CircularBuffer<Voltage>(Constants.LauncherConstants.SAMPLES_TO_AVERAGE);
 
@@ -103,6 +108,7 @@ public class LauncherSubSystem extends SubsystemBase {
     //Stored Target Values
     private AngularVelocity mTargetSpeed = RPM.of(0);
     private VelocityVoltage mFlywheelRequest = new VelocityVoltage(mTargetSpeed);
+    private VelocityVoltage mTransferMoveRequest = new VelocityVoltage(RPM.of(Constants.LauncherConstants.TRANSFER_LAUNCHING_RPM));
     private Angle mTargetAngle = Degrees.of(0);
     private Voltage mFeedSpeed = Volt.of(0);
     private Voltage mKf = Volt.of(0);
@@ -127,7 +133,7 @@ public class LauncherSubSystem extends SubsystemBase {
         mFlywheelFollower = new TalonFX(RobotMap.LAUNCHER_LEFT);
         mFlywheelFollowerTwo = new TalonFX(RobotMap.LAUNCHER_RIGHT_2);
         mHoodMotor = new SparkMax(RobotMap.HOOD, MotorType.kBrushless);
-        mHopper = new SparkFlex(RobotMap.HOPPER, MotorType.kBrushless);
+        mHopper = new TalonFX(RobotMap.HOPPER);
 
         //SETUP FLYWHEEL MOTORS (Phoenix v6)
         TalonFXConfiguration flywheelLeaderConfig = new TalonFXConfiguration();
@@ -168,7 +174,7 @@ public class LauncherSubSystem extends SubsystemBase {
         //END SETUP FLYWHEEEL MOTORS
 
         //BEGIN SETUP OTHER FUEL MOTORS (RevLib)
-
+/* 
         SparkFlexConfig fuelMotorsConfig = new SparkFlexConfig();
         fuelMotorsConfig.smartCurrentLimit(40);
         fuelMotorsConfig.voltageCompensation(8.0);
@@ -177,7 +183,16 @@ public class LauncherSubSystem extends SubsystemBase {
         fuelMotorsConfig.inverted(true);
         mHopper.configure(fuelMotorsConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         
+        */
+        CurrentLimitsConfigs hopperCurrentLimitsConfigs = new CurrentLimitsConfigs();
+        hopperCurrentLimitsConfigs.StatorCurrentLimit = 100;
+        hopperCurrentLimitsConfigs.SupplyCurrentLimit = 60;
 
+        MotorOutputConfigs hoppeMotorOutputConfigs = new MotorOutputConfigs();
+        hoppeMotorOutputConfigs.Inverted = InvertedValue.Clockwise_Positive;
+
+        mHopper.getConfigurator().apply(hopperCurrentLimitsConfigs);
+        mHopper.getConfigurator().apply(hoppeMotorOutputConfigs);
         //END SETUP OTHER FUEL MOTORS
 
         //TODO SETUP HOOD MOTOR
@@ -200,6 +215,28 @@ public class LauncherSubSystem extends SubsystemBase {
         mHoodMotorConfig.apply(mHoodMotorSoftLimitConfig);
 
         mHoodMotor.configure(mHoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+        //Transfer Setup
+
+        CurrentLimitsConfigs transferCurrentLimitConfigs = new CurrentLimitsConfigs();
+        flywheelCurrentLimitConfigs.StatorCurrentLimit = Constants.LauncherConstants.TRANSFER_STATOR_CURRENT_LIMIT;
+        flywheelCurrentLimitConfigs.SupplyCurrentLimit = Constants.LauncherConstants.TRANSFER_SUPPLY_CURRENT_LIMIT;
+
+        Slot0Configs transferPIDConfig = new Slot0Configs();
+        transferPIDConfig.kP = Constants.LauncherConstants.TRANSFER_KP;
+        transferPIDConfig.kI = Constants.LauncherConstants.TRANSFER_KI;
+        transferPIDConfig.kD = Constants.LauncherConstants.TRANSFER_KD;
+        transferPIDConfig.kS = Constants.LauncherConstants.TRANSFER_KS;
+        transferPIDConfig.kV = Constants.LauncherConstants.TRANSFER_KV;
+
+        MotorOutputConfigs transferOutputConfigs = new MotorOutputConfigs();
+        transferOutputConfigs.Inverted = InvertedValue.Clockwise_Positive;
+
+        TalonFXConfiguration transferConfig = new TalonFXConfiguration(); 
+        transferConfig.CurrentLimits = transferCurrentLimitConfigs;
+        transferConfig.Slot0 = transferPIDConfig;
+        transferConfig.MotorOutput = transferOutputConfigs;
+        mTransfer.getConfigurator().apply(transferConfig);
 
         
         //SIM
@@ -272,6 +309,7 @@ public class LauncherSubSystem extends SubsystemBase {
         mFlywheelLeader.stopMotor();
         //#jacobtodo
         mHopper.stopMotor();
+        mTransfer.stopMotor();
         mLauncherState = LauncherStates.kIdle;
         mTargetSpeed = RPM.of(0);
         mFlywheelRequest = new VelocityVoltage(RPM.of(0)); //Not needed, but to be safe.
@@ -345,24 +383,28 @@ public class LauncherSubSystem extends SubsystemBase {
                 break;
             case kOpenLoop:
                 mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
-                mFlywheelLeader.setControl(mFlywheelVoltageOut);
-                if(!isAtSpeed()){
+                //mFlywheelLeader.setControl(mFlywheelVoltageOut);
+                mFlywheelLeader.setControl(mFlywheelRequest); 
+                if(!isAtSpeed() && mFlywheelLeader.getVelocity().getValueAsDouble() > mTargetSpeed.in(RotationsPerSecond)){
                     estimatekF();
                     savekF();
                 }
                 if(!mEnableLaunch && !getSmartEnableLaunch()){
                     mLauncherState = LauncherStates.kClosedLoop;
                 }
-                mHopper.setVoltage(mFeedSpeed);
+                mHopper.setControl(new VoltageOut(mFeedSpeed));
+                mTransfer.setControl(mTransferMoveRequest);
                 break;
             case kCleaningMode:
                  mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.in(Degrees), ControlType.kPosition);
+                 mTransfer.setVoltage(3.0);
                 //DO Nothing for cleaning mode, managed externally
             break;
             case kZeroHood:
                 mHoodMotor.set(-.3);
                 mFlywheelLeader.set(0);
-                mHopper.set(0);
+                mHopper.stopMotor();
+                mTransfer.stopMotor();
                 if(Math.abs(mHoodMotor.getOutputCurrent()) > 2 && Math.abs(mHoodMotor.getEncoder().getVelocity()) < 0.1)
                 {
                     mHoodMotor.getEncoder().setPosition(0);
@@ -378,12 +420,14 @@ public class LauncherSubSystem extends SubsystemBase {
                 mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
                 mFlywheelLeader.stopMotor();
                 mHopper.stopMotor();
+                mTransfer.stopMotor();
                 break;
             case kIdle:  //Intentionally no-break after kIdle, we want kIdle to be effectively the default
             default:
                 mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.in(Degrees), ControlType.kPosition);
                 mFlywheelLeader.stopMotor();
                 mHopper.stopMotor();
+                mTransfer.stopMotor();
                 break;
             
         }
@@ -400,7 +444,7 @@ public class LauncherSubSystem extends SubsystemBase {
         SmartDashboard.putNumber("Launcher/Sim/SimAmps", mFlywheelSimulation.getCurrentDrawAmps());
         SmartDashboard.putNumber("Launcher/Sim/SimInputVolts", mFlywheelSimulation.getInputVoltage());
         SmartDashboard.putNumber("Launcher/Sim/SimKrakenMotorVolts", mFlywheelLeaderSim.getMotorVoltage());
-        SmartDashboard.putNumber("Launcher/HopperAmps", mHopper.getOutputCurrent());
+        //SmartDashboard.putNumber("Launcher/HopperAmps", mHopper.getOutputCurrent());
 
     }
 
@@ -449,6 +493,7 @@ public class LauncherSubSystem extends SubsystemBase {
         mLauncherState = LauncherStates.kCleaningMode;
         mFlywheelLeader.setVoltage(3.0);
         mHopper.setVoltage(3.0);
+
     }
 
     public void adjustShooterOffsetHigher(){

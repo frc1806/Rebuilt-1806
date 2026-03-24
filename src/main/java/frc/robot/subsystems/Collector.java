@@ -1,39 +1,46 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Rotations;
+
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
-import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.SoftLimitConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableValue;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.RobotContainer;
 import frc.robot.RobotMap;
 import frc.robot.Constants.CollectorConstants;
-import frc.robot.subsystems.LauncherSubSystem.LauncherStates;
+
+
 
 public class Collector extends SubsystemBase {
 
-private TalonFX mCollectorMotor = new TalonFX(RobotMap.INTAKE);
 
-private SparkFlex mSliderMotor = new SparkFlex(RobotMap.SLIDER, MotorType.kBrushless);
-private SparkFlexConfig mSliderConfig = new SparkFlexConfig();
-private SoftLimitConfig mSliderSoftLimitConfig = new SoftLimitConfig();
+
+private SparkFlex mCollectorMotor = new SparkFlex(RobotMap.INTAKE, MotorType.kBrushless);
+private SparkFlex mCollectorMotorTwo = new SparkFlex(RobotMap.INTAKE_TWO, MotorType.kBrushless);
+
+
+private TalonFX mSliderMotor = new TalonFX(RobotMap.SLIDER);
+private TalonFXConfiguration mSliderConfig = new TalonFXConfiguration();
+private SoftwareLimitSwitchConfigs mSliderSoftLimitConfig = new SoftwareLimitSwitchConfigs();
 
 private NetworkTable mRobotTable = NetworkTableInstance.getDefault().getTable("Robot");
+
 
 private static Collector S_COLLECTOR = new Collector();
 public static Collector GetInstance(){
@@ -52,33 +59,45 @@ enum SliderStates{
 
 
 private Collector(){
-    TalonFXConfiguration rollerConfig = new TalonFXConfiguration().withCurrentLimits(new CurrentLimitsConfigs().withStatorCurrentLimit(Constants.CollectorConstants.STATOR_CURRENT_LIMIT)
+    /*TalonFXConfiguration rollerConfig = new TalonFXConfiguration().withCurrentLimits(new CurrentLimitsConfigs().withStatorCurrentLimit(Constants.CollectorConstants.STATOR_CURRENT_LIMIT)
             .withSupplyCurrentLimit(Constants.CollectorConstants.SUPPLY_CURRENT_LIMIT)).withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
 
-    mCollectorMotor.getConfigurator().apply(rollerConfig);
+    mCollectorMotor.getConfigurator().apply(rollerConfig);*/
 
-    mSliderConfig.smartCurrentLimit(Constants.CollectorConstants.SLIDER_MOTOR_CURRENT_LIMIT);
-    mSliderConfig.voltageCompensation(Constants.CollectorConstants.SLIDER_MOTOR_VOLTAGE_COMPENSATION);
-    mSliderConfig.inverted(Constants.CollectorConstants.SLIDER_MOTOR_INVERTED);
-    mSliderSoftLimitConfig.forwardSoftLimit(Constants.CollectorConstants.OUT_POSITION);
-    mSliderSoftLimitConfig.forwardSoftLimitEnabled(false);
-    mSliderSoftLimitConfig.reverseSoftLimitEnabled(false);
-    mSliderSoftLimitConfig.reverseSoftLimit(Constants.CollectorConstants.IN_POSITION);
-    mSliderConfig.apply(mSliderSoftLimitConfig);
-    mSliderConfig.idleMode(IdleMode.kBrake);
+    SparkFlexConfig intakeConfig = new SparkFlexConfig();
+    intakeConfig.smartCurrentLimit(Constants.CollectorConstants.SUPPLY_CURRENT_LIMIT);
+    intakeConfig.inverted(true);
+    
+
+    mCollectorMotor.configure(intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    intakeConfig.follow(mCollectorMotor.getDeviceId(), true);
+    mCollectorMotorTwo.configure(intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+    TalonFXConfiguration sliderMotorConfig = new TalonFXConfiguration();
+    CurrentLimitsConfigs sliderCurrentLimitConfig = new CurrentLimitsConfigs();
+    sliderCurrentLimitConfig.StatorCurrentLimit = 120;
+    sliderCurrentLimitConfig.SupplyCurrentLimit = Constants.CollectorConstants.SLIDER_MOTOR_CURRENT_LIMIT;
+    //mSliderConfig.smartCurrentLimit(Constants.CollectorConstants.SLIDER_MOTOR_CURRENT_LIMIT);
+    //mSliderConfig.voltageCompensation(Constants.CollectorConstants.SLIDER_MOTOR_VOLTAGE_COMPENSATION);
+    MotorOutputConfigs sliderOutputConfig = new MotorOutputConfigs();
+    sliderOutputConfig.Inverted= InvertedValue.Clockwise_Positive;
+    sliderOutputConfig.NeutralMode = NeutralModeValue.Brake;
+    //mSliderConfig.inverted(Constants.CollectorConstants.SLIDER_MOTOR_INVERTED);
+    sliderMotorConfig.withCurrentLimits(sliderCurrentLimitConfig).withMotorOutput(sliderOutputConfig);
+    sliderMotorConfig.Slot0.kP = Constants.CollectorConstants.SLIDER_MOTOR_KP;
+    sliderMotorConfig.Slot0.kI = Constants.CollectorConstants.SLIDER_MOTOR_KI;
+    sliderMotorConfig.Slot0.kD = Constants.CollectorConstants.SLIDER_MOTOR_KD;
+
+    mSliderSoftLimitConfig.ForwardSoftLimitThreshold = Constants.CollectorConstants.OUT_POSITION;
+    mSliderSoftLimitConfig.ForwardSoftLimitEnable = true;
+    mSliderSoftLimitConfig.ReverseSoftLimitEnable = true;
+    mSliderSoftLimitConfig.ReverseSoftLimitThreshold = Constants.CollectorConstants.IN_POSITION;
+    sliderMotorConfig.Feedback.SensorToMechanismRatio = 1;
 
 
-    mSliderConfig.encoder.positionConversionFactor(1);
-    mSliderConfig.encoder.velocityConversionFactor(1);
-    mSliderConfig.closedLoop.pid(Constants.CollectorConstants.SLIDER_MOTOR_KP, Constants.CollectorConstants.SLIDER_MOTOR_KI, Constants.CollectorConstants.SLIDER_MOTOR_KD);
-    mSliderConfig.closedLoop.maxMotion.cruiseVelocity(50.0);
-    mSliderConfig.closedLoop.maxMotion.maxAcceleration(10.0);
 
 
-    mSliderMotor.configure(mSliderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-
-
-    mSliderConfig.closedLoop.pid(Constants.CollectorConstants.SLIDER_MOTOR_KP, Constants.CollectorConstants.SLIDER_MOTOR_KI, Constants.CollectorConstants.SLIDER_MOTOR_KD);
+    mSliderMotor.getConfigurator().apply(sliderMotorConfig);
 
 
 }
@@ -95,8 +114,8 @@ public void stopIntake(){
 }
 
 public void intake(){
-    if(mSliderMotor.getEncoder().getPosition() > CollectorConstants.SLIDER_SAFE_EXTENSION_MIN){
-        mCollectorMotor.setVoltage(12.0);
+    if(mSliderMotor.getPosition().getValue().in(Rotations) > CollectorConstants.SLIDER_SAFE_EXTENSION_MIN){
+        mCollectorMotor.setVoltage(12);
     }
     else{
         mCollectorMotor.setVoltage(0);
@@ -117,7 +136,15 @@ public void outtake(){
     public void periodic() {
         switch (mSliderState) {
             case kExtending:
-                mSliderMotor.getClosedLoopController().setSetpoint(Math.min(Constants.CollectorConstants.OUT_POSITION, Math.max( 0.0, (Constants.CollectorConstants.OUT_POSITION - (16.0* RobotContainer.launcher.getLaunchingTime() + (6 * Math.sin(4 * Math.PI * RobotContainer.launcher.getLaunchingTime())))))), ControlType.kPosition);
+            if(Math.abs(mSliderMotor.getPosition().getValue().in(Rotations) - Constants.CollectorConstants.OUT_POSITION) < 1.0){
+                mSliderMotor.set(0.0);
+            }
+            else{
+                mSliderMotor.setControl(new PositionVoltage(Constants.CollectorConstants.OUT_POSITION));
+
+            }
+                //mSliderMotor.getClosedLoopController().setSetpoint(Math.min(Constants.CollectorConstants.OUT_POSITION, Math.max( 0.0, (Constants.CollectorConstants.OUT_POSITION - (16.0* RobotContainer.launcher.getLaunchingTime() + (6 * Math.sin(4 * Math.PI * RobotContainer.launcher.getLaunchingTime())))))), ControlType.kPosition);
+                //mSliderMotor.getClosedLoopController().setSetpoint(Constants.CollectorConstants.OUT_POSITION, ControlType.kPosition);
                 break;
 
             default:
@@ -126,7 +153,14 @@ public void outtake(){
                 break;
 
             case kRetracting:
-                mSliderMotor.getClosedLoopController().setSetpoint(Constants.CollectorConstants.IN_POSITION, ControlType.kPosition);
+                if(Math.abs(mSliderMotor.getPosition().getValue().in(Rotations) - Constants.CollectorConstants.IN_POSITION) < 1.0){
+                    mSliderMotor.set(0.0);
+                }
+                else{
+                    mSliderMotor.setControl(new PositionVoltage(Constants.CollectorConstants.IN_POSITION));
+                }
+
+                //mSliderMotor.getClosedLoopController().setSetpoint(Constants.CollectorConstants.IN_POSITION, ControlType.kPosition);
                 break;
 
             case kShake:
@@ -134,10 +168,10 @@ public void outtake(){
                 mCollectorMotor.set(.8);
                 break;
 
-            case kZeroExtending:
+            /*case kZeroExtending:
                 mSliderMotor.set(.3);
-                if(Math.abs(mSliderMotor.getOutputCurrent()) > Constants.CollectorConstants.INTAKE_ZEROING_CURRENT_THRESHOLD && Math.abs(mSliderMotor.getEncoder().getVelocity()) < Constants.CollectorConstants.INTAKE_ZEROING_VELOCITY_THRESHOLD){
-                    mSliderMotor.getEncoder().setPosition(0);
+                if(Math.abs(mSliderMotor.getStatorCurrent()) > Constants.CollectorConstants.INTAKE_ZEROING_CURRENT_THRESHOLD && Math.abs(mSliderMotor.getPosition().getValue().in(Rotations)) < Constants.CollectorConstants.INTAKE_ZEROING_VELOCITY_THRESHOLD){
+                    mSliderMotor.().setPosition(0);
                     mSliderState = SliderStates.kIdle;
                     mSliderMotor.set(0);
                     mSliderSoftLimitConfig.forwardSoftLimitEnabled(true);
@@ -147,10 +181,11 @@ public void outtake(){
                 }
                 mSliderMotor.getEncoder().getVelocity();
                 break;
+                */
         }
 
-        mRobotTable.putValue("Collector/Position", NetworkTableValue.makeDouble(mSliderMotor.getEncoder().getPosition()));
-        mRobotTable.putValue("Collector/CollectorCurrent", NetworkTableValue.makeDouble(mSliderMotor.getOutputCurrent()));
+        mRobotTable.putValue("Collector/Position", NetworkTableValue.makeDouble(mSliderMotor.getPosition().getValue().in(Rotations)));
+        mRobotTable.putValue("Collector/CollectorCurrent", NetworkTableValue.makeDouble(mSliderMotor.getStatorCurrent().getValue().in(Amps)));
         mRobotTable.putValue("Collector/CollectorState", NetworkTableValue.makeString(mSliderState.name()));
     }
 
@@ -167,21 +202,21 @@ public void outtake(){
     }
 
     public void setCoastMode(){
-        mSliderConfig.idleMode(IdleMode.kCoast);
-        mSliderMotor.configure(mSliderConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        mSliderConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        mSliderMotor.getConfigurator().apply(mSliderConfig);
     }
 
     public void setBreakMode(){
-        mSliderConfig.idleMode(IdleMode.kCoast);
-        mSliderMotor.configure(mSliderConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        mSliderConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        mSliderMotor.getConfigurator().apply(mSliderConfig);
         
     }
 
-    public void zeroExtending (){
+   /* public void zeroExtending (){
         mSliderSoftLimitConfig.forwardSoftLimitEnabled(false);
         mSliderSoftLimitConfig.reverseSoftLimitEnabled(false);
         mSliderConfig.apply(mSliderSoftLimitConfig);
         mSliderMotor.configure(mSliderConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
         mSliderState = SliderStates.kZeroExtending;
-    }
+    }*/
 }

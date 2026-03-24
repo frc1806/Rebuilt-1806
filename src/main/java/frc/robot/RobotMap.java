@@ -12,6 +12,7 @@ public class RobotMap {
      * 41-49 Climber
      */
     public static final int INTAKE = 11;
+    public static final int INTAKE_TWO = 12;
     public static final int SLIDER = 13;
     public static final int HOPPER = 21;
     public static final int LAUNCHER_LEFT = 31; //ROBOT LEFT

@@ -341,7 +341,7 @@ public class Vision
     TOP_CAM("top",
              new Rotation3d(0, 0, Math.toRadians(30)),
              new Translation3d(Units.inchesToMeters(2),
-                               Units.inchesToMeters(-2),
+                               Units.inchesToMeters(-6.75),
                                Units.inchesToMeters(20)),
              VecBuilder.fill(4, 4, 8), VecBuilder.fill(0.5, 0.5, 1)),
     /**
@@ -645,7 +645,7 @@ public class Vision
     if(bestPose != null)
     {
       Pose3d bestPose3d = bestPose.estimatedPose;
-      return new Pose2d(bestPose3d.getX(), bestPose3d.getY(), bestPose3d.getRotation().toRotation2d());
+      return new Pose2d(bestPose3d.getX(), bestPose3d.getY(), bestPose3d.getRotation().toRotation2d().unaryMinus());
     }
     return null;
 

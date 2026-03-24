@@ -11,19 +11,15 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
-import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -46,8 +42,6 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.io.File;
-import java.util.function.DoubleSupplier;
-
 import swervelib.SwerveInputStream;
 
 /**
@@ -163,7 +157,7 @@ public class RobotContainer
       drivebase::getRobotVelocity,
       drivebase::drive,
       new PIDController(1.0, 0.00, 0.1),  // translation
-      new PIDController(0.8, 0.0, 0.0),  // rotation
+      new PIDController(1.0, 0.0, 0.0),  // rotation
       new PIDController(1.0, 0.0, 0.0)   // cross-track
   ).withDefaultShouldFlip()
   .withPoseReset(drivebase::resetOdometry);
@@ -181,7 +175,8 @@ public class RobotContainer
       BASIC_AUTONOMOUS(),
       CLIMB_AUTO(),
       RIGHT_CLIMB(),
-      AMBITION()
+      AMBITION(),
+      LEFT_GRAB()
     ;
 
     private Command autonomousCommand;
@@ -242,13 +237,21 @@ public class RobotContainer
 
     Command rightClimbFollowCommand = pathBuilder.build(new Path("RightClimb"));
     Command rightClimbAutoCommand = Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching))
-                                      .andThen(climbFollowCommand.alongWith(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_GRAB_ANGLE))).andThen(new ParallelDeadlineGroup(new WaitCommand(1.0), drivebase.driveCommand(() -> 0.2, () -> 0.0, () -> 0.0))
+                                      .andThen(rightClimbFollowCommand.alongWith(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_GRAB_ANGLE))).andThen(new ParallelDeadlineGroup(new WaitCommand(1.0), drivebase.driveCommand(() -> 0.2, () -> 0.0, () -> 0.0))
                                       .andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_l1_HOOK_ANGLE)).andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE).alongWith(drivebase.driveCommand(() -> -0.2, () -> 0.0, () -> 0.0))))
                                       .andThen(new ParallelDeadlineGroup(new WaitCommand(10.0), new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE)));
     Autonomous.RIGHT_CLIMB.setAutonomousCommand(rightClimbAutoCommand);
 
     Command ambitionFollowCommand = pathBuilder.build(new Path("Ambition"));
     Command ambitionAutoCommand = Commands.runOnce(collector::extend).andThen(new ParallelDeadlineGroup(ambitionFollowCommand, Commands.runOnce(collector::intake)).andThen(Commands.runOnce(collector::stopIntake)).andThen(Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop))));
+
+    Autonomous.AMBITION.setAutonomousCommand(ambitionAutoCommand);
+
+    Command leftGrabFollowCommand = pathBuilder.build(new Path("LeftGrab"));
+    Command leftGrabFollowCommand2 = pathBuilder.build(new Path("LeftGrab2"));
+    Command leftGrabAutonoCommand = Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(collector::extend).andThen(new ParallelDeadlineGroup(leftGrabFollowCommand, Commands.runOnce(collector::intake)).andThen(Commands.runOnce(collector::stopIntake)).andThen(leftGrabFollowCommand2).andThen(Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)))));
+    Autonomous.LEFT_GRAB.setAutonomousCommand(leftGrabAutonoCommand);
+
 
 
   }

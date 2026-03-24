@@ -6,8 +6,6 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Degree;
 
-import java.security.PublicKey;
-
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
@@ -120,20 +118,31 @@ public final class Constants
 
     public static final Angle HOOD_HOME_POSITION =Degree.of(0); //DEGREES
     public static final Angle HOOD_STARTING_POSITION = Degree.of(0);
+
+    public static final double TRANSFER_KP = 0.067; // SIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIX SEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVEN
+    public static final double TRANSFER_KI = 0;
+    public static final double TRANSFER_KD = 0;
+    public static final double TRANSFER_KS = 0.06;
+    public static final double TRANSFER_KV = 0.13;
+
+    public static final double TRANSFER_STATOR_CURRENT_LIMIT = 0.0;
+    public static final double TRANSFER_SUPPLY_CURRENT_LIMIT = 0.0;
+
+    public static final double TRANSFER_LAUNCHING_RPM = 3500.0;
   }
   public static class CollectorConstants
   {
     public static final double STATOR_CURRENT_LIMIT = 120;
-    public static final double SUPPLY_CURRENT_LIMIT = 60;
+    public static final int SUPPLY_CURRENT_LIMIT = 60;
     public static final int SLIDER_MOTOR_CURRENT_LIMIT = 30;
     public static final double SLIDER_MOTOR_VOLTAGE_COMPENSATION = 8.0;
     public static final boolean SLIDER_MOTOR_INVERTED = true;
 
-    public static final double SLIDER_MOTOR_KP = 1.0/25.0;
+    public static final double SLIDER_MOTOR_KP = 10.0/25.0;
     public static final double SLIDER_MOTOR_KI = 0.0;
     public static final double SLIDER_MOTOR_KD = 0.0;
 
-    public static final double OUT_POSITION = 43.0;
+    public static final double OUT_POSITION = 42.0;
     public static final double IN_POSITION =  0.75;
 
     public static final double INTAKE_ZEROING_CURRENT_THRESHOLD = 5; //amps
