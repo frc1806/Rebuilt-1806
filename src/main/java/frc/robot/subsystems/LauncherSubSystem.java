@@ -134,6 +134,7 @@ public class LauncherSubSystem extends SubsystemBase {
         mFlywheelFollowerTwo = new TalonFX(RobotMap.LAUNCHER_RIGHT_2);
         mHoodMotor = new SparkMax(RobotMap.HOOD, MotorType.kBrushless);
         mHopper = new TalonFX(RobotMap.HOPPER);
+        mTransfer = new TalonFX(RobotMap.TRANSFER);
 
         //SETUP FLYWHEEL MOTORS (Phoenix v6)
         TalonFXConfiguration flywheelLeaderConfig = new TalonFXConfiguration();
