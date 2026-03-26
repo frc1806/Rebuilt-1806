@@ -13,6 +13,7 @@ import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -20,6 +21,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
@@ -73,8 +75,8 @@ public class LauncherSubSystem extends SubsystemBase {
 
     //Rollers that move the fuel into to the flywheel
 
-    private SparkMax mHoodMotor;
-    private SparkMaxConfig mHoodMotorConfig;
+    private TalonFX mHoodMotor;
+    private TalonFXConfiguration mHoodMotorConfig;
     private SoftLimitConfig mHoodMotorSoftLimitConfig;
     private double mStartLaunchingTime =0;
 
@@ -132,7 +134,7 @@ public class LauncherSubSystem extends SubsystemBase {
         mFlywheelLeader = new TalonFX(RobotMap.LAUNCHER_RIGHT);
         mFlywheelFollower = new TalonFX(RobotMap.LAUNCHER_LEFT);
         mFlywheelFollowerTwo = new TalonFX(RobotMap.LAUNCHER_RIGHT_2);
-        mHoodMotor = new SparkMax(RobotMap.HOOD, MotorType.kBrushless);
+        mHoodMotor = new TalonFX(RobotMap.HOOD);
         mHopper = new TalonFX(RobotMap.HOPPER);
         mTransfer = new TalonFX(RobotMap.TRANSFER);
 
@@ -197,25 +199,25 @@ public class LauncherSubSystem extends SubsystemBase {
         //END SETUP OTHER FUEL MOTORS
 
         //TODO SETUP HOOD MOTOR
-        mHoodMotorConfig = new SparkMaxConfig();
-        mHoodMotorConfig.smartCurrentLimit(Constants.LauncherConstants.SMART_CURRENT_LIMIT);
-        mHoodMotorConfig.voltageCompensation(Constants.LauncherConstants.VOLTAGE_COMPENSATION);
-        mHoodMotorConfig.idleMode(IdleMode.kBrake);
-        mHoodMotorConfig.inverted(Constants.LauncherConstants.HOOD_INVERTED);
-        mHoodMotorConfig.encoder.positionConversionFactor(Constants.LauncherConstants.HOOD_POSITION_CONVERSION_FACTOR); //Degrees
-        mHoodMotorConfig.encoder.velocityConversionFactor(Constants.LauncherConstants.HOOD_POSITION_CONVERSION_FACTOR /60.0); //Degrees per second
-
-        mHoodMotorConfig.closedLoop.pid(Constants.LauncherConstants.HOOD_MOTOR_KP, Constants.LauncherConstants.HOOD_MOTOR_KI, Constants.LauncherConstants.HOOD_MOTOR_KD);
-        mHoodMotorConfig.closedLoop.maxMotion.cruiseVelocity(180.0);
-        mHoodMotorConfig.closedLoop.maxMotion.maxAcceleration(45.0);
+        mHoodMotorConfig = new TalonFXConfiguration();
+        mHoodMotor.setNeutralMode(NeutralModeValue.Brake);
+        mHoodMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        FeedbackConfigs HoodMotorEncoderConfigs = new FeedbackConfigs();
+        HoodMotorEncoderConfigs.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         mHoodMotorSoftLimitConfig = new SoftLimitConfig();
         mHoodMotorSoftLimitConfig.forwardSoftLimit(Constants.LauncherConstants.HOOD_MAX_ANGLE);
         mHoodMotorSoftLimitConfig.forwardSoftLimitEnabled(true);
         mHoodMotorSoftLimitConfig.reverseSoftLimit(Constants.LauncherConstants.HOOD_MIN_ANGLE);
         mHoodMotorSoftLimitConfig.reverseSoftLimitEnabled(true);
-        mHoodMotorConfig.apply(mHoodMotorSoftLimitConfig);
+        SoftLimitConfig softwareLimitConfigs = configs.SoftwareLimitConfig
+        softwareLimitConfigs.ForwardSoftLimitThreshold = 10.0;
 
-        mHoodMotor.configure(mHoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        Slot0Configs HoodMotorPIDConfig = new Slot0Configs();
+        HoodMotorPIDConfig.kP = Constants.LauncherConstants.HOOD_MOTOR_KP;
+        HoodMotorPIDConfig.kI = Constants.LauncherConstants.HOOD_MOTOR_KI;
+        HoodMotorPIDConfig.kD = Constants.LauncherConstants.HOOD_MOTOR_KD;
+
+        //mHoodMotor.configure(mHoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         //Transfer Setup
 
