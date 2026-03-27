@@ -179,8 +179,16 @@ public class SwerveSubsystem extends SubsystemBase
     return (isRedAlliance()?Constants.DrivebaseConstants.RED_ALLIANCE_GOAL_AIM:Constants.DrivebaseConstants.BLUE_ALLIANCE_GOAL_AIM).minus(getPose().getTranslation());
   }
 
+  public Translation2d getRobotToFeed(){
+     return (isRedAlliance()?Constants.DrivebaseConstants.RED_ALLIANCE_FEED_AIM:Constants.DrivebaseConstants.BLUE_ALLIANCE_FEED_AIM).minus(getPose().getTranslation());
+  }
+
   public double getDistanceToTarget(){
     return Math.abs(Math.hypot(getRobotToGoal().getX(), getRobotToGoal().getY()));
+  }
+
+  public double getDistanceToFeed(){
+    return Math.abs(Math.hypot(getRobotToFeed().getX(), getRobotToFeed().getY()));
   }
 
   public double getAngleToTargetRadians(){
@@ -566,7 +574,7 @@ public class SwerveSubsystem extends SubsystemBase
   {
     swerveDrive.resetOdometry(initialHolonomicPose);
     if(DriverStation.isDisabled()){
-      swerveDrive.setGyro(new Rotation3d(initialHolonomicPose.getRotation().getRadians(), swerveDrive.getGyroRotation3d().getMeasureY().in(Radians), swerveDrive.getGyroRotation3d().getMeasureZ().in(Radians)));
+      swerveDrive.setGyro(new Rotation3d(-swerveDrive.getGyroRotation3d().toRotation2d().getRadians(), swerveDrive.getGyroRotation3d().getMeasureY().in(Radians), initialHolonomicPose.getRotation().getRadians()));
     }
     mLastOdometryUpdate = Timer.getFPGATimestamp();
   }

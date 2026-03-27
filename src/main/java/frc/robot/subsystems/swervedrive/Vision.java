@@ -645,7 +645,7 @@ public class Vision
     if(bestPose != null)
     {
       Pose3d bestPose3d = bestPose.estimatedPose;
-      return new Pose2d(bestPose3d.getX(), bestPose3d.getY(), bestPose3d.getRotation().toRotation2d().unaryMinus());
+      return new Pose2d(bestPose3d.getX(), bestPose3d.getY(), bestPose3d.getRotation().toRotation2d());
     }
     return null;
 

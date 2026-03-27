@@ -67,6 +67,9 @@ public final class Constants
 
     public static final Translation2d BLUE_ALLIANCE_GOAL_AIM = new Translation2d(4.833, 4.00);
     public static final Translation2d RED_ALLIANCE_GOAL_AIM = new Translation2d(11.849, 4.00);
+
+    public static final Translation2d RED_ALLIANCE_FEED_AIM = new Translation2d(15.537, 6.907);
+    public static final Translation2d BLUE_ALLIANCE_FEED_AIM = new Translation2d(1.0, 1.0);
     public static final double AIM_ANGLE_TOLERANCE = 5;
 
   }
@@ -114,7 +117,7 @@ public final class Constants
     public static final double VOLTAGE_COMPENSATION = 8.0;
     public static final boolean HOOD_INVERTED = false;
 
-    public static final double HOOD_POSITION_CONVERSION_FACTOR = 360.0/187.5;
+    public static final double HOOD_GEAR_RATIO = 23.0 * (152.0 / 14.0);
 
     public static final Angle HOOD_HOME_POSITION =Degree.of(0); //DEGREES
     public static final Angle HOOD_STARTING_POSITION = Degree.of(0);

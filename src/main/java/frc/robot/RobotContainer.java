@@ -109,6 +109,11 @@ public class RobotContainer
     ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_GOAL_AIM:Constants.DrivebaseConstants.BLUE_ALLIANCE_GOAL_AIM).minus(drivebase.getPose().getTranslation()).getY(), 
     ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_GOAL_AIM:Constants.DrivebaseConstants.BLUE_ALLIANCE_GOAL_AIM).minus(drivebase.getPose().getTranslation()).getX()).headingWhile(true);
 
+  SwerveInputStream driveFeedAim = driveAngularVelocity.copy().withControllerHeadingAxis(
+    ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_FEED_AIM:Constants.DrivebaseConstants.BLUE_ALLIANCE_FEED_AIM).minus(drivebase.getPose().getTranslation()).getY(), 
+    ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_FEED_AIM:Constants.DrivebaseConstants.BLUE_ALLIANCE_FEED_AIM).minus(drivebase.getPose().getTranslation()).getX()).headingWhile(true);
+
+
   /**
    * Clone's the angular velocity input stream and converts it to a robotRelative input stream.
    */
@@ -167,6 +172,7 @@ public class RobotContainer
 
   
   Command driveGoalAimCommand = drivebase.driveFieldOriented(driveGoalAim);
+  Command driveFeedAimCommand = drivebase.driveFieldOriented(driveFeedAim);
 
 
   
@@ -338,6 +344,7 @@ public class RobotContainer
       driverXbox.povUp().onTrue(Commands.runOnce(launcher::adjustShooterOffsetLower));
       driverXbox.povDown().onTrue(Commands.runOnce(launcher::adjustShooterOffsetHigher));
       driverXbox.a().whileTrue(driveGoalAimCommand.alongWith(launcher.launcherAimAtGoal()));
+      driverXbox.x().whileTrue(driveFeedAimCommand.alongWith(launcher.launcherAimForFeed()));
 
       operatorXbox.a().onTrue(Commands.runOnce(collector::extend));
       operatorXbox.y().onTrue(Commands.runOnce(collector::retract));

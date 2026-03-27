@@ -22,6 +22,7 @@
       "/SmartDashboard/Pigeon 2 (v6) [13]": "Gyro",
       "/SmartDashboard/Swerve Drive": "Alerts",
       "/SmartDashboard/VisionSystemSim-Vision/Sim Field": "Field2d",
+      "/SmartDashboard/auto/autonomousChooser": "String Chooser",
       "/SmartDashboard/test/testmodes": "String Chooser"
     },
     "windows": {

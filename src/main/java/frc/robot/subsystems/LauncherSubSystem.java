@@ -1,20 +1,29 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Amp;
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Rotation;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volt;
 
 import java.util.HashSet;
 import java.util.Set;
 
+import org.dyn4j.geometry.Rotation;
+
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -77,7 +86,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
     private TalonFX mHoodMotor;
     private TalonFXConfiguration mHoodMotorConfig;
-    private SoftLimitConfig mHoodMotorSoftLimitConfig;
+    private SoftwareLimitSwitchConfigs mHoodMotorSoftLimitConfig = new SoftwareLimitSwitchConfigs();
     private double mStartLaunchingTime =0;
 
     //Hopper Motor
@@ -129,7 +138,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
     //Constructor is private for singleton pattern
     private LauncherSubSystem(){
-        System.out.println("Constructor for Launcher!!!!!!");
+        //System.out.println("Constructor for Launcher!!!!!!");
         //Make motors exist
         mFlywheelLeader = new TalonFX(RobotMap.LAUNCHER_RIGHT);
         mFlywheelFollower = new TalonFX(RobotMap.LAUNCHER_LEFT);
@@ -198,24 +207,27 @@ public class LauncherSubSystem extends SubsystemBase {
         mHopper.getConfigurator().apply(hoppeMotorOutputConfigs);
         //END SETUP OTHER FUEL MOTORS
 
-        //TODO SETUP HOOD MOTOR
         mHoodMotorConfig = new TalonFXConfiguration();
         mHoodMotor.setNeutralMode(NeutralModeValue.Brake);
         mHoodMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         FeedbackConfigs HoodMotorEncoderConfigs = new FeedbackConfigs();
         HoodMotorEncoderConfigs.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        mHoodMotorSoftLimitConfig = new SoftLimitConfig();
-        mHoodMotorSoftLimitConfig.forwardSoftLimit(Constants.LauncherConstants.HOOD_MAX_ANGLE);
-        mHoodMotorSoftLimitConfig.forwardSoftLimitEnabled(true);
-        mHoodMotorSoftLimitConfig.reverseSoftLimit(Constants.LauncherConstants.HOOD_MIN_ANGLE);
-        mHoodMotorSoftLimitConfig.reverseSoftLimitEnabled(true);
-        SoftLimitConfig softwareLimitConfigs = configs.SoftwareLimitConfig
-        softwareLimitConfigs.ForwardSoftLimitThreshold = 10.0;
+        HoodMotorEncoderConfigs.SensorToMechanismRatio = Constants.LauncherConstants.HOOD_GEAR_RATIO;
+        mHoodMotorSoftLimitConfig.ForwardSoftLimitEnable = true;
+        mHoodMotorSoftLimitConfig.ForwardSoftLimitThreshold = Rotation.convertFrom(Constants.LauncherConstants.HOOD_MAX_ANGLE, Degree);
+        mHoodMotorSoftLimitConfig.ReverseSoftLimitEnable = true;
+        mHoodMotorSoftLimitConfig.ReverseSoftLimitThreshold = Rotation.convertFrom(Constants.LauncherConstants.HOOD_MIN_ANGLE, Degree);
+        mHoodMotorConfig.CurrentLimits.StatorCurrentLimit = 120;
+        mHoodMotorConfig.CurrentLimits.SupplyCurrentLimit = 8;
 
         Slot0Configs HoodMotorPIDConfig = new Slot0Configs();
         HoodMotorPIDConfig.kP = Constants.LauncherConstants.HOOD_MOTOR_KP;
         HoodMotorPIDConfig.kI = Constants.LauncherConstants.HOOD_MOTOR_KI;
         HoodMotorPIDConfig.kD = Constants.LauncherConstants.HOOD_MOTOR_KD;
+
+        mHoodMotor.getConfigurator().apply(mHoodMotorConfig);
+        mHoodMotor.getConfigurator().apply(HoodMotorPIDConfig);
+        mHoodMotor.getConfigurator().apply(mHoodMotorSoftLimitConfig);
 
         //mHoodMotor.configure(mHoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -369,7 +381,8 @@ public class LauncherSubSystem extends SubsystemBase {
         //STATE MACHINE
         switch(mLauncherState){
             case kClosedLoop:
-                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
+                mHoodMotor.setControl(new PositionVoltage(mTargetAngle));
+                //mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
                 mFlywheelLeader.setControl(mFlywheelRequest); 
                 mHopper.stopMotor();
                 if(isAtSpeed())
@@ -385,7 +398,8 @@ public class LauncherSubSystem extends SubsystemBase {
 
                 break;
             case kOpenLoop:
-                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
+                mHoodMotor.setControl(new PositionVoltage(mTargetAngle));
+                //mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
                 //mFlywheelLeader.setControl(mFlywheelVoltageOut);
                 mFlywheelLeader.setControl(mFlywheelRequest); 
                 if(!isAtSpeed() && mFlywheelLeader.getVelocity().getValueAsDouble() > mTargetSpeed.in(RotationsPerSecond)){
@@ -399,7 +413,8 @@ public class LauncherSubSystem extends SubsystemBase {
                 mTransfer.setControl(mTransferMoveRequest);
                 break;
             case kCleaningMode:
-                 mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.in(Degrees), ControlType.kPosition);
+                 mHoodMotor.setControl(new PositionVoltage(Constants.LauncherConstants.HOOD_HOME_POSITION));
+                 //mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.in(Degrees), ControlType.kPosition);
                  mTransfer.setVoltage(3.0);
                 //DO Nothing for cleaning mode, managed externally
             break;
@@ -408,26 +423,25 @@ public class LauncherSubSystem extends SubsystemBase {
                 mFlywheelLeader.set(0);
                 mHopper.stopMotor();
                 mTransfer.stopMotor();
-                if(Math.abs(mHoodMotor.getOutputCurrent()) > 2 && Math.abs(mHoodMotor.getEncoder().getVelocity()) < 0.1)
+                if(Math.abs(mHoodMotor.getSupplyCurrent().getValue().in(Amps)) > 2 && Math.abs(mHoodMotor.getVelocity().getValue().in(DegreesPerSecond)) < 0.1)
                 {
-                    mHoodMotor.getEncoder().setPosition(0);
+                    mHoodMotor.setPosition(0.0);
                     mHoodMotor.set(0);
                     mLauncherState = LauncherStates.kIdle;
-                    mHoodMotorSoftLimitConfig.forwardSoftLimitEnabled(true);
-                    mHoodMotorSoftLimitConfig.reverseSoftLimitEnabled(true);
-                    mHoodMotorConfig.apply(mHoodMotorSoftLimitConfig);
-                    mHoodMotor.configure(mHoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+                    mHoodMotorSoftLimitConfig.ForwardSoftLimitEnable = true;
+                    mHoodMotorSoftLimitConfig.ReverseSoftLimitEnable = true;
+                    mHoodMotor.getConfigurator().apply(mHoodMotorSoftLimitConfig);
                 }
             break;
             case kTestHood:
-                mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
+                mHoodMotor.setControl(new PositionVoltage(mTargetAngle));
                 mFlywheelLeader.stopMotor();
                 mHopper.stopMotor();
                 mTransfer.stopMotor();
                 break;
             case kIdle:  //Intentionally no-break after kIdle, we want kIdle to be effectively the default
             default:
-                mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.in(Degrees), ControlType.kPosition);
+                mHoodMotor.setControl(new PositionVoltage(Constants.LauncherConstants.HOOD_HOME_POSITION));
                 mFlywheelLeader.stopMotor();
                 mHopper.stopMotor();
                 mTransfer.stopMotor();
@@ -436,13 +450,13 @@ public class LauncherSubSystem extends SubsystemBase {
         }
 
         SmartDashboard.putNumber("Launcher/RPM", getFlywheelVelocity().magnitude());
-        SmartDashboard.putNumber("Launcher/Angle", mHoodMotor.getEncoder().getPosition());
+        SmartDashboard.putNumber("Launcher/Angle", mHoodMotor.getPosition().getValue().in(Degrees));
         SmartDashboard.putString("Launcher/State", mLauncherState.name());
         SmartDashboard.putNumber("Launcher/Target RPM", mTargetSpeed.magnitude());
         SmartDashboard.putNumber("Launcher/TargetAngle", mTargetAngle.in(Degrees));
         SmartDashboard.putNumber("Launcher/kF", mKf.magnitude());
         SmartDashboard.putNumber("Launcher/kF Samples", mFlywheelEstimator.size());
-        SmartDashboard.putNumber("Launcher/HoodMotorAmps", mHoodMotor.getOutputCurrent());
+        SmartDashboard.putNumber("Launcher/HoodMotorAmps", mHoodMotor.getSupplyCurrent().getValue().in(Amps));
         SmartDashboard.putNumber("Launcher/Sim/SimSpeed", mFlywheelSimulation.getAngularVelocityRPM());
         SmartDashboard.putNumber("Launcher/Sim/SimAmps", mFlywheelSimulation.getCurrentDrawAmps());
         SmartDashboard.putNumber("Launcher/Sim/SimInputVolts", mFlywheelSimulation.getInputVoltage());
@@ -509,10 +523,9 @@ public class LauncherSubSystem extends SubsystemBase {
 
     public void zeroHood(){
         mLauncherState = LauncherStates.kZeroHood;
-        mHoodMotorSoftLimitConfig.forwardSoftLimitEnabled(false);
-        mHoodMotorSoftLimitConfig.reverseSoftLimitEnabled(false);
-        mHoodMotorConfig.apply(mHoodMotorSoftLimitConfig);
-        mHoodMotor.configure(mHoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+        mHoodMotorSoftLimitConfig.ForwardSoftLimitEnable = false;
+        mHoodMotorSoftLimitConfig.ReverseSoftLimitEnable = false;
+        mHoodMotor.getConfigurator().apply(mHoodMotorSoftLimitConfig);
     }
     
     public boolean getVisionEnableLaunch(){
@@ -526,7 +539,7 @@ public class LauncherSubSystem extends SubsystemBase {
     public Command launcherAimAtGoal(){
         return new Command(){
 
- @Override
+            @Override
             public Set<Subsystem> getRequirements() {
                 HashSet<Subsystem> reqs = new HashSet<>();
                 reqs.add(RobotContainer.launcher);
@@ -536,6 +549,23 @@ public class LauncherSubSystem extends SubsystemBase {
             @Override
             public void execute(){
                 shoot(VisionShotGenerator.GetGoalShotForDistance(mDrivebase.getDistanceToTarget()));
+            };
+        };
+    }
+
+        public Command launcherAimForFeed(){
+        return new Command(){
+
+            @Override
+            public Set<Subsystem> getRequirements() {
+                HashSet<Subsystem> reqs = new HashSet<>();
+                reqs.add(RobotContainer.launcher);
+                return reqs;
+            }
+
+            @Override
+            public void execute(){
+                shoot(VisionShotGenerator.GetGoalShotForDistance(mDrivebase.getDistanceToFeed()));
             };
         };
     }
