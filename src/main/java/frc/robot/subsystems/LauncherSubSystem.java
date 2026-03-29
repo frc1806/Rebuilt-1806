@@ -152,6 +152,7 @@ public class LauncherSubSystem extends SubsystemBase {
         TalonFXConfiguration flywheelFollowerConfig = new TalonFXConfiguration();
         FeedbackConfigs flywheelEncoderConfigs = new FeedbackConfigs();
         flywheelEncoderConfigs.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        flywheelEncoderConfigs.SensorToMechanismRatio = 1 / Constants.LauncherConstants.FLYWHEEL_GEAR_RATIO;
 
         CurrentLimitsConfigs flywheelCurrentLimitConfigs = new CurrentLimitsConfigs();
         flywheelCurrentLimitConfigs.StatorCurrentLimit = 100;
@@ -213,12 +214,13 @@ public class LauncherSubSystem extends SubsystemBase {
         FeedbackConfigs HoodMotorEncoderConfigs = new FeedbackConfigs();
         HoodMotorEncoderConfigs.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         HoodMotorEncoderConfigs.SensorToMechanismRatio = Constants.LauncherConstants.HOOD_GEAR_RATIO;
+        mHoodMotorConfig.Feedback = HoodMotorEncoderConfigs;
         mHoodMotorSoftLimitConfig.ForwardSoftLimitEnable = true;
         mHoodMotorSoftLimitConfig.ForwardSoftLimitThreshold = Rotation.convertFrom(Constants.LauncherConstants.HOOD_MAX_ANGLE, Degree);
         mHoodMotorSoftLimitConfig.ReverseSoftLimitEnable = true;
         mHoodMotorSoftLimitConfig.ReverseSoftLimitThreshold = Rotation.convertFrom(Constants.LauncherConstants.HOOD_MIN_ANGLE, Degree);
         mHoodMotorConfig.CurrentLimits.StatorCurrentLimit = 120;
-        mHoodMotorConfig.CurrentLimits.SupplyCurrentLimit = 8;
+        mHoodMotorConfig.CurrentLimits.SupplyCurrentLimit = 16;
 
         Slot0Configs HoodMotorPIDConfig = new Slot0Configs();
         HoodMotorPIDConfig.kP = Constants.LauncherConstants.HOOD_MOTOR_KP;
@@ -270,7 +272,6 @@ public class LauncherSubSystem extends SubsystemBase {
         if(Constants.LauncherConstants.HOOD_AUTO_ZERO){
             zeroHood();
         }
-
         SmartDashboard.putNumber("Launcher/ShotTuning/Angle", 15.0);
         SmartDashboard.putNumber("Launcher/ShotTuning/FlywheelRPM", 2800);
         SmartDashboard.putNumber("Launcher/ShotTuning/FeedSpeed", 8.0);
@@ -291,7 +292,7 @@ public class LauncherSubSystem extends SubsystemBase {
             mLauncherState = LauncherStates.kClosedLoop;
         }
         mTargetSpeed = speed;
-        mFlywheelRequest = new VelocityVoltage(mTargetSpeed.div(Constants.LauncherConstants.FLYWHEEL_GEAR_RATIO)); //Saving RAM by only instantiating this on a change.
+        mFlywheelRequest = new VelocityVoltage(mTargetSpeed); //Saving RAM by only instantiating this on a change.
         mTargetAngle = angle;
         mFeedSpeed = feedSpeed;
         if(mLauncherState != LauncherStates.kClosedLoop && mLauncherState != LauncherStates.kOpenLoop)
@@ -314,7 +315,7 @@ public class LauncherSubSystem extends SubsystemBase {
      * @return {@link AngularVelocity} of the flywheel, not the motor speed.
      */
     public AngularVelocity getFlywheelVelocity(){
-        return RPM.of(RPM.convertFrom(mFlywheelLeader.getVelocity().getValue().magnitude(), RotationsPerSecond)).times(Constants.LauncherConstants.FLYWHEEL_GEAR_RATIO);
+        return mFlywheelLeader.getVelocity().getValue();
     }
 
     /**
@@ -385,6 +386,7 @@ public class LauncherSubSystem extends SubsystemBase {
                 //mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
                 mFlywheelLeader.setControl(mFlywheelRequest); 
                 mHopper.stopMotor();
+                mTransfer.stopMotor();
                 if(isAtSpeed())
                 {
                     mFlywheelEstimator.addLast(estimatekF());
@@ -411,6 +413,7 @@ public class LauncherSubSystem extends SubsystemBase {
                 }
                 mHopper.setControl(new VoltageOut(mFeedSpeed));
                 mTransfer.setControl(mTransferMoveRequest);
+                //mTransfer.setControl(new VoltageOut(mFeedSpeed));
                 break;
             case kCleaningMode:
                  mHoodMotor.setControl(new PositionVoltage(Constants.LauncherConstants.HOOD_HOME_POSITION));
@@ -449,7 +452,7 @@ public class LauncherSubSystem extends SubsystemBase {
             
         }
 
-        SmartDashboard.putNumber("Launcher/RPM", getFlywheelVelocity().magnitude());
+        SmartDashboard.putNumber("Launcher/RPM", getFlywheelVelocity().in(RPM));
         SmartDashboard.putNumber("Launcher/Angle", mHoodMotor.getPosition().getValue().in(Degrees));
         SmartDashboard.putString("Launcher/State", mLauncherState.name());
         SmartDashboard.putNumber("Launcher/Target RPM", mTargetSpeed.magnitude());
@@ -461,7 +464,9 @@ public class LauncherSubSystem extends SubsystemBase {
         SmartDashboard.putNumber("Launcher/Sim/SimAmps", mFlywheelSimulation.getCurrentDrawAmps());
         SmartDashboard.putNumber("Launcher/Sim/SimInputVolts", mFlywheelSimulation.getInputVoltage());
         SmartDashboard.putNumber("Launcher/Sim/SimKrakenMotorVolts", mFlywheelLeaderSim.getMotorVoltage());
-        //SmartDashboard.putNumber("Launcher/HopperAmps", mHopper.getOutputCurrent());
+        SmartDashboard.putNumber("Launcher/TransferRPM", mTransfer.getVelocity().getValue().in(RPM));
+        SmartDashboard.putNumber("Launcher/TransferCurrent", mTransfer.getStatorCurrent().getValue().in(Amps));
+        SmartDashboard.putNumber("Launcher/HopperAmps", mHopper.getStatorCurrent().getValue().in(Amps));
 
     }
 
@@ -503,7 +508,20 @@ public class LauncherSubSystem extends SubsystemBase {
     }
 
     public Command prepareDashboardShot(){
-        return prepareShotCommand(RPM.of(SmartDashboard.getNumber("Launcher/ShotTuning/FlywheelRPM", 1500)), Degrees.of(SmartDashboard.getNumber("Launcher/ShotTuning/Angle", 25)),  Volt.of(SmartDashboard.getNumber("Launcher/ShotTuning/FeedSpeed", 8.0)));
+        return new Command(){
+
+            @Override
+            public Set<Subsystem> getRequirements() {
+                HashSet<Subsystem> reqs = new HashSet<>();
+                reqs.add(RobotContainer.launcher);
+                return reqs;
+            }
+
+            @Override
+            public void execute(){
+                shoot(RPM.of(SmartDashboard.getNumber("Launcher/ShotTuning/FlywheelRPM", 1500)), Degrees.of(SmartDashboard.getNumber("Launcher/ShotTuning/Angle", 25)),  Volt.of(SmartDashboard.getNumber("Launcher/ShotTuning/FeedSpeed", 8.0)));
+            };
+        };
     }
 
     public void clean(){

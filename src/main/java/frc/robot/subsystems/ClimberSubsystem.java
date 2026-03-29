@@ -1,5 +1,4 @@
 package frc.robot.subsystems;
-
 import com.ctre.phoenix6.configs.ClosedLoopGeneralConfigs;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
@@ -11,7 +10,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.revrobotics.spark.config.ClosedLoopConfig;
-
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableValue;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -87,6 +85,4 @@ public class ClimberSubsystem extends SubsystemBase{
     public void stop(){
         mClimberFrontLead.stopMotor();
     }
-
-
 }

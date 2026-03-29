@@ -339,7 +339,7 @@ public class Vision
      * Left Camera
      */
     TOP_CAM("top",
-             new Rotation3d(0, 0, Math.toRadians(30)),
+             new Rotation3d(0, Math.toRadians(30), 0.0),
              new Translation3d(Units.inchesToMeters(2),
                                Units.inchesToMeters(-6.75),
                                Units.inchesToMeters(20)),
@@ -348,7 +348,7 @@ public class Vision
      * Right Camera
      */
     BOTTOM_CAM("bottom",
-              new Rotation3d(0, Math.toRadians(0), Math.toRadians(30)),
+              new Rotation3d(0, Math.toRadians(10.0), 0.0),
               new Translation3d(Units.inchesToMeters(12.5),
                                 Units.inchesToMeters(0),
                                 Units.inchesToMeters(4.0)),

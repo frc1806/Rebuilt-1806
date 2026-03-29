@@ -573,9 +573,6 @@ public class SwerveSubsystem extends SubsystemBase
   public void resetOdometry(Pose2d initialHolonomicPose)
   {
     swerveDrive.resetOdometry(initialHolonomicPose);
-    if(DriverStation.isDisabled()){
-      swerveDrive.setGyro(new Rotation3d(-swerveDrive.getGyroRotation3d().toRotation2d().getRadians(), swerveDrive.getGyroRotation3d().getMeasureY().in(Radians), initialHolonomicPose.getRotation().getRadians()));
-    }
     mLastOdometryUpdate = Timer.getFPGATimestamp();
   }
 

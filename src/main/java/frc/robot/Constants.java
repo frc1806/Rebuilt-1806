@@ -81,25 +81,25 @@ public final class Constants
     public static final double DEADBAND        = 0.1;
     public static final double LEFT_Y_DEADBAND = 0.1;
     public static final double RIGHT_X_DEADBAND = 0.1;
-    public static final double TURN_CONSTANT    = 6;
+    public static final double TURN_CONSTANT    = 6.0;
     public static final double SNAP_ANGLE_RADIUS = 0.6;
   }
 
   public static class LauncherConstants
   {
     public static final double FLYWHEEL_RPM_TOLERANCE = 300.0;
-    public static final double FLYWHEEL_GEAR_RATIO = 1.0; // GEAR UP
+    public static final double FLYWHEEL_GEAR_RATIO = 2.0; // GEAR UP
     //Fancy 254 style open loop shooting
     public static final int SAMPLES_TO_AVERAGE = 30;
     
-    public static final double FLYWHEEL_RAMP_KP = 0.067; // SIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIX SEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVEN
+    public static final double FLYWHEEL_RAMP_KP = 0.026;
     public static final double FLYWHEEL_RAMP_KI = 0;
     public static final double FLYWHEEL_RAMP_KD = 0;
-    public static final double FLYWHEEL_RAMP_KS = 0.06;
-    public static final double FLYWHEEL_RAMP_KV = 0.13;
+    public static final double FLYWHEEL_RAMP_KS = 0.02;
+    public static final double FLYWHEEL_RAMP_KV = 0.067;
 
-    public static final double FLYWHEEL_PER_MOTOR_SUPPLY_CURRENT_LIMIT = 80;
-    public static final double FLYWHEEL_PER_MOTOR_STATOR_CURRENT_LIMIT = 100;
+    public static final double FLYWHEEL_PER_MOTOR_SUPPLY_CURRENT_LIMIT = 100;
+    public static final double FLYWHEEL_PER_MOTOR_STATOR_CURRENT_LIMIT = 120;
 
     public static final double FUEL_MOTORS_CURRENT_LIMIT = 80; //TRANSFER & HOPPER
     public static final double FUEL_MOTORS_NOMINAL_VOLTAGE = 10.0; //Motors will output a maximum of 8 volts.
@@ -109,7 +109,7 @@ public final class Constants
     public static final double HOOD_MIN_ANGLE = 0.0;
     public static final double HOOD_MAX_ANGLE = 50.0;
 
-    public static final double HOOD_MOTOR_KP = 1.0/10.0;
+    public static final double HOOD_MOTOR_KP = 125.0;
     public static final double HOOD_MOTOR_KI = 0.0;
     public static final double HOOD_MOTOR_KD = 0.0;
 
@@ -125,13 +125,13 @@ public final class Constants
     public static final double TRANSFER_KP = 0.067; // SIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIX SEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVEN
     public static final double TRANSFER_KI = 0;
     public static final double TRANSFER_KD = 0;
-    public static final double TRANSFER_KS = 0.06;
-    public static final double TRANSFER_KV = 0.13;
+    public static final double TRANSFER_KS = 0.1;
+    public static final double TRANSFER_KV = 0.14;
 
-    public static final double TRANSFER_STATOR_CURRENT_LIMIT = 0.0;
-    public static final double TRANSFER_SUPPLY_CURRENT_LIMIT = 0.0;
+    public static final double TRANSFER_STATOR_CURRENT_LIMIT = 120.0;
+    public static final double TRANSFER_SUPPLY_CURRENT_LIMIT = 50.0;
 
-    public static final double TRANSFER_LAUNCHING_RPM = 3500.0;
+    public static final double TRANSFER_LAUNCHING_RPM = 4000.0;
   }
   public static class CollectorConstants
   {
@@ -141,11 +141,11 @@ public final class Constants
     public static final double SLIDER_MOTOR_VOLTAGE_COMPENSATION = 8.0;
     public static final boolean SLIDER_MOTOR_INVERTED = true;
 
-    public static final double SLIDER_MOTOR_KP = 10.0/25.0;
+    public static final double SLIDER_MOTOR_KP = 8.0/25.0;
     public static final double SLIDER_MOTOR_KI = 0.0;
     public static final double SLIDER_MOTOR_KD = 0.0;
 
-    public static final double OUT_POSITION = 42.0;
+    public static final double OUT_POSITION = 38.0;
     public static final double IN_POSITION =  0.75;
 
     public static final double INTAKE_ZEROING_CURRENT_THRESHOLD = 5; //amps

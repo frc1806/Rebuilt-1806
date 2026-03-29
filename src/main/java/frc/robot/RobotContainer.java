@@ -57,8 +57,8 @@ public class RobotContainer
   final         CommandXboxController driverXbox = new CommandXboxController(0);
   final         CommandXboxController operatorXbox = new CommandXboxController(1);
 
-  public static final Shot CLOSE_SHOT = new Shot(RPM.of(2800), Degrees.of(0.0), Volts.of(10.0), true);
-  public static final Shot PROTECTED_SHOT = new Shot(RPM.of(3800), Degrees.of(20.0), Volts.of(10.0), true);
+  public static final Shot CLOSE_SHOT = new Shot(RPM.of(3550), Degrees.of(6.0), Volts.of(10.0), true);
+  public static final Shot PROTECTED_SHOT = new Shot(RPM.of(4500), Degrees.of(22.0), Volts.of(10.0), true);
 
 
   //Test Modes
@@ -344,6 +344,7 @@ public class RobotContainer
       driverXbox.povUp().onTrue(Commands.runOnce(launcher::adjustShooterOffsetLower));
       driverXbox.povDown().onTrue(Commands.runOnce(launcher::adjustShooterOffsetHigher));
       driverXbox.a().whileTrue(driveGoalAimCommand.alongWith(launcher.launcherAimAtGoal()));
+    
       driverXbox.x().whileTrue(driveFeedAimCommand.alongWith(launcher.launcherAimForFeed()));
 
       operatorXbox.a().onTrue(Commands.runOnce(collector::extend));
@@ -353,7 +354,10 @@ public class RobotContainer
       operatorXbox.povDown().onTrue(new ClimberL1GoToAngleCommand(0));
       operatorXbox.povLeft().onTrue(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_GRAB_ANGLE));
       operatorXbox.povRight().onTrue(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE));
-      
+      operatorXbox.leftTrigger().onTrue(launcher.prepareDashboardShot());
+      operatorXbox.leftTrigger().onFalse(Commands.runOnce(launcher::stop, launcher));
+      operatorXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
+      operatorXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
 
     }
 

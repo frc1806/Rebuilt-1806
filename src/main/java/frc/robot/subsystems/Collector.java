@@ -66,7 +66,7 @@ private Collector(){
 
     SparkFlexConfig intakeConfig = new SparkFlexConfig();
     intakeConfig.smartCurrentLimit(Constants.CollectorConstants.SUPPLY_CURRENT_LIMIT);
-    intakeConfig.inverted(true);
+    intakeConfig.inverted(false);
     
 
     mCollectorMotor.configure(intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
