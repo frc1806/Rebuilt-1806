@@ -16,6 +16,8 @@ public class VisionShotGenerator {
         put(3.0, 22.0);
         put(4.0, 25.0);
         put (5.0, 29.0);
+        put(5.8, 29.0);
+        put(15.0,30.0);
 
     }};
 
@@ -27,6 +29,8 @@ public class VisionShotGenerator {
         put(3.0, 4500.0);
         put(4.0, 5000.0);
         put(5.0, 6000.0);
+        put(5.8, 6800.0);
+        put(15.0, 7250.0);
     }};
 
     private static InterpolatingDoubleTreeMap FEED_SPEED_BY_DISTANCE = new InterpolatingDoubleTreeMap()
@@ -37,6 +41,8 @@ public class VisionShotGenerator {
         put(3.0, 10.0);
         put(4.0, 11.0);
         put(5.0, 12.0);
+        put(5.8, 12.0);
+        put(15.0,12.0);
 
     }};
 
