@@ -343,6 +343,7 @@ public class RobotContainer
 
       driverXbox.povUp().onTrue(Commands.runOnce(launcher::adjustShooterOffsetLower));
       driverXbox.povDown().onTrue(Commands.runOnce(launcher::adjustShooterOffsetHigher));
+      driverXbox.povRight().onTrue(Commands.runOnce(drivebase::manualFullPhotonvisionOdometryReset));
       driverXbox.a().whileTrue(driveGoalAimCommand.alongWith(launcher.launcherAimAtGoal()));
     
       driverXbox.x().whileTrue(driveFeedAimCommand.alongWith(launcher.launcherAimForFeed()));

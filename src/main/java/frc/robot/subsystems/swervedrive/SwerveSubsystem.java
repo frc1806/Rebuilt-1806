@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems.swervedrive;
 
+import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Meter;
 import static edu.wpi.first.units.Units.Radians;
 
@@ -161,7 +162,14 @@ public class SwerveSubsystem extends SubsystemBase
     if(mNeedOdometryUpdate && !checkIfNeedOdometryResetDueToTip()){
       Pose2d photonvisionPose = vision.getBestPhotonvisionPose();
       if(photonvisionPose != null){
-        resetOdometry(photonvisionPose);
+        if(!DriverStation.isDisabled())
+        {
+          resetOdometryFromVisionWhileEnabled(photonvisionPose);
+        }
+        else{
+          resetOdometry(photonvisionPose);
+        }
+
         mNeedOdometryUpdate = false;
       }
     }
@@ -198,6 +206,14 @@ public class SwerveSubsystem extends SubsystemBase
   @Override
   public void simulationPeriodic()
   {
+  }
+
+  public void manualFullPhotonvisionOdometryReset(){
+      Pose2d photonvisionPose = vision.getBestPhotonvisionPose();
+      if(photonvisionPose != null){
+          resetOdometry(photonvisionPose);
+          mNeedOdometryUpdate = false;
+      }
   }
 
   /**
@@ -576,6 +592,11 @@ public class SwerveSubsystem extends SubsystemBase
     mLastOdometryUpdate = Timer.getFPGATimestamp();
   }
 
+  public void resetOdometryFromVisionWhileEnabled(Pose2d photonvisionPose){
+    swerveDrive.resetOdometry(new Pose2d(photonvisionPose.getTranslation(), getHeading()));
+    mLastOdometryUpdate = Timer.getFPGATimestamp();
+  }
+
   /**
    * Gets the current pose (position and rotation) of the robot, as reported by odometry.
    *
@@ -799,7 +820,7 @@ public class SwerveSubsystem extends SubsystemBase
 
 
   public boolean checkIfNeedOdometryResetDueToTip(){
-    return Math.abs(swerveDrive.getGyroRotation3d().getY()) > 15 || Math.abs(swerveDrive.getGyroRotation3d().getZ()) > 15;
+    return Math.abs(swerveDrive.getGyroRotation3d().getY()) > Radians.convertFrom(15, Degree) || Math.abs(swerveDrive.getGyroRotation3d().getX()) > Radians.convertFrom(15, Degree);
   }
 
   public boolean checkIfOdometryStale(){
