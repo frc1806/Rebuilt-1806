@@ -44,7 +44,7 @@ deploy {
 def deployArtifact = deploy.targets.roborio.artifacts.frcJava
 
 // Task to backup the current deploy folder from the roborio
-task backupRoborioDeployFolder {
+/*task backupRoborioDeployFolder {
     group = 'Deploy'
     description = 'Backs up the current deploy folder from the roborio to local project directory'
 
@@ -77,7 +77,7 @@ task backupRoborioDeployFolder {
 // Make the deploy task depend on the backup task
 tasks.matching { it.name == 'deploy' }.all {
     dependsOn backupRoborioDeployFolder
-}
+}*/
 
 // Set to true to use debug for all targets including JNI, which will drastically impact
 // performance.
