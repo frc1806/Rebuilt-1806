@@ -110,8 +110,9 @@ public final class Constants
     public static final double HOOD_MAX_ANGLE = 50.0;
 
     public static final double HOOD_MOTOR_KP = 125.0;
-    public static final double HOOD_MOTOR_KI = 0.0;
+    public static final double HOOD_MOTOR_KI = 1.0;
     public static final double HOOD_MOTOR_KD = 0.0;
+    public static final double HOOD_MOTOR_IZone = 1.5;
 
     public static final int SMART_CURRENT_LIMIT = 12;
     public static final double VOLTAGE_COMPENSATION = 8.0;
@@ -156,6 +157,12 @@ public final class Constants
     public static final double SLIDER_SHAKE_TIME_SCALER = 4;
 
     public static final double SLIDER_SAFE_EXTENSION_MIN = -10;
+
+    public static final double INTAKE_SPEED_KP = 0.067;
+    public static final double INTAKE_SPEED_KI = 0.0;
+    public static final double INTAKE_SPEED_KD = 0.0;
+    public static final double INTAKE_SPEED_KS = 0.1;
+    public static final double INTAKE_SPEED_KV = 0.0002;
 
   }
 

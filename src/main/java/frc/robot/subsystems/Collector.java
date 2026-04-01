@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Rotations;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -15,13 +16,17 @@ import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
+
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableValue;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.RobotContainer;
 import frc.robot.RobotMap;
 import frc.robot.Constants.CollectorConstants;
 
@@ -67,6 +72,15 @@ private Collector(){
     SparkFlexConfig intakeConfig = new SparkFlexConfig();
     intakeConfig.smartCurrentLimit(Constants.CollectorConstants.SUPPLY_CURRENT_LIMIT);
     intakeConfig.inverted(false);
+
+    ClosedLoopConfig intakeRollerSpeedPIDConfig = new ClosedLoopConfig();
+    intakeRollerSpeedPIDConfig.p(Constants.CollectorConstants.INTAKE_SPEED_KP)
+        .i(Constants.CollectorConstants.INTAKE_SPEED_KI)
+        .d(Constants.CollectorConstants.INTAKE_SPEED_KD)
+        .feedForward
+            .kS(Constants.CollectorConstants.INTAKE_SPEED_KS)
+            .kV(Constants.CollectorConstants.INTAKE_SPEED_KV);
+    intakeConfig.apply(intakeRollerSpeedPIDConfig);
     
 
     mCollectorMotor.configure(intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -110,12 +124,23 @@ public void stop(){
 } 
 
 public void stopIntake(){
-    mCollectorMotor.stopMotor();
+    if(mSliderMotor.getPosition().getValue().in(Rotations) > CollectorConstants.SLIDER_SAFE_EXTENSION_MIN){
+        if(RobotContainer.launcher.isLaunching()){
+            mCollectorMotor.setVoltage(6.0);
+        }
+        else{
+            mCollectorMotor.stopMotor();
+        }
+    }
+    else{
+        mCollectorMotor.stopMotor();
+    }
+
 }
 
 public void intake(){
     if(mSliderMotor.getPosition().getValue().in(Rotations) > CollectorConstants.SLIDER_SAFE_EXTENSION_MIN){
-        mCollectorMotor.setVoltage(12);
+        mCollectorMotor.setVoltage(6.0 + (Math.abs(RobotContainer.drivebase.getRobotVelocity().vxMetersPerSecond) * (6.0/5.0)));
     }
     else{
         mCollectorMotor.setVoltage(0);
@@ -185,7 +210,7 @@ public void outtake(){
         }
 
         mRobotTable.putValue("Collector/Position", NetworkTableValue.makeDouble(mSliderMotor.getPosition().getValue().in(Rotations)));
-        mRobotTable.putValue("Collector/CollectorCurrent", NetworkTableValue.makeDouble(mSliderMotor.getStatorCurrent().getValue().in(Amps)));
+        mRobotTable.putValue("Collector/CollectorCurrent", NetworkTableValue.makeDouble(mCollectorMotor.getEncoder().getVelocity()));
         mRobotTable.putValue("Collector/CollectorState", NetworkTableValue.makeString(mSliderState.name()));
     }
 

@@ -293,7 +293,7 @@ public class LauncherSubSystem extends SubsystemBase {
         }
         mTargetSpeed = speed;
         mFlywheelRequest = new VelocityVoltage(mTargetSpeed); //Saving RAM by only instantiating this on a change.
-        mTargetAngle = angle;
+        mTargetAngle = angle.plus(Degrees.of(RobotPreferences.GetShooterAngleOffset()));
         mFeedSpeed = feedSpeed;
         if(mLauncherState != LauncherStates.kClosedLoop && mLauncherState != LauncherStates.kOpenLoop)
         {
@@ -532,11 +532,11 @@ public class LauncherSubSystem extends SubsystemBase {
     }
 
     public void adjustShooterOffsetHigher(){
-        RobotPreferences.SetShooterAngleOffset(RobotPreferences.GetShooterAngleOffset() + .1);
+        RobotPreferences.SetShooterAngleOffset(RobotPreferences.GetShooterAngleOffset() + .5);
     }
     
     public void adjustShooterOffsetLower(){
-        RobotPreferences.SetShooterAngleOffset(RobotPreferences.GetShooterAngleOffset() - .1);
+        RobotPreferences.SetShooterAngleOffset(RobotPreferences.GetShooterAngleOffset() - .5);
     }
 
     public void zeroHood(){
@@ -610,5 +610,9 @@ public class LauncherSubSystem extends SubsystemBase {
         else{
             return Timer.getFPGATimestamp() - mStartLaunchingTime;
         }
+    }
+
+    public boolean isLaunching(){
+        return mLauncherState == LauncherStates.kOpenLoop;
     }
 }
