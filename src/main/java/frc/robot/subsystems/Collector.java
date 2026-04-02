@@ -15,6 +15,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
@@ -126,7 +127,7 @@ public void stop(){
 public void stopIntake(){
     if(mSliderMotor.getPosition().getValue().in(Rotations) > CollectorConstants.SLIDER_SAFE_EXTENSION_MIN){
         if(RobotContainer.launcher.isLaunching()){
-            mCollectorMotor.setVoltage(6.0);
+            mCollectorMotor.getClosedLoopController().setSetpoint(3000.0 + (Math.abs(RobotContainer.drivebase.getRobotVelocity().vxMetersPerSecond) * (3000.0/5.0)), ControlType.kVelocity);
         }
         else{
             mCollectorMotor.stopMotor();
@@ -140,7 +141,8 @@ public void stopIntake(){
 
 public void intake(){
     if(mSliderMotor.getPosition().getValue().in(Rotations) > CollectorConstants.SLIDER_SAFE_EXTENSION_MIN){
-        mCollectorMotor.setVoltage(6.0 + (Math.abs(RobotContainer.drivebase.getRobotVelocity().vxMetersPerSecond) * (6.0/5.0)));
+       // mCollectorMotor.setVoltage(6.0 + (Math.abs(RobotContainer.drivebase.getRobotVelocity().vxMetersPerSecond) * (6.0/5.0)));
+       mCollectorMotor.getClosedLoopController().setSetpoint(3000.0 + (Math.abs(RobotContainer.drivebase.getRobotVelocity().vxMetersPerSecond) * (3000.0/5.0)), ControlType.kVelocity);
     }
     else{
         mCollectorMotor.setVoltage(0);

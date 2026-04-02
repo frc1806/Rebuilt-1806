@@ -137,4 +137,9 @@ public class SnapAnglesHelper {
     }
   }
 
+  public void clearSnapAngleMemory(){
+    mTranslation2d = null;
+  }
+
+
 }

@@ -95,7 +95,7 @@ public class RobotContainer
   /**
    * Clone's the angular velocity input stream and converts it to a fieldRelative input stream.
    */
-  SnapAnglesHelper snapAnglesHelper = new SnapAnglesHelper(FieldSnapAngles.k2026RebuiltAngles).withAllianceRelativeControl(true);
+  public static SnapAnglesHelper snapAnglesHelper = new SnapAnglesHelper(FieldSnapAngles.k2026RebuiltAngles).withAllianceRelativeControl(true);
   SwerveInputStream driveDirectAngle = driveAngularVelocity.copy().withControllerHeadingAxis(snapAnglesHelper.getXDoubleSupplier(() ->driverXbox.getRightX() * -1,
   () -> driverXbox.getRightY() * -1), snapAnglesHelper.getYDoubleSupplier(() ->driverXbox.getRightX() * -1,
   () -> driverXbox.getRightY() * -1)).headingWhile(true);
@@ -106,8 +106,8 @@ public class RobotContainer
 
 
   SwerveInputStream driveGoalAim = driveAngularVelocity.copy().withControllerHeadingAxis(
-    ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_GOAL_AIM:Constants.DrivebaseConstants.BLUE_ALLIANCE_GOAL_AIM).minus(drivebase.getPose().getTranslation()).getY(), 
-    ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_GOAL_AIM:Constants.DrivebaseConstants.BLUE_ALLIANCE_GOAL_AIM).minus(drivebase.getPose().getTranslation()).getX()).headingWhile(true);
+    ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_GOAL_AIM.plus(drivebase.getShotCorrectionTranslation()):Constants.DrivebaseConstants.BLUE_ALLIANCE_GOAL_AIM.plus(drivebase.getShotCorrectionTranslation())).minus(drivebase.getPose().getTranslation()).getY(), 
+    ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_GOAL_AIM.plus(drivebase.getShotCorrectionTranslation()):Constants.DrivebaseConstants.BLUE_ALLIANCE_GOAL_AIM.plus(drivebase.getShotCorrectionTranslation())).minus(drivebase.getPose().getTranslation()).getX()).headingWhile(true);
 
   SwerveInputStream driveFeedAim = driveAngularVelocity.copy().withControllerHeadingAxis(
     ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_FEED_AIM:Constants.DrivebaseConstants.BLUE_ALLIANCE_FEED_AIM).minus(drivebase.getPose().getTranslation()).getY(), 
@@ -344,9 +344,9 @@ public class RobotContainer
       driverXbox.povUp().onTrue(Commands.runOnce(launcher::adjustShooterOffsetLower));
       driverXbox.povDown().onTrue(Commands.runOnce(launcher::adjustShooterOffsetHigher));
       driverXbox.povRight().onTrue(Commands.runOnce(drivebase::manualFullPhotonvisionOdometryReset));
-      driverXbox.a().whileTrue(driveGoalAimCommand.alongWith(launcher.launcherAimAtGoal()));
+      driverXbox.a().whileTrue(Commands.runOnce(snapAnglesHelper::clearSnapAngleMemory).andThen(driveGoalAimCommand.alongWith(launcher.launcherAimAtGoal())));
     
-      driverXbox.x().whileTrue(driveFeedAimCommand.alongWith(launcher.launcherAimForFeed()));
+      driverXbox.x().whileTrue(Commands.runOnce(snapAnglesHelper::clearSnapAngleMemory).andThen(driveFeedAimCommand.alongWith(launcher.launcherAimForFeed())));
 
       operatorXbox.a().onTrue(Commands.runOnce(collector::extend));
       operatorXbox.y().onTrue(Commands.runOnce(collector::retract));

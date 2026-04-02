@@ -827,4 +827,8 @@ public class SwerveSubsystem extends SubsystemBase
     return Timer.getFPGATimestamp() - mLastOdometryUpdate > Constants.DrivebaseConstants.ODOMETRY_STALE_TIME;
   }
 
+  public Translation2d getShotCorrectionTranslation(){
+    return new Translation2d(getFieldVelocity().vxMetersPerSecond * Constants.LauncherConstants.SHOT_CORRECTION_FACTOR_X, getFieldVelocity().vyMetersPerSecond * Constants.LauncherConstants.SHOT_CORRECTION_FACTOR_Y);
+  }
+
 }
