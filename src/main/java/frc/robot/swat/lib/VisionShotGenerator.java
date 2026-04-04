@@ -10,10 +10,11 @@ public class VisionShotGenerator {
 
     private static InterpolatingDoubleTreeMap SHOT_ANGLE_BY_DISTANCE = new InterpolatingDoubleTreeMap()
     {{
-        put(1.5, 6.0);
+        put(1.5, 10.0);
         put(2.0, 12.0);
         put(2.5, 17.0);
         put(3.0, 22.0);
+        put(4.5, 23.0);
         put(4.0, 25.0);
         put (5.0, 29.0);
         put(5.8, 29.0);
@@ -27,6 +28,7 @@ public class VisionShotGenerator {
         put(2.0, 3900.0);
         put(2.5, 4300.0);
         put(3.0, 4500.0);
+        put(3.5, 4750.0);
         put(4.0, 5000.0);
         put(5.0, 6000.0);
         put(5.8, 6800.0);
@@ -39,6 +41,7 @@ public class VisionShotGenerator {
         put(2.0, 7.0);
         put(2.5, 8.0);
         put(3.0, 10.0);
+        put(3.5, 10.5);
         put(4.0, 11.0);
         put(5.0, 12.0);
         put(5.8, 12.0);

@@ -292,7 +292,9 @@ public class RobotContainer
         driveDirectAngleKeyboard);
 
 
+
     drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
+    collector.setDefaultCommand(Commands.runOnce(collector::stopIntake, collector));
 
     //collector.setDefaultCommand(Commands.run(collector::stop, collector));
     //launcher.setDefaultCommand(Commands.run(launcher::stop, launcher));
@@ -334,12 +336,11 @@ public class RobotContainer
       //driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       //driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
       driverXbox.y().onTrue(launcher.prepareShotCommand(CLOSE_SHOT));
-      driverXbox.y().or(driverXbox.b().or(driverXbox.a())).onFalse(Commands.runOnce(launcher::stop, launcher));
+      driverXbox.y().or(driverXbox.b().or(driverXbox.a())).or(driverXbox.x()).onFalse(Commands.runOnce(launcher::stop, launcher));
       driverXbox.b().onTrue(launcher.prepareShotCommand(PROTECTED_SHOT));
       driverXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
       driverXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
-      driverXbox.leftTrigger().whileTrue(Commands.run(collector::intake, collector));
-      driverXbox.leftTrigger().onFalse(Commands.runOnce(collector::stopIntake, collector));
+      driverXbox.leftTrigger().or(operatorXbox.b()).whileTrue(Commands.run(collector::intake, collector));
       driverXbox.start().whileTrue(Commands.none());
       driverXbox.back().whileTrue(Commands.none());
       //driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());

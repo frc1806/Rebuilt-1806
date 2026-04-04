@@ -65,6 +65,7 @@ enum SliderStates{
 
 
 private Collector(){
+
     /*TalonFXConfiguration rollerConfig = new TalonFXConfiguration().withCurrentLimits(new CurrentLimitsConfigs().withStatorCurrentLimit(Constants.CollectorConstants.STATOR_CURRENT_LIMIT)
             .withSupplyCurrentLimit(Constants.CollectorConstants.SUPPLY_CURRENT_LIMIT)).withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
 
@@ -77,7 +78,7 @@ private Collector(){
     ClosedLoopConfig intakeRollerSpeedPIDConfig = new ClosedLoopConfig();
     intakeRollerSpeedPIDConfig.p(Constants.CollectorConstants.INTAKE_SPEED_KP)
         .i(Constants.CollectorConstants.INTAKE_SPEED_KI)
-        .d(Constants.CollectorConstants.INTAKE_SPEED_KD)
+        .d(Constants.CollectorConstants.INTAKE_SPEED_KD).minOutput(0.0)
         .feedForward
             .kS(Constants.CollectorConstants.INTAKE_SPEED_KS)
             .kV(Constants.CollectorConstants.INTAKE_SPEED_KV);
@@ -127,7 +128,7 @@ public void stop(){
 public void stopIntake(){
     if(mSliderMotor.getPosition().getValue().in(Rotations) > CollectorConstants.SLIDER_SAFE_EXTENSION_MIN){
         if(RobotContainer.launcher.isLaunching()){
-            mCollectorMotor.getClosedLoopController().setSetpoint(3000.0 + (Math.abs(RobotContainer.drivebase.getRobotVelocity().vxMetersPerSecond) * (3000.0/5.0)), ControlType.kVelocity);
+            mCollectorMotor.getClosedLoopController().setSetpoint(4000.0 + (Math.abs(RobotContainer.drivebase.getRobotVelocity().vxMetersPerSecond) * (2000.0/5.0)), ControlType.kVelocity);
         }
         else{
             mCollectorMotor.stopMotor();
