@@ -160,11 +160,11 @@ public final class Constants
 
     public static final double SLIDER_SAFE_EXTENSION_MIN = -10;
 
-    public static final double INTAKE_SPEED_KP = 0.067;
+    public static final double INTAKE_SPEED_KP = 0.0005;
     public static final double INTAKE_SPEED_KI = 0.0;
     public static final double INTAKE_SPEED_KD = 0.0;
-    public static final double INTAKE_SPEED_KS = 0.1;
-    public static final double INTAKE_SPEED_KV = 0.0002;
+    public static final double INTAKE_SPEED_KS = 0.01;
+    public static final double INTAKE_SPEED_KV = 0.00012;
 
   }
 
