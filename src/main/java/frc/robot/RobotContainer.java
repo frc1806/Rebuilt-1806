@@ -110,8 +110,8 @@ public class RobotContainer
     ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_GOAL_AIM.plus(drivebase.getShotCorrectionTranslation()):Constants.DrivebaseConstants.BLUE_ALLIANCE_GOAL_AIM.plus(drivebase.getShotCorrectionTranslation())).minus(drivebase.getPose().getTranslation()).getX()).headingWhile(true);
 
   SwerveInputStream driveFeedAim = driveAngularVelocity.copy().withControllerHeadingAxis(
-    ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_FEED_AIM:Constants.DrivebaseConstants.BLUE_ALLIANCE_FEED_AIM).minus(drivebase.getPose().getTranslation()).getY(), 
-    ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_FEED_AIM:Constants.DrivebaseConstants.BLUE_ALLIANCE_FEED_AIM).minus(drivebase.getPose().getTranslation()).getX()).headingWhile(true);
+    ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_FEED_AIM.plus(drivebase.getShotCorrectionTranslation()):Constants.DrivebaseConstants.BLUE_ALLIANCE_FEED_AIM.plus(drivebase.getShotCorrectionTranslation())).minus(drivebase.getPose().getTranslation()).getY(), 
+    ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_FEED_AIM.plus(drivebase.getShotCorrectionTranslation()):Constants.DrivebaseConstants.BLUE_ALLIANCE_FEED_AIM).plus(drivebase.getShotCorrectionTranslation()).minus(drivebase.getPose().getTranslation()).getX()).headingWhile(true);
 
 
   /**
@@ -162,13 +162,14 @@ public class RobotContainer
       drivebase::getPose,
       drivebase::getRobotVelocity,
       drivebase::drive,
-      new PIDController(1.0, 0.00, 0.1),  // translation
-      new PIDController(1.0, 0.0, 0.0),  // rotation
-      new PIDController(1.0, 0.0, 0.0)   // cross-track
+      new PIDController(0.4, 0.00, 0.1),  // translation
+      new PIDController(3.0, 0.0, 0.0),  // rotation
+      new PIDController(0.1, 0.0, 0.0)   // cross-track
   ).withDefaultShouldFlip()
   .withPoseReset(drivebase::resetOdometry);
 
   private SendableChooser<TestModes> mTestModeChooser = new SendableChooser<>();
+
 
   
   Command driveGoalAimCommand = drivebase.driveFieldOriented(driveGoalAim);
@@ -262,7 +263,7 @@ public class RobotContainer
 
     Command microwaveRightFollowCommand = pathBuilder.build(new Path("MicrowaveRight"));
     Command microwaveRight2FollowCommand = pathBuilder.build(new Path("MicrowaveRight2"));
-    Command microwaveRightAutoCommand = Commands.runOnce(collector::extend).andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.runOnce(collector::intake)).andThen(new ParallelDeadlineGroup(new WaitCommand(5.0), driveGoalAimCommand, launcher.launcherAimAtGoal())).andThen(Commands.runOnce(launcher::stop)).andThen(new ParallelDeadlineGroup(microwaveRight2FollowCommand, Commands.runOnce(collector::intake)).andThen(new ParallelDeadlineGroup(new WaitCommand(5.0), driveGoalAimCommand, launcher.launcherAimAtGoal())).andThen(Commands.runOnce(launcher::stop))));
+    Command microwaveRightAutoCommand = Commands.runOnce(collector::extend).andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.run(collector::intake, collector)).andThen(new ParallelDeadlineGroup(new WaitCommand(5.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal())).andThen(Commands.runOnce(launcher::stop, launcher)).andThen(new ParallelDeadlineGroup(microwaveRight2FollowCommand, Commands.run(collector::intake, collector)).andThen(new ParallelDeadlineGroup(new WaitCommand(5.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal())).andThen(Commands.runOnce(launcher::stop, launcher))));
     Autonomous.MICROWAVE_RIGHT.setAutonomousCommand(microwaveRightAutoCommand);
 
   }

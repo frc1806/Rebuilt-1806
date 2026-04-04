@@ -132,8 +132,8 @@ public final class Constants
     public static final double TRANSFER_SUPPLY_CURRENT_LIMIT = 50.0;
 
     public static final double TRANSFER_LAUNCHING_RPM = 4000.0;
-    public static final double SHOT_CORRECTION_FACTOR_X = 0.8;
-    public static final double SHOT_CORRECTION_FACTOR_Y = 0.5;
+    public static final double SHOT_CORRECTION_FACTOR_X = 1.5;
+    public static final double SHOT_CORRECTION_FACTOR_Y = 0.8;
 
   }
   public static class CollectorConstants
