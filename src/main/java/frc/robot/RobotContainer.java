@@ -183,7 +183,8 @@ public class RobotContainer
       CLIMB_AUTO(),
       RIGHT_CLIMB(),
       AMBITION(),
-      LEFT_GRAB()
+      LEFT_GRAB(),
+      MICROWAVE_RIGHT()
     ;
 
     private Command autonomousCommand;
@@ -258,6 +259,11 @@ public class RobotContainer
     Command leftGrabFollowCommand2 = pathBuilder.build(new Path("LeftGrab2"));
     Command leftGrabAutonoCommand = Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(collector::extend).andThen(new ParallelDeadlineGroup(leftGrabFollowCommand, Commands.runOnce(collector::intake)).andThen(Commands.runOnce(collector::stopIntake)).andThen(leftGrabFollowCommand2).andThen(Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)))));
     Autonomous.LEFT_GRAB.setAutonomousCommand(new AutonomousCommand(leftGrabAutonoCommand));
+
+    Command microwaveRightFollowCommand = pathBuilder.build(new Path("MicrowaveRight"));
+    Command microwaveRight2FollowCommand = pathBuilder.build(new Path("MicrowaveRight2"));
+    Command microwaveRightAutoCommand = Commands.runOnce(collector::extend).andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.runOnce(collector::intake)).andThen(new ParallelDeadlineGroup(new WaitCommand(5.0), driveGoalAimCommand, launcher.launcherAimAtGoal())).andThen(Commands.runOnce(launcher::stop)).andThen(new ParallelDeadlineGroup(microwaveRight2FollowCommand, Commands.runOnce(collector::intake)).andThen(new ParallelDeadlineGroup(new WaitCommand(5.0), driveGoalAimCommand, launcher.launcherAimAtGoal())).andThen(Commands.runOnce(launcher::stop))));
+    Autonomous.MICROWAVE_RIGHT.setAutonomousCommand(microwaveRightAutoCommand);
 
   }
 
