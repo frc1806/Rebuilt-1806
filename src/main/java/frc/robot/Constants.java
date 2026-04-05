@@ -109,8 +109,8 @@ public final class Constants
     public static final double HOOD_MIN_ANGLE = 0.0;
     public static final double HOOD_MAX_ANGLE = 50.0;
 
-    public static final double HOOD_MOTOR_KP = 125.0;
-    public static final double HOOD_MOTOR_KI = 1.0;
+    public static final double HOOD_MOTOR_KP = 150.0;
+    public static final double HOOD_MOTOR_KI = 3.0;
     public static final double HOOD_MOTOR_KD = 0.0;
 
     public static final int SMART_CURRENT_LIMIT = 12;
@@ -132,8 +132,8 @@ public final class Constants
     public static final double TRANSFER_SUPPLY_CURRENT_LIMIT = 50.0;
 
     public static final double TRANSFER_LAUNCHING_RPM = 4000.0;
-    public static final double SHOT_CORRECTION_FACTOR_X = 1.5;
-    public static final double SHOT_CORRECTION_FACTOR_Y = 0.8;
+    public static final double SHOT_CORRECTION_FACTOR_X = -0.5;
+    public static final double SHOT_CORRECTION_FACTOR_Y = -1.5;
 
   }
   public static class CollectorConstants
@@ -148,7 +148,7 @@ public final class Constants
     public static final double SLIDER_MOTOR_KI = 0.0;
     public static final double SLIDER_MOTOR_KD = 0.0;
 
-    public static final double OUT_POSITION = 38.0;
+    public static final double OUT_POSITION = 34.5;
     public static final double IN_POSITION =  0.75;
 
     public static final double INTAKE_ZEROING_CURRENT_THRESHOLD = 5; //amps
@@ -160,10 +160,10 @@ public final class Constants
 
     public static final double SLIDER_SAFE_EXTENSION_MIN = -10;
 
-    public static final double INTAKE_SPEED_KP = 0.0005;
+    public static final double INTAKE_SPEED_KP = 0.00055;
     public static final double INTAKE_SPEED_KI = 0.0;
     public static final double INTAKE_SPEED_KD = 0.0;
-    public static final double INTAKE_SPEED_KS = 0.01;
+    public static final double INTAKE_SPEED_KS = 0.008;
     public static final double INTAKE_SPEED_KV = 0.00012;
 
   }

@@ -97,7 +97,7 @@ private Collector(){
     //mSliderConfig.voltageCompensation(Constants.CollectorConstants.SLIDER_MOTOR_VOLTAGE_COMPENSATION);
     MotorOutputConfigs sliderOutputConfig = new MotorOutputConfigs();
     sliderOutputConfig.Inverted= InvertedValue.Clockwise_Positive;
-    sliderOutputConfig.NeutralMode = NeutralModeValue.Brake;
+    sliderOutputConfig.NeutralMode = NeutralModeValue.Coast;
     //mSliderConfig.inverted(Constants.CollectorConstants.SLIDER_MOTOR_INVERTED);
     sliderMotorConfig.withCurrentLimits(sliderCurrentLimitConfig).withMotorOutput(sliderOutputConfig);
     sliderMotorConfig.Slot0.kP = Constants.CollectorConstants.SLIDER_MOTOR_KP;
