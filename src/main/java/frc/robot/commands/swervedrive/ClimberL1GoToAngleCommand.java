@@ -23,6 +23,6 @@ public class ClimberL1GoToAngleCommand extends Command {
     }
 
     public void end(boolean interrupted){
-        RobotContainer.climber.manualControl(0.0, 0.0);
+        RobotContainer.climber.manualControl(0.0);
     }
 }

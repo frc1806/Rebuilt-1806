@@ -571,6 +571,23 @@ public class LauncherSubSystem extends SubsystemBase {
         };
     }
 
+    public Command launcherAimForDistance(double distanceToTarget){
+        return new Command(){
+
+            @Override
+            public Set<Subsystem> getRequirements() {
+                HashSet<Subsystem> reqs = new HashSet<>();
+                reqs.add(RobotContainer.launcher);
+                return reqs;
+            }
+
+            @Override
+            public void execute(){
+                shoot(VisionShotGenerator.GetGoalShotForDistance(distanceToTarget));
+            };
+        };
+    }
+
         public Command launcherAimForFeed(){
         return new Command(){
 

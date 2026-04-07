@@ -18,11 +18,11 @@ import frc.robot.RobotMap;
 
 public class ClimberSubsystem extends SubsystemBase{
 
-    private TalonFX mClimberFrontLead, mClimberFrontFollower;//, mClimberRearLead; //mClimberRearFollower;
+    private TalonFX mClimberFrontLead;// mClimberFrontFollower;//, mClimberRearLead; //mClimberRearFollower;
 
     public ClimberSubsystem(){
         mClimberFrontLead = new TalonFX(RobotMap.CLIMBER_1);
-        mClimberFrontFollower = new TalonFX(RobotMap.CLIMBER_2);
+        //mClimberFrontFollower = new TalonFX(RobotMap.CLIMBER_2);
         //mClimberRearLead = new TalonFX(RobotMap.CLIMBER_3);
         //mClimberRearFollower = new TalonFX(RobotMap.CLIMBER_4);
 
@@ -35,7 +35,7 @@ public class ClimberSubsystem extends SubsystemBase{
         //Follower reaFollower = new Follower(mClimberRearLead.getDeviceID(), MotorAlignmentValue.Opposed);
 
         mClimberFrontLead.getConfigurator().apply(climberCurrentLimitConfig);
-        mClimberFrontFollower.getConfigurator().apply(climberCurrentLimitConfig);
+        //mClimberFrontFollower.getConfigurator().apply(climberCurrentLimitConfig);
        //mClimberRearLead.getConfigurator().apply(climberCurrentLimitConfig);
         //mClimberRearFollower.getConfigurator().apply(climberCurrentLimitConfig);
         
@@ -54,7 +54,7 @@ public class ClimberSubsystem extends SubsystemBase{
         l1Slot0Configs.kD = Constants.ClimberConstants.CLIMBER_L1_KD;
         mClimberFrontLead.getConfigurator().apply(l1Slot0Configs);
 
-        mClimberFrontFollower.setControl(frontFollower);
+        //mClimberFrontFollower.setControl(frontFollower);
         //mClimberRearFollower.setControl(reaFollower);
     }
 
@@ -64,7 +64,7 @@ public class ClimberSubsystem extends SubsystemBase{
         
     }
 
-    public void manualControl(double frontOutput, double rearOutput){
+    public void manualControl(double frontOutput){
         mClimberFrontLead.set(frontOutput * 0.5);
         //mClimberRearLead.set(rearOutput * 0.5);
     }

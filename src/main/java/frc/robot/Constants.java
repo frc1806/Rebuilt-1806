@@ -102,7 +102,7 @@ public final class Constants
     public static final double FLYWHEEL_PER_MOTOR_STATOR_CURRENT_LIMIT = 120;
 
     public static final double FUEL_MOTORS_CURRENT_LIMIT = 80; //TRANSFER & HOPPER
-    public static final double FUEL_MOTORS_NOMINAL_VOLTAGE = 10.0; //Motors will output a maximum of 8 volts.
+    public static final double FUEL_MOTORS_NOMINAL_VOLTAGE = 10.0; //Motors will output a maximum of 10 volts.
 
     public static final boolean HOOD_AUTO_ZERO = false;
 
@@ -144,16 +144,20 @@ public final class Constants
     public static final double SLIDER_MOTOR_VOLTAGE_COMPENSATION = 8.0;
     public static final boolean SLIDER_MOTOR_INVERTED = true;
 
-    public static final double SLIDER_MOTOR_KP = 8.0/25.0;
-    public static final double SLIDER_MOTOR_KI = 0.0;
+    public static final double SLIDER_MOTOR_KP = 8.1/25.0;
+    public static final double SLIDER_MOTOR_KI = 0.05;
     public static final double SLIDER_MOTOR_KD = 0.0;
 
+    public static final double SLIDER_MOTOR_SOFT_KP = 2.0/25.0;
+    public static final double SLIDER_MOTOR_SOFT_KI = 0;
+    public static final double SLIDER_MOTOR_SOFT_KD = 0;
+
     public static final double OUT_POSITION = 34.5;
-    public static final double IN_POSITION =  0.75;
+    public static final double IN_POSITION =  0.0;
 
-    public static final double INTAKE_ZEROING_CURRENT_THRESHOLD = 5; //amps
+    public static final double INTAKE_ZEROING_CURRENT_THRESHOLD = 3; //amps
 
-    public static final double INTAKE_ZEROING_VELOCITY_THRESHOLD = 5;//RPM
+    public static final double INTAKE_ZEROING_VELOCITY_THRESHOLD = 8;//RPM
 
     public static final double SLIDER_SHAKE_POWER_FACTOR = .3;
     public static final double SLIDER_SHAKE_TIME_SCALER = 4;

@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -264,12 +265,24 @@ public class RobotContainer
 
     Command microwaveRightFollowCommand = pathBuilder.build(new Path("MicrowaveRight"));
     Command microwaveRight2FollowCommand = pathBuilder.build(new Path("MicrowaveRight2"));
-    Command microwaveRightAutoCommand = Commands.runOnce(collector::extend).andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.run(collector::intake, collector)).andThen(new ParallelDeadlineGroup(new WaitCommand(5.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal())).andThen(Commands.runOnce(launcher::stop, launcher)).andThen(new ParallelDeadlineGroup(microwaveRight2FollowCommand, Commands.run(collector::intake, collector)).andThen(new ParallelDeadlineGroup(new WaitCommand(5.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal())).andThen(Commands.runOnce(launcher::stop, launcher))));
+    Command microwaveRight3FollowCommand = pathBuilder.build(new Path("MicrowaveRight3"));
+    Command microwaveRightAutoCommand = Commands.runOnce(collector::extend)
+      .andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitCommand(3.0), launcher.launcherAimForDistance(2.7)))
+      .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
+      .andThen(new ParallelDeadlineGroup(microwaveRight2FollowCommand, Commands.run(collector::intake, collector), launcher.launcherAimForDistance(2.7))
+      .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
+      .andThen(Commands.runOnce(launcher::stop, launcher))))
+      .andThen(new ParallelDeadlineGroup(microwaveRight3FollowCommand, Commands.run(collector::intake, collector)));
     Autonomous.MICROWAVE_RIGHT.setAutonomousCommand(microwaveRightAutoCommand);
 
     Command microwaveLeftFollowCommand = pathBuilder.build(new Path("MicrowaveLeft"));
     Command microwaveLeft2FollowCommand = pathBuilder.build(new Path("MicrowaveLeft2"));
-    Command microwaveLeftAutoCommand = Commands.runOnce(collector::extend).andThen(new ParallelDeadlineGroup(microwaveLeftFollowCommand, Commands.run(collector::intake, collector)).andThen(new ParallelDeadlineGroup(new WaitCommand(5.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal())).andThen(Commands.runOnce(launcher::stop, launcher)).andThen(new ParallelDeadlineGroup(microwaveLeft2FollowCommand, Commands.run(collector::intake, collector)).andThen(new ParallelDeadlineGroup(new WaitCommand(5.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal())).andThen(Commands.runOnce(launcher::stop, launcher))));
+    Command microwaveLeftAutoCommand = Commands.runOnce(collector::extend)
+      .andThen(new ParallelDeadlineGroup(microwaveLeftFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitCommand(3.0), launcher.launcherAimForDistance(2.7)))
+      .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
+      .andThen(new ParallelDeadlineGroup(microwaveLeft2FollowCommand, Commands.run(collector::intake, collector), launcher.launcherAimForDistance(2.7))
+      .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
+      .andThen(Commands.runOnce(launcher::stop, launcher))));
     Autonomous.MICROWAVE_LEFT.setAutonomousCommand(microwaveLeftAutoCommand);
 
 
@@ -340,7 +353,7 @@ public class RobotContainer
     }
     else
     {
-      climber.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY(), () -> operatorXbox.getRightY()));
+      climber.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY()));
       //driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       //driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
       driverXbox.y().onTrue(launcher.prepareShotCommand(CLOSE_SHOT));
@@ -406,7 +419,7 @@ public class RobotContainer
             driverXbox.a().or(operatorXbox.a()).whileTrue(new ParallelCommandGroup(Commands.run(collector::stop, collector), Commands.run(launcher::stop, launcher)));
           break;
         case kClimberTest:
-            climber.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY(), () -> operatorXbox.getRightY()));/*
+            climber.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY()));/*
             drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
             climber.setDefaultCommand(climber.runClimberCommand(
               new DoubleSupplier() {

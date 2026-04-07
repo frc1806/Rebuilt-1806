@@ -9,21 +9,19 @@ import frc.robot.RobotContainer;
 public class RunClimberCommand extends Command{
 
     DoubleSupplier frontHookDoubleSupplier;
-    DoubleSupplier rearDoubleSupplier;
 
-    public RunClimberCommand(DoubleSupplier frontHookOutput, DoubleSupplier rearHookOutput){
+    public RunClimberCommand(DoubleSupplier frontHookOutput){
         addRequirements(RobotContainer.climber);
         frontHookDoubleSupplier = frontHookOutput;
-        rearDoubleSupplier = rearHookOutput;
     }
 
     @Override
     public void execute(){
-        RobotContainer.climber.manualControl(frontHookDoubleSupplier.getAsDouble(), rearDoubleSupplier.getAsDouble());
+        RobotContainer.climber.manualControl(frontHookDoubleSupplier.getAsDouble());
     }
 
     @Override
     public void end(boolean interrupted){
-        RobotContainer.climber.manualControl(0, 0);
+        RobotContainer.climber.manualControl(0);
     }
 }

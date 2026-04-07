@@ -56,7 +56,9 @@ public static Collector GetInstance(){
 enum SliderStates{
     kIdle,
     kExtending,
+    kExtended,
     kRetracting,
+    kRetracted,
     kZeroExtending,
     kShake
 }
@@ -103,6 +105,10 @@ private Collector(){
     sliderMotorConfig.Slot0.kP = Constants.CollectorConstants.SLIDER_MOTOR_KP;
     sliderMotorConfig.Slot0.kI = Constants.CollectorConstants.SLIDER_MOTOR_KI;
     sliderMotorConfig.Slot0.kD = Constants.CollectorConstants.SLIDER_MOTOR_KD;
+
+    sliderMotorConfig.Slot1.kP = Constants.CollectorConstants.SLIDER_MOTOR_SOFT_KP;
+    sliderMotorConfig.Slot1.kI = Constants.CollectorConstants.SLIDER_MOTOR_SOFT_KI;
+    sliderMotorConfig.Slot1.kD = Constants.CollectorConstants.SLIDER_MOTOR_SOFT_KD;
 
     mSliderSoftLimitConfig.ForwardSoftLimitThreshold = Constants.CollectorConstants.OUT_POSITION;
     mSliderSoftLimitConfig.ForwardSoftLimitEnable = true;
@@ -165,16 +171,18 @@ public void outtake(){
         switch (mSliderState) {
             case kExtending:
             if(Math.abs(mSliderMotor.getPosition().getValue().in(Rotations) - Constants.CollectorConstants.OUT_POSITION) < 1.0){
-                mSliderMotor.set(0.0);
+               mSliderState = SliderStates.kExtended;
             }
             else{
-                mSliderMotor.setControl(new PositionVoltage(Constants.CollectorConstants.OUT_POSITION));
+                mSliderMotor.setControl(new PositionVoltage(Constants.CollectorConstants.OUT_POSITION).withSlot(0));
 
             }
                 //mSliderMotor.getClosedLoopController().setSetpoint(Math.min(Constants.CollectorConstants.OUT_POSITION, Math.max( 0.0, (Constants.CollectorConstants.OUT_POSITION - (16.0* RobotContainer.launcher.getLaunchingTime() + (6 * Math.sin(4 * Math.PI * RobotContainer.launcher.getLaunchingTime())))))), ControlType.kPosition);
                 //mSliderMotor.getClosedLoopController().setSetpoint(Constants.CollectorConstants.OUT_POSITION, ControlType.kPosition);
                 break;
-
+            case kExtended:
+                mSliderMotor.setControl(new PositionVoltage(Constants.CollectorConstants.OUT_POSITION).withSlot(1));
+                break;
             default:
             case kIdle:
                 mSliderMotor.set(0);
@@ -182,15 +190,17 @@ public void outtake(){
 
             case kRetracting:
                 if(Math.abs(mSliderMotor.getPosition().getValue().in(Rotations) - Constants.CollectorConstants.IN_POSITION) < 1.0){
-                    mSliderMotor.set(0.0);
+                    mSliderState = SliderStates.kRetracted;
                 }
                 else{
-                    mSliderMotor.setControl(new PositionVoltage(Constants.CollectorConstants.IN_POSITION));
+                    mSliderMotor.setControl(new PositionVoltage(Constants.CollectorConstants.IN_POSITION).withSlot(0));
                 }
 
                 //mSliderMotor.getClosedLoopController().setSetpoint(Constants.CollectorConstants.IN_POSITION, ControlType.kPosition);
                 break;
-
+            case kRetracted:
+                    mSliderMotor.setControl(new PositionVoltage(Constants.CollectorConstants.IN_POSITION).withSlot(1));
+                break;
             case kShake:
                 mSliderMotor.set(Constants.CollectorConstants.SLIDER_SHAKE_POWER_FACTOR * Math.sin(Timer.getFPGATimestamp()* Constants.CollectorConstants.SLIDER_SHAKE_TIME_SCALER));
                 mCollectorMotor.set(.8);
