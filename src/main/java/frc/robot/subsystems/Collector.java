@@ -27,6 +27,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableValue;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.RobotMap;
@@ -245,6 +246,10 @@ public void outtake(){
         mSliderConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         mSliderMotor.getConfigurator().apply(mSliderConfig);
         
+    }
+
+    public Trigger isIntakeExdendedButIn(){
+        return new Trigger(() ->  mSliderState == SliderStates.kExtended && mSliderMotor.getPosition().getValue().in(Rotations) < Constants.CollectorConstants.OUT_POSITION - 3.0);
     }
 
    /* public void zeroExtending (){

@@ -551,7 +551,7 @@ public class LauncherSubSystem extends SubsystemBase {
     }
 
     public boolean getSmartEnableLaunch(){
-        return getVisionEnableLaunch() && mMatchTimer.getHubState().mIsActive;
+        return ((RobotContainer.drivebase.isRedAlliance()?Constants.DrivebaseConstants.RED_ALLIANCE_ZONE.isRobotInZone():Constants.DrivebaseConstants.BLUE_ALLIANCE_ZONE.isRobotInZone()) && getVisionEnableLaunch()) && mMatchTimer.getHubState().mIsActive;
     }
 
     public Command launcherAimAtGoal(){

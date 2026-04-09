@@ -14,7 +14,9 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -410,8 +412,37 @@ public class RobotContainer
       operatorXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
       operatorXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
 
+      operatorXbox.setRumble(RumbleType.kBothRumble, 1.0);
+      collector.isIntakeExdendedButIn().onTrue(Commands.runOnce(this::rumbleOperatorController)).onFalse(Commands.runOnce(this::stopRumbleOperatorController));
+      matchTimer.isHubAboutToDisable().whileTrue(Commands.run(this::updateRumbleHubAboutToDisable)).onFalse(Commands.runOnce(this::stopRumbleDriverController));
+      matchTimer.isHubAboutToEnable().whileTrue(Commands.run(this::updateRumbleHubAboutToEnable)).onFalse(Commands.runOnce(this::rumbleDriverController));
+      matchTimer.isHubEnabled().and(matchTimer.isHubAboutToDisable().negate()).whileTrue(Commands.run(this::rumbleDriverController)).onFalse(Commands.runOnce(this::stopRumbleDriverController));
     }
 
+  }
+
+  private void rumbleOperatorController(){
+    operatorXbox.setRumble(RumbleType.kBothRumble, 1.0);
+  }
+
+  public void stopRumbleOperatorController(){
+    operatorXbox.setRumble(RumbleType.kBothRumble, 0);
+  }
+
+  public void stopRumbleDriverController(){
+    driverXbox.setRumble(RumbleType.kBothRumble, 0);
+  }
+
+  private void updateRumbleHubAboutToEnable(){
+    driverXbox.setRumble(RumbleType.kLeftRumble, Math.abs(Math.pow(Math.sin(12.0 *Timer.getFPGATimestamp()), 3.0)) * .7); 
+  }
+  
+  private void updateRumbleHubAboutToDisable(){
+    driverXbox.setRumble(RumbleType.kRightRumble, Math.abs(Math.pow(Math.sin((24.0 *Timer.getFPGATimestamp())), 3.0)) * 1.0); 
+  }
+
+  private void rumbleDriverController(){
+    operatorXbox.setRumble(RumbleType.kLeftRumble, 0.4);
   }
 
   private void setTestModeBindings(TestModes mode){
@@ -515,6 +546,8 @@ public class RobotContainer
   }
 
   public void disabledPeriodic(){
-    matchTimer.writeToNetworkTables();;
+    matchTimer.writeToNetworkTables();
+    stopRumbleOperatorController();
+    stopRumbleDriverController();
   }
 }
