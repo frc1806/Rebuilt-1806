@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import frc.robot.swat.lib.CanandcolorHSVFilter;
+import frc.robot.swat.lib.OdometryZone;
 import swervelib.math.Matter;
 
 /**
@@ -70,6 +71,12 @@ public final class Constants
 
     public static final Translation2d RED_ALLIANCE_FEED_AIM = new Translation2d(15.537, 6.907);
     public static final Translation2d BLUE_ALLIANCE_FEED_AIM = new Translation2d(1.0, 1.0);
+    public static final OdometryZone BLUE_ALLIANCE_ZONE = new OdometryZone(new Translation2d(0.0, 0.0), new Translation2d(4.0, 8.0));
+    public static final OdometryZone NEUTRAL_ZONE = new OdometryZone(new Translation2d(4.0, 0.0), new Translation2d(12.5, 8.0));
+    public static final OdometryZone RED_ALLIANCE_ZONE = new OdometryZone(new Translation2d(12.5, 0.0), new Translation2d(16.0,8.0));
+
+    public static final double AUTO_POD_LOCK_MIN_HORIZ_SPEED = 0.1; //meter per second
+    public static final double AUTO_POD_LOCK_MIN_ROT_SPEED = 0.2; //radian per second
     public static final double AIM_ANGLE_TOLERANCE = 5;
 
   }

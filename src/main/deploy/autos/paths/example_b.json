@@ -2,13 +2,15 @@
   "path_elements": [
     {
       "type": "translation",
-      "x_meters": 1.0,
-      "y_meters": 7.5
+      "x_meters": 12.478444459494966,
+      "y_meters": 8.048764614773079,
+      "intermediate_handoff_radius_meters": 1.0
     },
     {
       "type": "translation",
       "x_meters": 5.0,
-      "y_meters": 6.0
+      "y_meters": 6.0,
+      "intermediate_handoff_radius_meters": 1.0
     },
     {
       "type": "rotation",
@@ -19,7 +21,8 @@
     {
       "type": "translation",
       "x_meters": 12.5,
-      "y_meters": 3.0
+      "y_meters": 3.0,
+      "intermediate_handoff_radius_meters": 1.0
     }
   ]
 }

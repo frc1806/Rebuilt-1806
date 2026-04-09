@@ -558,6 +558,21 @@ public class SwerveSubsystem extends SubsystemBase
     });
   }
 
+  public Command driveFieldOrientedAutoLock(Supplier<ChassisSpeeds> velocity)
+  {
+    return run(()->{
+      ChassisSpeeds chassisSpeeds = velocity.get();
+      if(Math.abs(chassisSpeeds.vxMetersPerSecond) < Constants.DrivebaseConstants.AUTO_POD_LOCK_MIN_HORIZ_SPEED 
+          && Math.abs(chassisSpeeds.vyMetersPerSecond) < Constants.DrivebaseConstants.AUTO_POD_LOCK_MIN_HORIZ_SPEED
+          && Math.abs(chassisSpeeds.omegaRadiansPerSecond) < Constants.DrivebaseConstants.AUTO_POD_LOCK_MIN_ROT_SPEED){
+            lock();
+          }
+          else{
+            swerveDrive.driveFieldOriented(velocity.get());
+          }
+    });
+  }
+
   /**
    * Drive according to the chassis robot oriented velocity.
    *

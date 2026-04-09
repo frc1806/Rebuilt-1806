@@ -14,6 +14,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -173,10 +174,22 @@ public class RobotContainer
   private SendableChooser<TestModes> mTestModeChooser = new SendableChooser<>();
 
 
-  
-  Command driveGoalAimCommand = drivebase.driveFieldOriented(driveGoalAim);
-  Command driveFeedAimCommand = drivebase.driveFieldOriented(driveFeedAim);
+  private Command getDriveGoalAimCommand(){
+    return drivebase.driveFieldOriented(driveGoalAim);
+  }
 
+  private Command getDriveGoalAimAutoLockCommand(){
+    return drivebase.driveFieldOrientedAutoLock(driveGoalAim);
+  }
+
+  private Command getDriveFeedAimCommand(){
+    return drivebase.driveFieldOriented(driveFeedAim);
+  }
+
+  private Command getDriveFeedAimAutoLockCommand(){
+    return drivebase.driveFieldOrientedAutoLock(driveFeedAim);
+  }
+  
 
   
   public enum Autonomous{
@@ -373,9 +386,17 @@ public class RobotContainer
       driverXbox.povUp().onTrue(Commands.runOnce(launcher::adjustShooterOffsetLower));
       driverXbox.povDown().onTrue(Commands.runOnce(launcher::adjustShooterOffsetHigher));
       driverXbox.povRight().onTrue(Commands.runOnce(drivebase::manualFullPhotonvisionOdometryReset));
-      driverXbox.a().whileTrue(Commands.runOnce(snapAnglesHelper::clearSnapAngleMemory).andThen(driveGoalAimCommand.alongWith(launcher.launcherAimAtGoal())));
-    
-      driverXbox.x().whileTrue(Commands.runOnce(snapAnglesHelper::clearSnapAngleMemory).andThen(driveFeedAimCommand.alongWith(launcher.launcherAimForFeed())));
+      //driverXbox.a().whileTrue(Commands.runOnce(snapAnglesHelper::clearSnapAngleMemory).andThen(driveGoalAimCommand.alongWith(launcher.launcherAimAtGoal())));
+      driverXbox.a().and(()-> !drivebase.isRedAlliance()).and(()->Constants.DrivebaseConstants.BLUE_ALLIANCE_ZONE.isRobotInZone()).onTrue(Commands.runOnce(snapAnglesHelper::clearSnapAngleMemory).andThen(getDriveGoalAimCommand().alongWith(launcher.launcherAimAtGoal())));
+      driverXbox.a().and(()-> drivebase.isRedAlliance()).and(()->Constants.DrivebaseConstants.RED_ALLIANCE_ZONE.isRobotInZone()).onTrue(Commands.runOnce(snapAnglesHelper::clearSnapAngleMemory).andThen(getDriveGoalAimCommand().alongWith(launcher.launcherAimAtGoal())));
+      driverXbox.a().and(()-> !drivebase.isRedAlliance()).and(()->!Constants.DrivebaseConstants.BLUE_ALLIANCE_ZONE.isRobotInZone()).onTrue(getDriveFeedAimCommand().alongWith(launcher.launcherAimForFeed()));
+      driverXbox.a().and(()-> drivebase.isRedAlliance()).and(()->!Constants.DrivebaseConstants.RED_ALLIANCE_ZONE.isRobotInZone()).onTrue(getDriveFeedAimCommand().alongWith(launcher.launcherAimForFeed()));
+
+      driverXbox.x().and(()-> !drivebase.isRedAlliance()).and(()->Constants.DrivebaseConstants.BLUE_ALLIANCE_ZONE.isRobotInZone()).onTrue(Commands.runOnce(snapAnglesHelper::clearSnapAngleMemory).andThen(getDriveGoalAimAutoLockCommand().alongWith(launcher.launcherAimAtGoal())));
+      driverXbox.x().and(()-> drivebase.isRedAlliance()).and(()->Constants.DrivebaseConstants.RED_ALLIANCE_ZONE.isRobotInZone()).onTrue(Commands.runOnce(snapAnglesHelper::clearSnapAngleMemory).andThen(getDriveGoalAimAutoLockCommand().alongWith(launcher.launcherAimAtGoal())));
+      driverXbox.x().and(()-> !drivebase.isRedAlliance()).and(()->!Constants.DrivebaseConstants.BLUE_ALLIANCE_ZONE.isRobotInZone()).onTrue(getDriveFeedAimAutoLockCommand().alongWith(launcher.launcherAimForFeed()));
+      driverXbox.x().and(()-> drivebase.isRedAlliance()).and(()->!Constants.DrivebaseConstants.RED_ALLIANCE_ZONE.isRobotInZone()).onTrue(getDriveFeedAimAutoLockCommand().alongWith(launcher.launcherAimForFeed()));
+      //driverXbox.x().whileTrue(Commands.runOnce(snapAnglesHelper::clearSnapAngleMemory).andThen(driveFeedAimCommand.alongWith(launcher.launcherAimForFeed())));
 
       operatorXbox.a().onTrue(Commands.runOnce(collector::extend));
       operatorXbox.y().onTrue(Commands.runOnce(collector::retract));
