@@ -19,6 +19,7 @@ import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.networktables.NetworkTable;
@@ -76,6 +77,7 @@ private Collector(){
     SparkFlexConfig intakeConfig = new SparkFlexConfig();
     intakeConfig.smartCurrentLimit(Constants.CollectorConstants.SUPPLY_CURRENT_LIMIT);
     intakeConfig.inverted(false);
+    intakeConfig.idleMode(IdleMode.kCoast);
 
     ClosedLoopConfig intakeRollerSpeedPIDConfig = new ClosedLoopConfig();
     intakeRollerSpeedPIDConfig.p(Constants.CollectorConstants.INTAKE_SPEED_KP)
@@ -189,12 +191,7 @@ public void outtake(){
                 break;
 
             case kRetracting:
-                if(Math.abs(mSliderMotor.getPosition().getValue().in(Rotations) - Constants.CollectorConstants.IN_POSITION) < 1.0){
-                    mSliderState = SliderStates.kRetracted;
-                }
-                else{
-                    mSliderMotor.setControl(new PositionVoltage(Constants.CollectorConstants.IN_POSITION).withSlot(0));
-                }
+             mSliderMotor.setControl(new PositionVoltage(Constants.CollectorConstants.IN_POSITION).withSlot(0));
 
                 //mSliderMotor.getClosedLoopController().setSetpoint(Constants.CollectorConstants.IN_POSITION, ControlType.kPosition);
                 break;

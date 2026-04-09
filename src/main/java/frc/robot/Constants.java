@@ -148,7 +148,7 @@ public final class Constants
     public static final double SLIDER_MOTOR_KI = 0.05;
     public static final double SLIDER_MOTOR_KD = 0.0;
 
-    public static final double SLIDER_MOTOR_SOFT_KP = 2.0/25.0;
+    public static final double SLIDER_MOTOR_SOFT_KP = 0.0000;
     public static final double SLIDER_MOTOR_SOFT_KI = 0;
     public static final double SLIDER_MOTOR_SOFT_KD = 0;
 
