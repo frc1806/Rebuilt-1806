@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.AutonomousCommand;
+import frc.robot.commands.odometrytriggers.WaitForXTripline;
 import frc.robot.commands.swervedrive.ClimberL1GoToAngleCommand;
 import frc.robot.commands.swervedrive.RunClimberCommand;
 import frc.robot.lib.BLine.FollowPath;
@@ -267,7 +268,7 @@ public class RobotContainer
     Command microwaveRight2FollowCommand = pathBuilder.build(new Path("MicrowaveRight2"));
     Command microwaveRight3FollowCommand = pathBuilder.build(new Path("MicrowaveRight3"));
     Command microwaveRightAutoCommand = Commands.runOnce(collector::extend)
-      .andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitCommand(3.0), launcher.launcherAimForDistance(2.7)))
+      .andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitForXTripline(5.861), launcher.launcherAimForDistance(2.7)))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(new ParallelDeadlineGroup(microwaveRight2FollowCommand, Commands.run(collector::intake, collector), launcher.launcherAimForDistance(2.7))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
@@ -278,7 +279,7 @@ public class RobotContainer
     Command microwaveLeftFollowCommand = pathBuilder.build(new Path("MicrowaveLeft"));
     Command microwaveLeft2FollowCommand = pathBuilder.build(new Path("MicrowaveLeft2"));
     Command microwaveLeftAutoCommand = Commands.runOnce(collector::extend)
-      .andThen(new ParallelDeadlineGroup(microwaveLeftFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitCommand(3.0), launcher.launcherAimForDistance(2.7)))
+      .andThen(new ParallelDeadlineGroup(microwaveLeftFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitForXTripline(5.861), launcher.launcherAimForDistance(2.7)))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(new ParallelDeadlineGroup(microwaveLeft2FollowCommand, Commands.run(collector::intake, collector), launcher.launcherAimForDistance(2.7))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
