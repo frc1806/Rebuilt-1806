@@ -1,10 +1,7 @@
 package frc.robot;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
-
 import org.apache.commons.configuration2.FileBasedConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
@@ -53,7 +50,7 @@ public class RobotPreferences {
         try {
             builder.save();
         } catch (ConfigurationException e) {
-            // TODO Auto-generated catch block
+            System.out.println("ROBOT PREFERENCES : Failed to load preferences on boot!");// TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

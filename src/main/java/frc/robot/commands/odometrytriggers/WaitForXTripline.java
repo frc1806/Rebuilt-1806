@@ -1,7 +1,6 @@
 package frc.robot.commands.odometrytriggers;
 
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
@@ -19,7 +18,6 @@ public class WaitForXTripline extends Command{
 
     @Override
     public void end(boolean interrupted) {
-        // TODO Auto-generated method stub
         super.end(interrupted);
     }
 
