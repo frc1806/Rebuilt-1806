@@ -149,7 +149,8 @@ public void stopIntake(){
 public void intake(){
     if(mSliderMotor.getPosition().getValue().in(Rotations) > CollectorConstants.SLIDER_SAFE_EXTENSION_MIN){
        // mCollectorMotor.setVoltage(6.0 + (Math.abs(RobotContainer.drivebase.getRobotVelocity().vxMetersPerSecond) * (6.0/5.0)));
-       mCollectorMotor.getClosedLoopController().setSetpoint(3000.0 + (Math.abs(RobotContainer.drivebase.getRobotVelocity().vxMetersPerSecond) * (3000.0/5.0)), ControlType.kVelocity);
+       mCollectorMotor.getClosedLoopController().setSetpoint(5250.0 + (Math.abs(RobotContainer.drivebase.getRobotVelocity().vxMetersPerSecond) * (2000.0/4.0)), ControlType.kVelocity);
+       //mCollectorMotor.setVoltage(11.0);
     }
     else{
         mCollectorMotor.setVoltage(0);

@@ -380,8 +380,7 @@ public class RobotContainer
       driverXbox.start().whileTrue(Commands.none());
       driverXbox.back().whileTrue(Commands.none());
       //driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
-      driverXbox.leftBumper().whileTrue(Commands.runOnce(collector::outtake));
-      driverXbox.leftBumper().onFalse(Commands.runOnce(collector::stopIntake));
+      driverXbox.leftBumper().whileTrue(Commands.run(collector::outtake, collector));
       driverXbox.rightBumper().whileTrue(driveFieldOrientedDirectAngleSlow);
 
       driverXbox.povUp().onTrue(Commands.runOnce(launcher::adjustShooterOffsetLower));
@@ -412,7 +411,7 @@ public class RobotContainer
       operatorXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
 
       operatorXbox.setRumble(RumbleType.kBothRumble, 1.0);
-      collector.isIntakeExdendedButIn().onTrue(Commands.runOnce(this::rumbleOperatorController)).onFalse(Commands.runOnce(this::stopRumbleOperatorController));
+      //collector.isIntakeExdendedButIn().onTrue(Commands.runOnce(this::rumbleOperatorController)).onFalse(Commands.runOnce(this::stopRumbleOperatorController));
       matchTimer.isHubAboutToDisable().whileTrue(Commands.run(this::updateRumbleHubAboutToDisable)).onFalse(Commands.runOnce(this::stopRumbleDriverController));
       matchTimer.isHubAboutToEnable().whileTrue(Commands.run(this::updateRumbleHubAboutToEnable)).onFalse(Commands.runOnce(this::rumbleDriverController));
       matchTimer.isHubEnabled().and(matchTimer.isHubAboutToDisable().negate()).whileTrue(Commands.run(this::rumbleDriverController)).onFalse(Commands.runOnce(this::stopRumbleDriverController));
