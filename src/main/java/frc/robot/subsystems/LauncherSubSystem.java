@@ -575,6 +575,24 @@ public class LauncherSubSystem extends SubsystemBase {
         };
     }
 
+        public Command launcherAimForDistanceNoHood(double distanceToTarget){
+        return new Command(){
+
+            @Override
+            public Set<Subsystem> getRequirements() {
+                HashSet<Subsystem> reqs = new HashSet<>();
+                reqs.add(RobotContainer.launcher);
+                return reqs;
+            }
+
+            @Override
+            public void execute(){
+                Shot visionShotForDistance = VisionShotGenerator.GetGoalShotForDistance(distanceToTarget);
+                shoot(visionShotForDistance.getFlywheelSpeed(), Degrees.of(0.0).minus(Degrees.of(RobotPreferences.GetShooterAngleOffset())), Volt.of(0.0));
+            };
+        };
+    }
+
         public Command launcherAimForFeed(){
         return new Command(){
 
@@ -590,6 +608,11 @@ public class LauncherSubSystem extends SubsystemBase {
                 shoot(VisionShotGenerator.GetGoalShotForDistance(mDrivebase.getDistanceToFeed()));
             };
         };
+    }
+
+    public Angle getHoodAngle(){
+        return mHoodMotor.getPosition().getValue();
+
     }
 
     public void testHood15(){

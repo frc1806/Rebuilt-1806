@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.AutonomousCommand;
+import frc.robot.commands.WaitForHoodRetract;
 import frc.robot.commands.odometrytriggers.WaitForXTripline;
 import frc.robot.commands.swervedrive.ClimberL1GoToAngleCommand;
 import frc.robot.commands.swervedrive.RunClimberCommand;
@@ -166,9 +167,9 @@ public class RobotContainer
       drivebase::getPose,
       drivebase::getRobotVelocity,
       drivebase::drive,
-      new PIDController(0.4, 0.00, 0.1),  // translation
+      new PIDController(3.0, 0.00, 0.1),  // translation
       new PIDController(3.0, 0.0, 0.0),  // rotation
-      new PIDController(0.1, 0.0, 0.0)   // cross-track
+      new PIDController(0.2, 0.0, 0.0)   // cross-track
   ).withDefaultShouldFlip()
   .withPoseReset(drivebase::resetOdometry);
 
@@ -203,6 +204,8 @@ public class RobotContainer
       LEFT_GRAB(),
       MICROWAVE_RIGHT(),
       MICROWAVE_LEFT(),
+      KETTLE_RIGHT(),
+      KETTLE_LEFT()
     ;
 
     private Command autonomousCommand;
@@ -282,24 +285,65 @@ public class RobotContainer
     Command microwaveRight2FollowCommand = pathBuilder.build(new Path("MicrowaveRight2"));
     Command microwaveRight3FollowCommand = pathBuilder.build(new Path("MicrowaveRight3"));
     Command microwaveRightAutoCommand = Commands.runOnce(collector::extend)
-      .andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitForXTripline(5.861), launcher.launcherAimForDistance(2.7)))
+      .andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector)), new SequentialCommandGroup(new WaitForXTripline(5.861), launcher.launcherAimForDistance(2.7)))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
-      .andThen(new ParallelDeadlineGroup(microwaveRight2FollowCommand, Commands.run(collector::intake, collector), launcher.launcherAimForDistance(2.7))
+      .andThen(new ParallelDeadlineGroup(microwaveRight2FollowCommand, Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector)), launcher.launcherAimForDistance(2.7))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(Commands.runOnce(launcher::stop, launcher))))
-      .andThen(new ParallelDeadlineGroup(microwaveRight3FollowCommand, Commands.run(collector::intake, collector)));
+      .andThen(new ParallelDeadlineGroup(microwaveRight3FollowCommand, Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector))));
     Autonomous.MICROWAVE_RIGHT.setAutonomousCommand(microwaveRightAutoCommand);
 
     Command microwaveLeftFollowCommand = pathBuilder.build(new Path("MicrowaveLeft"));
     Command microwaveLeft2FollowCommand = pathBuilder.build(new Path("MicrowaveLeft2"));
     Command microwaveLeftAutoCommand = Commands.runOnce(collector::extend)
-      .andThen(new ParallelDeadlineGroup(microwaveLeftFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitForXTripline(5.861), launcher.launcherAimForDistance(2.7)))
+      .andThen(new ParallelDeadlineGroup(microwaveLeftFollowCommand,Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector)), new SequentialCommandGroup(new WaitForXTripline(5.861), launcher.launcherAimForDistance(2.7)))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
-      .andThen(new ParallelDeadlineGroup(microwaveLeft2FollowCommand, Commands.run(collector::intake, collector), launcher.launcherAimForDistance(2.7))
+      .andThen(new ParallelDeadlineGroup(microwaveLeft2FollowCommand, Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector)), launcher.launcherAimForDistance(2.7))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(Commands.runOnce(launcher::stop, launcher))));
     Autonomous.MICROWAVE_LEFT.setAutonomousCommand(microwaveLeftAutoCommand);
 
+    Command kettleRightFollowCommand = pathBuilder.build(new Path("KettleRight"));
+    Command kettleRight2FollowCommand = pathBuilder.build(new Path("KettleRight2"));
+    Command kettleRightAutoCommand = kettleRightFollowCommand
+      .deadlineFor(
+        new WaitForXTripline(5.5).andThen(Commands.runOnce(collector::extend, collector))
+         .andThen(Commands.run(collector::intake, collector).alongWith(new SequentialCommandGroup(new WaitForXTripline(5.0), launcher.launcherAimForDistanceNoHood(4.125))))
+      )
+      .andThen(new ParallelDeadlineGroup(new WaitCommand(4.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
+      .andThen(Commands.runOnce(launcher::stop, launcher))
+      .andThen(new WaitForHoodRetract())
+      .andThen(kettleRight2FollowCommand
+      .deadlineFor(
+        new WaitForXTripline(5.5).andThen(Commands.runOnce(collector::extend, collector))
+         .andThen(Commands.run(collector::intake, collector).alongWith(new SequentialCommandGroup(new WaitForXTripline(5.0), launcher.launcherAimForDistanceNoHood(4.125))))
+      )
+      .andThen(new ParallelDeadlineGroup(new WaitCommand(4.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
+      .andThen(Commands.runOnce(launcher::stop, launcher))
+      .andThen(new WaitForHoodRetract())
+      );
+      Autonomous.KETTLE_RIGHT.setAutonomousCommand(kettleRightAutoCommand);
+
+    Command kettleLeftFollowCommand = pathBuilder.build(new Path("KettleLeft"));
+    Command kettleLeft2FollowCommand = pathBuilder.build(new Path("KettleLeft2"));
+    Command kettleLeftAutoCommand = kettleLeftFollowCommand
+      .deadlineFor(
+        new WaitForXTripline(5.5).andThen(Commands.runOnce(collector::extend, collector))
+         .andThen(Commands.run(collector::intake, collector).alongWith(new SequentialCommandGroup(new WaitForXTripline(5.0), launcher.launcherAimForDistanceNoHood(4.125))))
+      )
+      .andThen(new ParallelDeadlineGroup(new WaitCommand(4.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
+      .andThen(Commands.runOnce(launcher::stop, launcher))
+      .andThen(new WaitForHoodRetract())
+      .andThen(kettleLeft2FollowCommand
+      .deadlineFor(
+        new WaitForXTripline(5.5).andThen(Commands.runOnce(collector::extend, collector))
+         .andThen(Commands.run(collector::intake, collector).alongWith(new SequentialCommandGroup(new WaitForXTripline(5.0), launcher.launcherAimForDistanceNoHood(4.125))))
+      )
+      .andThen(new ParallelDeadlineGroup(new WaitCommand(4.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
+      .andThen(Commands.runOnce(launcher::stop, launcher))
+      .andThen(new WaitForHoodRetract())
+      );
+      Autonomous.KETTLE_LEFT.setAutonomousCommand(kettleLeftAutoCommand);
 
   }
 
