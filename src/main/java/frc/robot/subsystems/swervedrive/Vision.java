@@ -339,10 +339,10 @@ public class Vision
      * Left Camera
      */
     TOP_CAM("top",
-             new Rotation3d(0, Math.toRadians(30), 0.0),
-             new Translation3d(Units.inchesToMeters(2),
-                               Units.inchesToMeters(-6.75),
-                               Units.inchesToMeters(20)),
+             new Rotation3d(0, Math.toRadians(28.3), 0.0),
+             new Translation3d(Units.inchesToMeters(3.75),
+                               Units.inchesToMeters(-7.0),
+                               Units.inchesToMeters(20.75)),
              VecBuilder.fill(4, 4, 8), VecBuilder.fill(0.5, 0.5, 1)),
     /**
      * Right Camera

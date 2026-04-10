@@ -114,6 +114,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
     private boolean mEnableLaunch = false;
     private boolean mVisionEnableLaunch = false;
+    private boolean mIsPreciseShot = true;
 
     private static final AngularVelocity kVelocityTolerance = RPM.of(Constants.LauncherConstants.FLYWHEEL_RPM_TOLERANCE);
 
@@ -133,6 +134,7 @@ public class LauncherSubSystem extends SubsystemBase {
         mHoodMotor = new TalonFX(RobotMap.HOOD);
         mHopper = new TalonFX(RobotMap.HOPPER);
         mTransfer = new TalonFX(RobotMap.TRANSFER);
+        
 
         //SETUP FLYWHEEL MOTORS (Phoenix v6)
         TalonFXConfiguration flywheelLeaderConfig = new TalonFXConfiguration();
@@ -286,6 +288,7 @@ public class LauncherSubSystem extends SubsystemBase {
         {
             mLauncherState = LauncherStates.kClosedLoop;
         } 
+        mIsPreciseShot = true;
     }
 
         /**
@@ -294,6 +297,7 @@ public class LauncherSubSystem extends SubsystemBase {
          */
         public void shoot(Shot shot){
             shoot(shot.getFlywheelSpeed(), shot.getHoodAngle(), shot.getFeedSpeed());
+            mIsPreciseShot = shot.isPreciseShot();
         }
 
 
@@ -371,9 +375,15 @@ public class LauncherSubSystem extends SubsystemBase {
             case kClosedLoop:
                 mHoodMotor.setControl(new PositionVoltage(mTargetAngle));
                 //mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
-                mFlywheelLeader.setControl(mFlywheelRequest); 
-                mHopper.stopMotor();
-                mTransfer.stopMotor();
+                mFlywheelLeader.setControl(mFlywheelRequest);
+                if(!mIsPreciseShot && mFlywheelLeader.getVelocity().getValue().in(RPM) > 1700) {
+                    mHopper.setControl(new VoltageOut(mFeedSpeed));
+                    mTransfer.setControl(mTransferMoveRequest);
+                }
+                else{
+                    mHopper.stopMotor();
+                    mTransfer.stopMotor();
+                }
                 if(isAtSpeed())
                 {
                     mFlywheelEstimator.addLast(estimatekF());
@@ -513,7 +523,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
     public void clean(){
         mLauncherState = LauncherStates.kCleaningMode;
-        mFlywheelLeader.setVoltage(3.0);
+        mFlywheelLeader.setVoltage(-3.0);
         mHopper.setVoltage(3.0);
 
     }
@@ -605,7 +615,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
             @Override
             public void execute(){
-                shoot(VisionShotGenerator.GetGoalShotForDistance(mDrivebase.getDistanceToFeed()));
+                shoot(VisionShotGenerator.GetFeedShotForDistance(mDrivebase.getDistanceToFeed()));
             };
         };
     }

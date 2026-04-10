@@ -22,6 +22,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableValue;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -171,7 +172,7 @@ public void outtake(){
     public void periodic() {
         switch (mSliderState) {
             case kExtending:
-            if(Math.abs(mSliderMotor.getPosition().getValue().in(Rotations) - Constants.CollectorConstants.OUT_POSITION) < 1.0){
+            if(Math.abs(mSliderMotor.getPosition().getValue().in(Rotations) - Constants.CollectorConstants.OUT_POSITION) < 1.0 && !DriverStation.isAutonomousEnabled()){
                mSliderState = SliderStates.kExtended;
             }
             else{

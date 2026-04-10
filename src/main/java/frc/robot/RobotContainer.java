@@ -252,7 +252,7 @@ public class RobotContainer
 
   public void buildAutonomousCommands(){
     Autonomous.DO_NOTHING.setAutonomousCommand(new AutonomousCommand(new WaitCommand(15)));
-    Autonomous.VISION_SHOOT_ONLY.setAutonomousCommand(new AutonomousCommand(drivebase.driveFieldOriented(driveGoalAim).alongWith(launcher.launcherAimAtGoal())));   
+    Autonomous.VISION_SHOOT_ONLY.setAutonomousCommand(new AutonomousCommand(new WaitCommand(1.0).andThen(drivebase.driveFieldOriented(driveGoalAim).alongWith(launcher.launcherAimAtGoal()))));   
     //Path myPath = new Path("SweepRight");
     //Command followCommand = pathBuilder.build(new Path("SweepRight")).andThen(pathBuilder.build(new Path("SweepRight2")).andThen(Commands.runOnce(drivebase::stop, drivebase)));
     Command basicAuto = pathBuilder.build(new Path("BasicPath")).alongWith(Commands.runOnce(collector::extend, collector)).andThen(Commands.runOnce(launcher::enableLaunching)).andThen(launcher.prepareShotCommand(PROTECTED_SHOT)).andThen(new WaitCommand(10)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching));
@@ -291,7 +291,7 @@ public class RobotContainer
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(Commands.runOnce(launcher::stop, launcher))))
       .andThen(new ParallelDeadlineGroup(microwaveRight3FollowCommand, Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector))));
-    Autonomous.MICROWAVE_RIGHT.setAutonomousCommand(microwaveRightAutoCommand);
+    Autonomous.MICROWAVE_RIGHT.setAutonomousCommand(new AutonomousCommand(microwaveRightAutoCommand));
 
     Command microwaveLeftFollowCommand = pathBuilder.build(new Path("MicrowaveLeft"));
     Command microwaveLeft2FollowCommand = pathBuilder.build(new Path("MicrowaveLeft2"));
@@ -301,7 +301,7 @@ public class RobotContainer
       .andThen(new ParallelDeadlineGroup(microwaveLeft2FollowCommand, Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector)), launcher.launcherAimForDistance(2.7))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(Commands.runOnce(launcher::stop, launcher))));
-    Autonomous.MICROWAVE_LEFT.setAutonomousCommand(microwaveLeftAutoCommand);
+    Autonomous.MICROWAVE_LEFT.setAutonomousCommand(new AutonomousCommand(microwaveLeftAutoCommand));
 
     Command kettleRightFollowCommand = pathBuilder.build(new Path("KettleRight"));
     Command kettleRight2FollowCommand = pathBuilder.build(new Path("KettleRight2"));
@@ -322,7 +322,7 @@ public class RobotContainer
       .andThen(Commands.runOnce(launcher::stop, launcher))
       .andThen(new WaitForHoodRetract())
       );
-      Autonomous.KETTLE_RIGHT.setAutonomousCommand(kettleRightAutoCommand);
+      Autonomous.KETTLE_RIGHT.setAutonomousCommand(new AutonomousCommand(kettleRightAutoCommand));
 
     Command kettleLeftFollowCommand = pathBuilder.build(new Path("KettleLeft"));
     Command kettleLeft2FollowCommand = pathBuilder.build(new Path("KettleLeft2"));
@@ -343,7 +343,7 @@ public class RobotContainer
       .andThen(Commands.runOnce(launcher::stop, launcher))
       .andThen(new WaitForHoodRetract())
       );
-      Autonomous.KETTLE_LEFT.setAutonomousCommand(kettleLeftAutoCommand);
+      Autonomous.KETTLE_LEFT.setAutonomousCommand(new AutonomousCommand(kettleLeftAutoCommand));
 
   }
 
@@ -416,7 +416,7 @@ public class RobotContainer
       //driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       //driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
       driverXbox.y().onTrue(launcher.prepareShotCommand(CLOSE_SHOT));
-      driverXbox.y().or(driverXbox.b().or(driverXbox.a())).or(driverXbox.x()).onFalse(Commands.runOnce(launcher::stop, launcher));
+      driverXbox.y().or(driverXbox.b().or(driverXbox.a())).or(driverXbox.x()).or(operatorXbox.leftBumper()).onFalse(Commands.runOnce(launcher::stop, launcher));
       driverXbox.b().onTrue(launcher.prepareShotCommand(PROTECTED_SHOT));
       driverXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
       driverXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
@@ -453,6 +453,7 @@ public class RobotContainer
       operatorXbox.leftTrigger().onFalse(Commands.runOnce(launcher::stop, launcher));
       operatorXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
       operatorXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
+      operatorXbox.leftBumper().and(driverXbox.a().negate().and(driverXbox.x().negate().and(driverXbox.b().negate().and(driverXbox.y().negate())))).whileTrue(launcher.launcherAimForDistanceNoHood(2.0));
 
       operatorXbox.setRumble(RumbleType.kBothRumble, 1.0);
       //collector.isIntakeExdendedButIn().onTrue(Commands.runOnce(this::rumbleOperatorController)).onFalse(Commands.runOnce(this::stopRumbleOperatorController));

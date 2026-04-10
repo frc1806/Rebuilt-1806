@@ -2,6 +2,7 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.RobotContainer;
 
 /**
@@ -13,7 +14,7 @@ public class AutonomousCommand extends Command{
     private Command mAutonomousCommand;
 
     public AutonomousCommand(Command autoCommand){
-        mAutonomousCommand = autoCommand;
+        mAutonomousCommand = new WaitCommand(0.3).andThen(autoCommand);
         addRequirements(autoCommand.getRequirements());
     }
 
