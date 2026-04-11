@@ -69,8 +69,10 @@ public final class Constants
     public static final Translation2d BLUE_ALLIANCE_GOAL_AIM = new Translation2d(4.833, 4.00);
     public static final Translation2d RED_ALLIANCE_GOAL_AIM = new Translation2d(11.849, 4.00);
 
-    public static final Translation2d RED_ALLIANCE_FEED_AIM = new Translation2d(15.537, 6.907);
-    public static final Translation2d BLUE_ALLIANCE_FEED_AIM = new Translation2d(1.0, 1.0);
+    public static final Translation2d RED_ALLIANCE_FEED_AIM = new Translation2d(15.537, 6.5);
+    public static final Translation2d RED_ALLIANCE_FEED_AIM_LEFT = new Translation2d(15.537, 1.5);
+    public static final Translation2d BLUE_ALLIANCE_FEED_AIM = new Translation2d(1.0, 1.5);
+    public static final Translation2d BLUE_ALLIANCE_FEED_AIM_LEFT = new Translation2d(1.0, 6.5);
     public static final OdometryZone BLUE_ALLIANCE_ZONE = new OdometryZone(new Translation2d(0.0, 0.0), new Translation2d(4.0, 8.0));
     public static final OdometryZone NEUTRAL_ZONE = new OdometryZone(new Translation2d(4.0, 0.0), new Translation2d(12.5, 8.0));
     public static final OdometryZone RED_ALLIANCE_ZONE = new OdometryZone(new Translation2d(12.5, 0.0), new Translation2d(16.0,8.0));

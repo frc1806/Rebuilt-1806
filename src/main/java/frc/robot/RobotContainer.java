@@ -115,8 +115,8 @@ public class RobotContainer
     ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_GOAL_AIM.plus(drivebase.getShotCorrectionTranslation()):Constants.DrivebaseConstants.BLUE_ALLIANCE_GOAL_AIM.plus(drivebase.getShotCorrectionTranslation())).minus(drivebase.getPose().getTranslation()).getX()).headingWhile(true);
 
   SwerveInputStream driveFeedAim = driveAngularVelocity.copy().withControllerHeadingAxis(
-    ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_FEED_AIM.plus(drivebase.getShotCorrectionTranslation()):Constants.DrivebaseConstants.BLUE_ALLIANCE_FEED_AIM.plus(drivebase.getShotCorrectionTranslation())).minus(drivebase.getPose().getTranslation()).getY(), 
-    ()-> (drivebase.isRedAlliance()? Constants.DrivebaseConstants.RED_ALLIANCE_FEED_AIM.plus(drivebase.getShotCorrectionTranslation()):Constants.DrivebaseConstants.BLUE_ALLIANCE_FEED_AIM).plus(drivebase.getShotCorrectionTranslation()).minus(drivebase.getPose().getTranslation()).getX()).headingWhile(true);
+    ()-> (getClosestAllianceFeedPoint().plus(drivebase.getShotCorrectionTranslation())).minus(drivebase.getPose().getTranslation()).getY(), 
+    ()-> (getClosestAllianceFeedPoint().plus(drivebase.getShotCorrectionTranslation())).minus(drivebase.getPose().getTranslation()).getX()).headingWhile(true);
 
 
   /**
@@ -191,6 +191,25 @@ public class RobotContainer
   private Command getDriveFeedAimAutoLockCommand(){
     return drivebase.driveFieldOrientedAutoLock(driveFeedAim);
   }
+
+  private Translation2d getClosestAllianceFeedPoint(){
+    if(drivebase.isRedAlliance()){
+      if(drivebase.getPose().getY() > 4.0){
+        return Constants.DrivebaseConstants.RED_ALLIANCE_FEED_AIM;
+      }
+      else{
+        return Constants.DrivebaseConstants.RED_ALLIANCE_FEED_AIM_LEFT;
+      }
+    }
+    else{
+      if(drivebase.getPose().getY() > 4.0){
+        return Constants.DrivebaseConstants.BLUE_ALLIANCE_FEED_AIM_LEFT;
+    }
+    else{
+      return Constants.DrivebaseConstants.BLUE_ALLIANCE_FEED_AIM;
+    }
+  }
+}
   
 
   
@@ -205,7 +224,8 @@ public class RobotContainer
       MICROWAVE_RIGHT(),
       MICROWAVE_LEFT(),
       KETTLE_RIGHT(),
-      KETTLE_LEFT()
+      KETTLE_LEFT(),
+      POP_SECRET
     ;
 
     private Command autonomousCommand;
@@ -344,6 +364,20 @@ public class RobotContainer
       .andThen(new WaitForHoodRetract())
       );
       Autonomous.KETTLE_LEFT.setAutonomousCommand(new AutonomousCommand(kettleLeftAutoCommand));
+
+      Command popSecretFollowCommand = pathBuilder.build(new Path("PopSecret"));
+      Command popSecret2FollowCommand = pathBuilder.build(new Path("PopSecret2"));
+      Command popSecret3FollowCommand = pathBuilder.build(new Path("PopSecret3"));
+      Command popSecretAutoCommand = 
+              popSecretFollowCommand.deadlineFor(Commands.runOnce(collector::extend, collector), launcher.launcherAimForDistance(3.0))
+              .andThen(new ParallelDeadlineGroup(new WaitCommand(4.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
+              .andThen(Commands.runOnce(launcher::stop, launcher))
+              .andThen(popSecret2FollowCommand.deadlineFor(Commands.run(collector::intake, collector)))
+              .andThen(new ParallelDeadlineGroup(new WaitCommand(4.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
+              .andThen(Commands.runOnce(launcher::stop, launcher))
+              .andThen(popSecret3FollowCommand)
+              .andThen(new WaitCommand(10).deadlineFor(Commands.run(collector::intake, collector)));
+      Autonomous.POP_SECRET.setAutonomousCommand(new AutonomousCommand(popSecretAutoCommand));
 
   }
 

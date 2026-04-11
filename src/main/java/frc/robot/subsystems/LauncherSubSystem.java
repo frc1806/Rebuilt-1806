@@ -376,7 +376,7 @@ public class LauncherSubSystem extends SubsystemBase {
                 mHoodMotor.setControl(new PositionVoltage(mTargetAngle));
                 //mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
                 mFlywheelLeader.setControl(mFlywheelRequest);
-                if(!mIsPreciseShot && mFlywheelLeader.getVelocity().getValue().in(RPM) > 1700) {
+                if(!mIsPreciseShot && mFlywheelLeader.getVelocity().getValue().in(RPM) > mTargetSpeed.in(RPM) * .5) {
                     mHopper.setControl(new VoltageOut(mFeedSpeed));
                     mTransfer.setControl(mTransferMoveRequest);
                 }

@@ -88,12 +88,12 @@
       "type": "translation",
       "x_meters": 5.765105438529221,
       "y_meters": 7.489,
-      "intermediate_handoff_radius_meters": 1.0
+      "intermediate_handoff_radius_meters": 0.8
     },
     {
       "type": "translation",
-      "x_meters": 1.0661777438591398,
-      "y_meters": 7.544728199320499,
+      "x_meters": 1.1418899740749668,
+      "y_meters": 7.24187927845719,
       "intermediate_handoff_radius_meters": 1.0
     }
   ],
