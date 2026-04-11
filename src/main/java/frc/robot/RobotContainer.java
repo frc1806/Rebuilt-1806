@@ -173,6 +173,17 @@ public class RobotContainer
   ).withDefaultShouldFlip()
   .withPoseReset(drivebase::resetOdometry);
 
+   // 3. Create a reusable path builder that doesn't rest odometry
+  FollowPath.Builder pathBuilderNoReset = new FollowPath.Builder(
+      drivebase,
+      drivebase::getPose,
+      drivebase::getRobotVelocity,
+      drivebase::drive,
+      new PIDController(3.0, 0.00, 0.1),  // translation
+      new PIDController(3.0, 0.0, 0.0),  // rotation
+      new PIDController(0.2, 0.0, 0.0)   // cross-track
+  ).withDefaultShouldFlip();
+
   private SendableChooser<TestModes> mTestModeChooser = new SendableChooser<>();
 
 
@@ -225,7 +236,8 @@ public class RobotContainer
       MICROWAVE_LEFT(),
       KETTLE_RIGHT(),
       KETTLE_LEFT(),
-      POP_SECRET
+      POP_SECRET(),
+      PRELOAD_KETTLE_LEFT()
     ;
 
     private Command autonomousCommand;
@@ -302,8 +314,8 @@ public class RobotContainer
     Autonomous.LEFT_GRAB.setAutonomousCommand(new AutonomousCommand(leftGrabAutonoCommand));
 
     Command microwaveRightFollowCommand = pathBuilder.build(new Path("MicrowaveRight"));
-    Command microwaveRight2FollowCommand = pathBuilder.build(new Path("MicrowaveRight2"));
-    Command microwaveRight3FollowCommand = pathBuilder.build(new Path("MicrowaveRight3"));
+    Command microwaveRight2FollowCommand = pathBuilderNoReset.build(new Path("MicrowaveRight2"));
+    Command microwaveRight3FollowCommand = pathBuilderNoReset.build(new Path("MicrowaveRight3"));
     Command microwaveRightAutoCommand = Commands.runOnce(collector::extend)
       .andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector)), new SequentialCommandGroup(new WaitForXTripline(5.861), launcher.launcherAimForDistance(2.7)))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
@@ -314,7 +326,7 @@ public class RobotContainer
     Autonomous.MICROWAVE_RIGHT.setAutonomousCommand(new AutonomousCommand(microwaveRightAutoCommand));
 
     Command microwaveLeftFollowCommand = pathBuilder.build(new Path("MicrowaveLeft"));
-    Command microwaveLeft2FollowCommand = pathBuilder.build(new Path("MicrowaveLeft2"));
+    Command microwaveLeft2FollowCommand = pathBuilderNoReset.build(new Path("MicrowaveLeft2"));
     Command microwaveLeftAutoCommand = Commands.runOnce(collector::extend)
       .andThen(new ParallelDeadlineGroup(microwaveLeftFollowCommand,Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector)), new SequentialCommandGroup(new WaitForXTripline(5.861), launcher.launcherAimForDistance(2.7)))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
@@ -324,7 +336,7 @@ public class RobotContainer
     Autonomous.MICROWAVE_LEFT.setAutonomousCommand(new AutonomousCommand(microwaveLeftAutoCommand));
 
     Command kettleRightFollowCommand = pathBuilder.build(new Path("KettleRight"));
-    Command kettleRight2FollowCommand = pathBuilder.build(new Path("KettleRight2"));
+    Command kettleRight2FollowCommand = pathBuilderNoReset.build(new Path("KettleRight2"));
     Command kettleRightAutoCommand = kettleRightFollowCommand
       .deadlineFor(
         new WaitForXTripline(5.5).andThen(Commands.runOnce(collector::extend, collector))
@@ -345,7 +357,7 @@ public class RobotContainer
       Autonomous.KETTLE_RIGHT.setAutonomousCommand(new AutonomousCommand(kettleRightAutoCommand));
 
     Command kettleLeftFollowCommand = pathBuilder.build(new Path("KettleLeft"));
-    Command kettleLeft2FollowCommand = pathBuilder.build(new Path("KettleLeft2"));
+    Command kettleLeft2FollowCommand = pathBuilderNoReset.build(new Path("KettleLeft2"));
     Command kettleLeftAutoCommand = kettleLeftFollowCommand
       .deadlineFor(
         new WaitForXTripline(5.5).andThen(Commands.runOnce(collector::extend, collector))
@@ -366,8 +378,8 @@ public class RobotContainer
       Autonomous.KETTLE_LEFT.setAutonomousCommand(new AutonomousCommand(kettleLeftAutoCommand));
 
       Command popSecretFollowCommand = pathBuilder.build(new Path("PopSecret"));
-      Command popSecret2FollowCommand = pathBuilder.build(new Path("PopSecret2"));
-      Command popSecret3FollowCommand = pathBuilder.build(new Path("PopSecret3"));
+      Command popSecret2FollowCommand = pathBuilderNoReset.build(new Path("PopSecret2"));
+      Command popSecret3FollowCommand = pathBuilderNoReset.build(new Path("PopSecret3"));
       Command popSecretAutoCommand = 
               popSecretFollowCommand.deadlineFor(Commands.runOnce(collector::extend, collector), launcher.launcherAimForDistance(3.0))
               .andThen(new ParallelDeadlineGroup(new WaitCommand(4.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
@@ -378,6 +390,20 @@ public class RobotContainer
               .andThen(popSecret3FollowCommand)
               .andThen(new WaitCommand(10).deadlineFor(Commands.run(collector::intake, collector)));
       Autonomous.POP_SECRET.setAutonomousCommand(new AutonomousCommand(popSecretAutoCommand));
+
+      Command preloadKettleLeftFollowCommand = pathBuilderNoReset.build(new Path("PreloadKettleLeft"));
+      Command preloadKettleLeftAutoCommand=
+              drivebase.driveFieldOriented(driveGoalAim).alongWith(launcher.launcherAimAtGoal())
+              .andThen(Commands.runOnce(launcher::stop, launcher))
+              .andThen(new WaitForHoodRetract())
+              .andThen(preloadKettleLeftFollowCommand.deadlineFor(new WaitForXTripline(5.75).andThen(Commands.runOnce(collector::extend, collector).andThen(Commands.run(collector::intake, collector).alongWith(launcher.launcherAimForDistanceNoHood(3))))))
+              .andThen(new WaitCommand(10.0).deadlineFor(drivebase.driveFieldOriented(driveGoalAim).alongWith(launcher.launcherAimAtGoal())))
+              .andThen(Commands.runOnce(launcher::stop, launcher));
+      Autonomous.PRELOAD_KETTLE_LEFT.setAutonomousCommand(new AutonomousCommand(preloadKettleLeftAutoCommand));
+
+
+
+
 
   }
 
