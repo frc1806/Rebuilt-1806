@@ -32,8 +32,8 @@ import frc.robot.commands.WaitForHoodRetract;
 import frc.robot.commands.odometrytriggers.WaitForXTripline;
 import frc.robot.commands.swervedrive.ClimberL1GoToAngleCommand;
 import frc.robot.commands.swervedrive.RunClimberCommand;
-import frc.robot.lib.BLine.FollowPath;
-import frc.robot.lib.BLine.Path;
+import frc.robot.commands.swervedrive.auto.AdaptivePurePursuitBuilder;
+import frc.robot.lib.pathfollowing.BLinePath;
 import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.LauncherSubSystem;
@@ -162,27 +162,35 @@ public class RobotContainer
 
 
   // 2. Create a reusable path builder
-  FollowPath.Builder pathBuilder = new FollowPath.Builder(
+  AdaptivePurePursuitBuilder pathBuilder = new AdaptivePurePursuitBuilder(
       drivebase,
       drivebase::getPose,
-      drivebase::getRobotVelocity,
-      drivebase::drive,
-      new PIDController(3.0, 0.00, 0.1),  // translation
-      new PIDController(3.0, 0.0, 0.0),  // rotation
-      new PIDController(0.2, 0.0, 0.0)   // cross-track
+      drivebase::getFieldVelocity
   ).withDefaultShouldFlip()
   .withPoseReset(drivebase::resetOdometry);
 
-   // 3. Create a reusable path builder that doesn't rest odometry
-  FollowPath.Builder pathBuilderNoReset = new FollowPath.Builder(
+   // 3. Create a reusable path builder that doesn't reset odometry
+  AdaptivePurePursuitBuilder pathBuilderNoReset = new AdaptivePurePursuitBuilder(
       drivebase,
       drivebase::getPose,
-      drivebase::getRobotVelocity,
-      drivebase::drive,
-      new PIDController(3.0, 0.00, 0.1),  // translation
-      new PIDController(3.0, 0.0, 0.0),  // rotation
-      new PIDController(0.2, 0.0, 0.0)   // cross-track
+      drivebase::getFieldVelocity
   ).withDefaultShouldFlip();
+
+  // 4. Create mirrored path builders (for left/right symmetry)
+  AdaptivePurePursuitBuilder pathBuilderMirror = new AdaptivePurePursuitBuilder(
+      drivebase,
+      drivebase::getPose,
+      drivebase::getFieldVelocity
+  ).withDefaultShouldFlip()
+  .withPoseReset(drivebase::resetOdometry)
+  .withMirror();
+
+  AdaptivePurePursuitBuilder pathBuilderNoResetMirror = new AdaptivePurePursuitBuilder(
+      drivebase,
+      drivebase::getPose,
+      drivebase::getFieldVelocity
+  ).withDefaultShouldFlip()
+  .withMirror();
 
   private SendableChooser<TestModes> mTestModeChooser = new SendableChooser<>();
 
@@ -237,7 +245,13 @@ public class RobotContainer
       KETTLE_RIGHT(),
       KETTLE_LEFT(),
       POP_SECRET(),
-      PRELOAD_KETTLE_LEFT()
+      PRELOAD_KETTLE_LEFT(),
+      PRELOAD_KETTLE_RIGHT(),
+      KETTLE_LEFT_PATHS(),
+      KETTLE_RIGHT_PATHS(),
+      MICROWAVE_LEFT_PATHS(),
+      MICROWAVE_RIGHT_PATHS(),
+      POP_SECRET_PATHS()
     ;
 
     private Command autonomousCommand;
@@ -285,39 +299,40 @@ public class RobotContainer
   public void buildAutonomousCommands(){
     Autonomous.DO_NOTHING.setAutonomousCommand(new AutonomousCommand(new WaitCommand(15)));
     Autonomous.VISION_SHOOT_ONLY.setAutonomousCommand(new AutonomousCommand(new WaitCommand(1.0).andThen(drivebase.driveFieldOriented(driveGoalAim).alongWith(launcher.launcherAimAtGoal()))));   
-    //Path myPath = new Path("SweepRight");
-    //Command followCommand = pathBuilder.build(new Path("SweepRight")).andThen(pathBuilder.build(new Path("SweepRight2")).andThen(Commands.runOnce(drivebase::stop, drivebase)));
-    Command basicAuto = pathBuilder.build(new Path("BasicPath")).alongWith(Commands.runOnce(collector::extend, collector)).andThen(Commands.runOnce(launcher::enableLaunching)).andThen(launcher.prepareShotCommand(PROTECTED_SHOT)).andThen(new WaitCommand(10)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching));
+    //Path myPath = new BLinePath("SweepRight");
+    //Command followCommand = pathBuilder.build(new BLinePath("SweepRight")).andThen(pathBuilder.build(new BLinePath("SweepRight2")).andThen(Commands.runOnce(drivebase::stop, drivebase)));
+    Command basicAuto = pathBuilder.build(new BLinePath("BasicPath")).alongWith(Commands.runOnce(collector::extend, collector)).andThen(Commands.runOnce(launcher::enableLaunching)).andThen(launcher.prepareShotCommand(PROTECTED_SHOT)).andThen(new WaitCommand(10)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching));
     Autonomous.BASIC_AUTONOMOUS.setAutonomousCommand(new AutonomousCommand(basicAuto));
-    Command climbFollowCommand = pathBuilder.build(new Path("CenterClimb"));
+    Command climbFollowCommand = pathBuilder.build(new BLinePath("CenterClimb"));
     Command centerClimbAutoCommand = Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching))
                                       .andThen(climbFollowCommand.alongWith(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_GRAB_ANGLE))).andThen(new ParallelDeadlineGroup(new WaitCommand(1.0), drivebase.driveCommand(() -> 0.2, () -> 0.0, () -> 0.0))
                                       .andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_l1_HOOK_ANGLE)).andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE).alongWith(drivebase.driveCommand(() -> -0.2, () -> 0.0, () -> 0.0))))
                                       .andThen(new ParallelDeadlineGroup(new WaitCommand(10.0), new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE)));
     Autonomous.CLIMB_AUTO.setAutonomousCommand(new AutonomousCommand(centerClimbAutoCommand));
 
-    Command rightClimbFollowCommand = pathBuilder.build(new Path("RightClimb"));
+    Command rightClimbFollowCommand = pathBuilder.build(new BLinePath("RightClimb"));
     Command rightClimbAutoCommand = Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching))
                                       .andThen(rightClimbFollowCommand.alongWith(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_GRAB_ANGLE))).andThen(new ParallelDeadlineGroup(new WaitCommand(1.0), drivebase.driveCommand(() -> 0.2, () -> 0.0, () -> 0.0))
                                       .andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_l1_HOOK_ANGLE)).andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE).alongWith(drivebase.driveCommand(() -> -0.2, () -> 0.0, () -> 0.0))))
                                       .andThen(new ParallelDeadlineGroup(new WaitCommand(10.0), new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE)));
     Autonomous.RIGHT_CLIMB.setAutonomousCommand(new AutonomousCommand(rightClimbAutoCommand));
 
-    Command ambitionFollowCommand = pathBuilder.build(new Path("Ambition"));
+    Command ambitionFollowCommand = pathBuilder.build(new BLinePath("Ambition"));
     Command ambitionAutoCommand = Commands.runOnce(collector::extend).andThen(new ParallelDeadlineGroup(ambitionFollowCommand, Commands.runOnce(collector::intake)).andThen(Commands.runOnce(collector::stopIntake)).andThen(Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop))));
 
     Autonomous.AMBITION.setAutonomousCommand(new AutonomousCommand(ambitionAutoCommand));
 
-    Command leftGrabFollowCommand = pathBuilder.build(new Path("LeftGrab"));
-    Command leftGrabFollowCommand2 = pathBuilder.build(new Path("LeftGrab2"));
+    Command leftGrabFollowCommand = pathBuilder.build(new BLinePath("LeftGrab"));
+    Command leftGrabFollowCommand2 = pathBuilder.build(new BLinePath("LeftGrab2"));
     Command leftGrabAutonoCommand = Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(collector::extend).andThen(new ParallelDeadlineGroup(leftGrabFollowCommand, Commands.runOnce(collector::intake)).andThen(Commands.runOnce(collector::stopIntake)).andThen(leftGrabFollowCommand2).andThen(Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)))));
     Autonomous.LEFT_GRAB.setAutonomousCommand(new AutonomousCommand(leftGrabAutonoCommand));
 
-    Command microwaveRightFollowCommand = pathBuilder.build(new Path("MicrowaveRight"));
-    Command microwaveRight2FollowCommand = pathBuilderNoReset.build(new Path("MicrowaveRight2"));
-    Command microwaveRight3FollowCommand = pathBuilderNoReset.build(new Path("MicrowaveRight3"));
+    // Microwave Right: Use mirrored Left paths
+    Command microwaveRightFollowCommand = pathBuilderMirror.build(new BLinePath("MicrowaveLeft"));
+    Command microwaveRight2FollowCommand = pathBuilderNoResetMirror.build(new BLinePath("MicrowaveLeft2"));
+    Command microwaveRight3FollowCommand = pathBuilderNoResetMirror.build(new BLinePath("MicrowaveLeft3"));
     Command microwaveRightAutoCommand = Commands.runOnce(collector::extend)
-      .andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector)), new SequentialCommandGroup(new WaitForXTripline(5.861), launcher.launcherAimForDistance(2.7)))
+      .andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector)), new SequentialCommandGroup(new WaitForXTripline(7.0), launcher.launcherAimForDistance(2.7)))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(new ParallelDeadlineGroup(microwaveRight2FollowCommand, Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector)), launcher.launcherAimForDistance(2.7))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
@@ -325,18 +340,21 @@ public class RobotContainer
       .andThen(new ParallelDeadlineGroup(microwaveRight3FollowCommand, Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector))));
     Autonomous.MICROWAVE_RIGHT.setAutonomousCommand(new AutonomousCommand(microwaveRightAutoCommand));
 
-    Command microwaveLeftFollowCommand = pathBuilder.build(new Path("MicrowaveLeft"));
-    Command microwaveLeft2FollowCommand = pathBuilderNoReset.build(new Path("MicrowaveLeft2"));
+    Command microwaveLeftFollowCommand = pathBuilder.build(new BLinePath("MicrowaveLeft"));
+    Command microwaveLeft2FollowCommand = pathBuilderNoReset.build(new BLinePath("MicrowaveLeft2"));
+    Command microwaveLeft3FollowCommand = pathBuilderNoReset.build(new BLinePath("MicrowaveLeft3"));
     Command microwaveLeftAutoCommand = Commands.runOnce(collector::extend)
-      .andThen(new ParallelDeadlineGroup(microwaveLeftFollowCommand,Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector)), new SequentialCommandGroup(new WaitForXTripline(5.861), launcher.launcherAimForDistance(2.7)))
+      .andThen(new ParallelDeadlineGroup(microwaveLeftFollowCommand,Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector)), new SequentialCommandGroup(new WaitForXTripline(7.0), launcher.launcherAimForDistance(2.7)))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(new ParallelDeadlineGroup(microwaveLeft2FollowCommand, Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector)), launcher.launcherAimForDistance(2.7))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
-      .andThen(Commands.runOnce(launcher::stop, launcher))));
+      .andThen(Commands.runOnce(launcher::stop, launcher))))
+      .andThen(new ParallelDeadlineGroup(microwaveLeft3FollowCommand, Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector))));;
     Autonomous.MICROWAVE_LEFT.setAutonomousCommand(new AutonomousCommand(microwaveLeftAutoCommand));
 
-    Command kettleRightFollowCommand = pathBuilder.build(new Path("KettleRight"));
-    Command kettleRight2FollowCommand = pathBuilderNoReset.build(new Path("KettleRight2"));
+    // Kettle Right: Use mirrored Left paths
+    Command kettleRightFollowCommand = pathBuilderMirror.build(new BLinePath("KettleLeft"));
+    Command kettleRight2FollowCommand = pathBuilderNoResetMirror.build(new BLinePath("KettleLeft2"));
     Command kettleRightAutoCommand = kettleRightFollowCommand
       .deadlineFor(
         new WaitForXTripline(5.5).andThen(Commands.runOnce(collector::extend, collector))
@@ -356,8 +374,8 @@ public class RobotContainer
       );
       Autonomous.KETTLE_RIGHT.setAutonomousCommand(new AutonomousCommand(kettleRightAutoCommand));
 
-    Command kettleLeftFollowCommand = pathBuilder.build(new Path("KettleLeft"));
-    Command kettleLeft2FollowCommand = pathBuilderNoReset.build(new Path("KettleLeft2"));
+    Command kettleLeftFollowCommand = pathBuilder.build(new BLinePath("KettleLeft"));
+    Command kettleLeft2FollowCommand = pathBuilderNoReset.build(new BLinePath("KettleLeft2"));
     Command kettleLeftAutoCommand = kettleLeftFollowCommand
       .deadlineFor(
         new WaitForXTripline(5.5).andThen(Commands.runOnce(collector::extend, collector))
@@ -377,9 +395,9 @@ public class RobotContainer
       );
       Autonomous.KETTLE_LEFT.setAutonomousCommand(new AutonomousCommand(kettleLeftAutoCommand));
 
-      Command popSecretFollowCommand = pathBuilder.build(new Path("PopSecret"));
-      Command popSecret2FollowCommand = pathBuilderNoReset.build(new Path("PopSecret2"));
-      Command popSecret3FollowCommand = pathBuilderNoReset.build(new Path("PopSecret3"));
+      Command popSecretFollowCommand = pathBuilder.build(new BLinePath("PopSecret"));
+      Command popSecret2FollowCommand = pathBuilderNoReset.build(new BLinePath("PopSecret2"));
+      Command popSecret3FollowCommand = pathBuilderNoReset.build(new BLinePath("PopSecret3"));
       Command popSecretAutoCommand = 
               popSecretFollowCommand.deadlineFor(Commands.runOnce(collector::extend, collector), launcher.launcherAimForDistance(3.0))
               .andThen(new ParallelDeadlineGroup(new WaitCommand(4.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
@@ -391,7 +409,7 @@ public class RobotContainer
               .andThen(new WaitCommand(10).deadlineFor(Commands.run(collector::intake, collector)));
       Autonomous.POP_SECRET.setAutonomousCommand(new AutonomousCommand(popSecretAutoCommand));
 
-      Command preloadKettleLeftFollowCommand = pathBuilderNoReset.build(new Path("PreloadKettleLeft"));
+      Command preloadKettleLeftFollowCommand = pathBuilderNoReset.build(new BLinePath("PreloadKettleLeft"));
       Command preloadKettleLeftAutoCommand=
               drivebase.driveFieldOriented(driveGoalAim).alongWith(launcher.launcherAimAtGoal())
               .andThen(Commands.runOnce(launcher::stop, launcher))
@@ -401,10 +419,44 @@ public class RobotContainer
               .andThen(Commands.runOnce(launcher::stop, launcher));
       Autonomous.PRELOAD_KETTLE_LEFT.setAutonomousCommand(new AutonomousCommand(preloadKettleLeftAutoCommand));
 
+      // Preload Kettle Right: Use mirrored PreloadKettleLeft path
+      Command preloadKettleRightFollowCommand = pathBuilderNoResetMirror.build(new BLinePath("PreloadKettleLeft"));
+      Command preloadKettleRightAutoCommand=
+              drivebase.driveFieldOriented(driveGoalAim).alongWith(launcher.launcherAimAtGoal())
+              .andThen(Commands.runOnce(launcher::stop, launcher))
+              .andThen(new WaitForHoodRetract())
+              .andThen(preloadKettleRightFollowCommand.deadlineFor(new WaitForXTripline(5.75).andThen(Commands.runOnce(collector::extend, collector).andThen(Commands.run(collector::intake, collector).alongWith(launcher.launcherAimForDistanceNoHood(3))))))
+              .andThen(new WaitCommand(10.0).deadlineFor(drivebase.driveFieldOriented(driveGoalAim).alongWith(launcher.launcherAimAtGoal())))
+              .andThen(Commands.runOnce(launcher::stop, launcher));
+      Autonomous.PRELOAD_KETTLE_RIGHT.setAutonomousCommand(new AutonomousCommand(preloadKettleRightAutoCommand));
 
 
 
 
+      // Simplified path-only autos
+      Command kettleLeftPathsCommand = pathBuilder.build(new BLinePath("KettleLeft"))
+        .andThen(pathBuilderNoReset.build(new BLinePath("KettleLeft2")));
+      Autonomous.KETTLE_LEFT_PATHS.setAutonomousCommand(new AutonomousCommand(kettleLeftPathsCommand));
+
+      Command kettleRightPathsCommand = pathBuilderMirror.build(new BLinePath("KettleLeft"))
+        .andThen(pathBuilderNoResetMirror.build(new BLinePath("KettleLeft2")));
+      Autonomous.KETTLE_RIGHT_PATHS.setAutonomousCommand(new AutonomousCommand(kettleRightPathsCommand));
+
+      Command microwaveLeftPathsCommand = pathBuilder.build(new BLinePath("MicrowaveLeft"))
+        .andThen(pathBuilderNoReset.build(new BLinePath("MicrowaveLeft2")))
+        .andThen(pathBuilderNoReset.build(new BLinePath("MicrowaveLeft3")));
+
+      Autonomous.MICROWAVE_LEFT_PATHS.setAutonomousCommand(new AutonomousCommand(microwaveLeftPathsCommand));
+
+      Command microwaveRightPathsCommand = pathBuilderMirror.build(new BLinePath("MicrowaveLeft"))
+        .andThen(pathBuilderNoResetMirror.build(new BLinePath("MicrowaveLeft2")))
+        .andThen(pathBuilderNoResetMirror.build(new BLinePath("MicrowaveLeft2")));
+      Autonomous.MICROWAVE_RIGHT_PATHS.setAutonomousCommand(new AutonomousCommand(microwaveRightPathsCommand));
+
+      Command popSecretPathsCommand = pathBuilder.build(new BLinePath("PopSecret"))
+        .andThen(pathBuilderNoReset.build(new BLinePath("PopSecret2")))
+        .andThen(pathBuilderNoReset.build(new BLinePath("PopSecret3")));
+      Autonomous.POP_SECRET_PATHS.setAutonomousCommand(new AutonomousCommand(popSecretPathsCommand));
   }
 
   /**

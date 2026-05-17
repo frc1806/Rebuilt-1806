@@ -623,7 +623,13 @@ public class Vision
 
   }
 
-  public Pose2d getBestPhotonvisionPose(){
+  /**
+   * Gets the best photonvision pose estimate with timestamp.
+   * Returns the full EstimatedRobotPose so timestamp is preserved for proper lag compensation.
+   *
+   * @return Best estimated robot pose with timestamp, or null if none available
+   */
+  public EstimatedRobotPose getBestPhotonvisionPoseWithTimestamp(){
     EstimatedRobotPose bestPose = null;
     for(Cameras camera :Cameras.values()){
       EstimatedRobotPose potentialPose = camera.getEstimatedGlobalPose().orElse(null);
@@ -642,13 +648,21 @@ public class Vision
         }
       }
     }
+    return bestPose;
+  }
+
+  /**
+   * @deprecated Use getBestPhotonvisionPoseWithTimestamp() instead to preserve timestamp for lag compensation
+   */
+  @Deprecated
+  public Pose2d getBestPhotonvisionPose(){
+    EstimatedRobotPose bestPose = getBestPhotonvisionPoseWithTimestamp();
     if(bestPose != null)
     {
       Pose3d bestPose3d = bestPose.estimatedPose;
       return new Pose2d(bestPose3d.getX(), bestPose3d.getY(), bestPose3d.getRotation().toRotation2d());
     }
     return null;
-
   }
 
 }

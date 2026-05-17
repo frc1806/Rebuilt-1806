@@ -197,4 +197,25 @@ public final class Constants
     public static final double CLIMBER_L1_CLIMB_ANGLE = 11.0;
 
   }
+
+  public static class PurePursuitConstants
+  {
+    // Lookahead parameters
+    public static final double MIN_LOOKAHEAD_DISTANCE = 0.2; // meters
+    public static final double LOOKAHEAD_VELOCITY_GAIN = 0.23; // dimensionless
+    public static final double MAX_LOOKAHEAD_DISTANCE = 1.3; // meters
+
+    // Completion tolerances (defaults when not in path JSON)
+    public static final double DEFAULT_POSITION_TOLERANCE = 0.05; // meters
+    public static final double DEFAULT_VELOCITY_TOLERANCE = 0.1; // m/s
+    public static final double DEFAULT_ROTATION_TOLERANCE = 5.0; // degrees
+
+    // Velocity profiling
+    public static final double WAYPOINT_DECEL_RADIUS_MULT = 1.0;
+    public static final double MIN_VELOCITY = 0.2; // m/s
+
+    // 2026 Field dimensions for alliance flipping
+    public static final double FIELD_LENGTH = 16.540988; // meters
+    public static final double FIELD_WIDTH = 8.069326; // meters
+  }
 }

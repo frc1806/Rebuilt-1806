@@ -8,17 +8,6 @@ import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Meter;
 import static edu.wpi.first.units.Units.Radians;
 
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.commands.PathPlannerAuto;
-import com.pathplanner.lib.commands.PathfindingCommand;
-import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.pathplanner.lib.path.PathConstraints;
-import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.util.DriveFeedforwards;
-import com.pathplanner.lib.util.swerve.SwerveSetpoint;
-import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -40,13 +29,10 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
 import frc.robot.subsystems.swervedrive.Vision.Cameras;
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
-import org.json.simple.parser.ParseException;
 import org.photonvision.targeting.PhotonPipelineResult;
 import swervelib.SwerveController;
 import swervelib.SwerveDrive;
@@ -119,7 +105,6 @@ public class SwerveSubsystem extends SubsystemBase
       // Stop the odometry thread if we are using vision that way we can synchronize updates better.
       swerveDrive.stopOdometryThread();
     }
-    setupPathPlanner();
     RobotModeTriggers.autonomous().onTrue(Commands.runOnce(this::zeroGyroWithAlliance));
 
 
@@ -159,14 +144,16 @@ public class SwerveSubsystem extends SubsystemBase
     }
 
     if(mNeedOdometryUpdate && !checkIfNeedOdometryResetDueToTip()){
-      Pose2d photonvisionPose = vision.getBestPhotonvisionPose();
-      if(photonvisionPose != null){
+      var estimatedPose = vision.getBestPhotonvisionPoseWithTimestamp();
+      if(estimatedPose != null){
         if(!DriverStation.isDisabled())
         {
-          resetOdometryFromVisionWhileEnabled(photonvisionPose);
+          // Use addVisionMeasurement with timestamp for proper lag compensation
+          resetOdometryFromVisionWhileEnabled(estimatedPose);
         }
         else{
-          resetOdometry(photonvisionPose);
+          // During disabled, can use hard reset since robot isn't moving
+          resetOdometry(estimatedPose.estimatedPose.toPose2d());
         }
 
         mNeedOdometryUpdate = false;
@@ -216,77 +203,6 @@ public class SwerveSubsystem extends SubsystemBase
   }
 
   /**
-   * Setup AutoBuilder for PathPlanner.
-   */
-  public void setupPathPlanner()
-  {
-    // Load the RobotConfig from the GUI settings. You should probably
-    // store this in your Constants file
-    RobotConfig config;
-    try
-    {
-      config = RobotConfig.fromGUISettings();
-
-      final boolean enableFeedforward = true;
-      // Configure AutoBuilder last
-      AutoBuilder.configure(
-          this::getPose,
-          // Robot pose supplier
-          this::resetOdometry,
-          // Method to reset odometry (will be called if your auto has a starting pose)
-          this::getRobotVelocity,
-          // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-          (speedsRobotRelative, moduleFeedForwards) -> {
-            if (enableFeedforward)
-            {
-              swerveDrive.drive(
-                  speedsRobotRelative,
-                  swerveDrive.kinematics.toSwerveModuleStates(speedsRobotRelative),
-                  moduleFeedForwards.linearForces()
-                               );
-            } else
-            {
-              swerveDrive.setChassisSpeeds(speedsRobotRelative);
-            }
-          },
-          // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
-          new PPHolonomicDriveController(
-              // PPHolonomicController is the built in path following controller for holonomic drive trains
-              new PIDConstants(5.0, 0.0, 0.0),
-              // Translation PID constants
-              new PIDConstants(5.0, 0.0, 0.0)
-              // Rotation PID constants
-          ),
-          config,
-          // The robot configuration
-          () -> {
-            // Boolean supplier that controls when the path will be mirrored for the red alliance
-            // This will flip the path being followed to the red side of the field.
-            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
-
-            var alliance = DriverStation.getAlliance();
-            if (alliance.isPresent())
-            {
-              return alliance.get() == DriverStation.Alliance.Red;
-            }
-            return false;
-          },
-          this
-          // Reference to this subsystem to set requirements
-                           );
-
-    } catch (Exception e)
-    {
-      // Handle exception as needed
-      e.printStackTrace();
-    }
-
-    //Preload PathPlanner Path finding
-    // IF USING CUSTOM PATHFINDER ADD BEFORE THIS LINE
-    PathfindingCommand.warmupCommand().schedule();
-  }
-
-  /**
    * Aim the robot at the target returned by PhotonVision.
    *
    * @return A {@link Command} which will run the alignment.
@@ -309,96 +225,6 @@ public class SwerveSubsystem extends SubsystemBase
       }
     });
   }
-
-  /**
-   * Get the path follower with events.
-   *
-   * @param pathName PathPlanner path name.
-   * @return {@link AutoBuilder#followPath(PathPlannerPath)} path command.
-   */
-  public Command getAutonomousCommand(String pathName)
-  {
-    // Create a path following command using AutoBuilder. This will also trigger event markers.
-    return new PathPlannerAuto(pathName);
-  }
-
-  /**
-   * Use PathPlanner Path finding to go to a point on the field.
-   *
-   * @param pose Target {@link Pose2d} to go to.
-   * @return PathFinding command
-   */
-  public Command driveToPose(Pose2d pose)
-  {
-// Create the constraints to use while pathfinding
-    PathConstraints constraints = new PathConstraints(
-        swerveDrive.getMaximumChassisVelocity(), 4.0,
-        swerveDrive.getMaximumChassisAngularVelocity(), Units.degreesToRadians(720));
-
-// Since AutoBuilder is configured, we can use it to build pathfinding commands
-    return AutoBuilder.pathfindToPose(
-        pose,
-        constraints,
-        edu.wpi.first.units.Units.MetersPerSecond.of(0) // Goal end velocity in meters/sec
-                                     );
-  }
-
-  /**
-   * Drive with {@link SwerveSetpointGenerator} from 254, implemented by PathPlanner.
-   *
-   * @param robotRelativeChassisSpeed Robot relative {@link ChassisSpeeds} to achieve.
-   * @return {@link Command} to run.
-   * @throws IOException    If the PathPlanner GUI settings is invalid
-   * @throws ParseException If PathPlanner GUI settings is nonexistent.
-   */
-  private Command driveWithSetpointGenerator(Supplier<ChassisSpeeds> robotRelativeChassisSpeed)
-  throws IOException, ParseException
-  {
-    SwerveSetpointGenerator setpointGenerator = new SwerveSetpointGenerator(RobotConfig.fromGUISettings(),
-                                                                            swerveDrive.getMaximumChassisAngularVelocity());
-    AtomicReference<SwerveSetpoint> prevSetpoint
-        = new AtomicReference<>(new SwerveSetpoint(swerveDrive.getRobotVelocity(),
-                                                   swerveDrive.getStates(),
-                                                   DriveFeedforwards.zeros(swerveDrive.getModules().length)));
-    AtomicReference<Double> previousTime = new AtomicReference<>();
-
-    return startRun(() -> previousTime.set(Timer.getFPGATimestamp()),
-                    () -> {
-                      double newTime = Timer.getFPGATimestamp();
-                      SwerveSetpoint newSetpoint = setpointGenerator.generateSetpoint(prevSetpoint.get(),
-                                                                                      robotRelativeChassisSpeed.get(),
-                                                                                      newTime - previousTime.get());
-                      swerveDrive.drive(newSetpoint.robotRelativeSpeeds(),
-                                        newSetpoint.moduleStates(),
-                                        newSetpoint.feedforwards().linearForces());
-                      prevSetpoint.set(newSetpoint);
-                      previousTime.set(newTime);
-
-                    });
-  }
-
-  /**
-   * Drive with 254's Setpoint generator; port written by PathPlanner.
-   *
-   * @param fieldRelativeSpeeds Field-Relative {@link ChassisSpeeds}
-   * @return Command to drive the robot using the setpoint generator.
-   */
-  public Command driveWithSetpointGeneratorFieldRelative(Supplier<ChassisSpeeds> fieldRelativeSpeeds)
-  {
-    try
-    {
-      return driveWithSetpointGenerator(() -> {
-        return ChassisSpeeds.fromFieldRelativeSpeeds(fieldRelativeSpeeds.get(), getHeading());
-
-      });
-    } catch (Exception e)
-    {
-      DriverStation.reportError(e.toString(), true);
-    }
-    return Commands.none();
-
-  }
-
 
   /**
    * Command to characterize the robot drive motors using SysId
@@ -606,8 +432,46 @@ public class SwerveSubsystem extends SubsystemBase
     mLastOdometryUpdate = Timer.getFPGATimestamp();
   }
 
-  public void resetOdometryFromVisionWhileEnabled(Pose2d photonvisionPose){
-    swerveDrive.resetOdometry(new Pose2d(photonvisionPose.getTranslation(), getHeading()));
+  /**
+   * Updates odometry from vision while enabled, using timestamp for proper lag compensation.
+   * Uses addVisionMeasurement() which automatically handles the delay between frame capture and processing.
+   * If the robot is stationary and there's a large discrepancy (>0.5m), performs a hard reset instead.
+   *
+   * @param estimatedPose Vision pose estimate with timestamp
+   */
+  public void resetOdometryFromVisionWhileEnabled(org.photonvision.EstimatedRobotPose estimatedPose){
+    // Use current gyro heading instead of vision heading (vision Z-axis rotation is less accurate)
+    Pose2d poseWithGyroHeading = new Pose2d(
+        estimatedPose.estimatedPose.toPose2d().getTranslation(),
+        getHeading()
+    );
+
+    // Calculate distance discrepancy between vision pose and current odometry
+    Pose2d currentPose = getPose();
+    double distanceDiscrepancy = currentPose.getTranslation()
+        .getDistance(poseWithGyroHeading.getTranslation());
+
+    // Check if robot is stationary
+    ChassisSpeeds currentVelocity = getFieldVelocity();
+    double robotSpeed = Math.hypot(
+        currentVelocity.vxMetersPerSecond,
+        currentVelocity.vyMetersPerSecond
+    );
+    boolean isStationary = robotSpeed < 0.1;
+
+    // If stationary with large discrepancy, do hard reset; otherwise use addVisionMeasurement
+    if (isStationary && distanceDiscrepancy > 0.5) {
+        System.out.println("Vision: Hard reset - stationary with "
+            + String.format("%.2fm", distanceDiscrepancy) + " discrepancy");
+        swerveDrive.resetOdometry(poseWithGyroHeading);
+    } else {
+        // Add vision measurement with timestamp - WPILib automatically compensates for lag
+        swerveDrive.addVisionMeasurement(
+            poseWithGyroHeading,
+            estimatedPose.timestampSeconds
+        );
+    }
+
     mLastOdometryUpdate = Timer.getFPGATimestamp();
   }
 
@@ -843,6 +707,18 @@ public class SwerveSubsystem extends SubsystemBase
 
   public Translation2d getShotCorrectionTranslation(){
     return new Translation2d(getFieldVelocity().vxMetersPerSecond * Constants.LauncherConstants.SHOT_CORRECTION_FACTOR_X, getFieldVelocity().vyMetersPerSecond * Constants.LauncherConstants.SHOT_CORRECTION_FACTOR_Y);
+  }
+
+  /**
+   * Checks if there is an active vision target available.
+   *
+   * @return True if vision has a valid pose estimate, false otherwise
+   */
+  public boolean hasActiveVisionTarget(){
+    if(vision == null){
+      return false;
+    }
+    return vision.getBestPhotonvisionPoseWithTimestamp() != null;
   }
 
 }
