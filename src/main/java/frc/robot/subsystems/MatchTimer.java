@@ -14,6 +14,7 @@ public class MatchTimer extends SubsystemBase{
     private static final double  TIME_AFTER_OFFICIAL_ACTIVE = 1.0;
     private static final double CLIMB_TIME = 15.0;
     private static final double AUTO_WINNER_LOAD_TIME = 8.0;
+    private static final double MAX_DRIFT_THRESHOLD = 3.0; // Resync if drift exceeds 3 seconds
 
     public enum TeleopMatchTimeframe{
         NOT_TELEOP(-1,-1),
@@ -129,7 +130,7 @@ public class MatchTimer extends SubsystemBase{
                 }else if (teleopTimeLeft > TeleopMatchTimeframe.SHIFT_3.teleopTimeLeftAtEnd - TIME_AFTER_OFFICIAL_ACTIVE){
                     return new HubState(teleopTimeLeft - (TeleopMatchTimeframe.SHIFT_3.teleopTimeLeftAtEnd - TIME_AFTER_OFFICIAL_ACTIVE), true);
                 }else if (teleopTimeLeft > TeleopMatchTimeframe.SHIFT_4.teleopTimeLeftAtEnd + TIME_BEFORE_OFFICIAL_ACTIVE){
-                    return new HubState(teleopTimeLeft + (TeleopMatchTimeframe.SHIFT_4.teleopTimeLeftAtEnd + TIME_AFTER_OFFICIAL_ACTIVE), false);
+                    return new HubState(teleopTimeLeft - (TeleopMatchTimeframe.SHIFT_4.teleopTimeLeftAtEnd + TIME_BEFORE_OFFICIAL_ACTIVE), false);
                 }else{
                     return new HubState(teleopTimeLeft, true);
                 }
@@ -152,9 +153,35 @@ public class MatchTimer extends SubsystemBase{
     @Override
     public void periodic(){
         if(running && teleopTimeLeft > 0){
-            currentTime = Timer.getFPGATimestamp();
-            teleopTimeLeft -= (currentTime- lastUpdateTimeStamp);
-            lastUpdateTimeStamp = currentTime;
+            // Check for large drift only during real matches (FMS attached)
+            if(DriverStation.isTeleop() && DriverStation.isFMSAttached()){
+                double fmsMatchTime = DriverStation.getMatchTime();
+                if(fmsMatchTime >= 0 && fmsMatchTime <= 135){
+                    double drift = Math.abs(teleopTimeLeft - fmsMatchTime);
+                    if(drift > MAX_DRIFT_THRESHOLD){
+                        // Large drift detected - resync to FMS time
+                        System.out.println("MatchTimer: Large drift detected (" +
+                            String.format("%.2f", drift) + "s) - resyncing to FMS time");
+                        teleopTimeLeft = fmsMatchTime;
+                        lastUpdateTimeStamp = Timer.getFPGATimestamp();
+                    } else {
+                        // Normal operation - use precise FPGA timing
+                        currentTime = Timer.getFPGATimestamp();
+                        teleopTimeLeft -= (currentTime - lastUpdateTimeStamp);
+                        lastUpdateTimeStamp = currentTime;
+                    }
+                } else {
+                    // FMS time unavailable - fallback to FPGA timing
+                    currentTime = Timer.getFPGATimestamp();
+                    teleopTimeLeft -= (currentTime - lastUpdateTimeStamp);
+                    lastUpdateTimeStamp = currentTime;
+                }
+            } else {
+                // Not in real match or not in teleop - use FPGA timing only
+                currentTime = Timer.getFPGATimestamp();
+                teleopTimeLeft -= (currentTime - lastUpdateTimeStamp);
+                lastUpdateTimeStamp = currentTime;
+            }
         }
         if(!loadedWonInAuto && teleopTimeLeft < 140 - AUTO_WINNER_LOAD_TIME )
         {

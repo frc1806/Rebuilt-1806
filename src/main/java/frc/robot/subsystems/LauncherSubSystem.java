@@ -57,6 +57,9 @@ public class LauncherSubSystem extends SubsystemBase {
         return S_LAUNCHER;
     }
 
+    // Cached requirements set to avoid repeated HashSet allocation
+    private static final Set<Subsystem> LAUNCHER_REQUIREMENTS = Set.of(S_LAUNCHER);
+
     private SwerveSubsystem mDrivebase = RobotContainer.drivebase;
     private MatchTimer mMatchTimer = RobotContainer.matchTimer;
 
@@ -111,6 +114,10 @@ public class LauncherSubSystem extends SubsystemBase {
     private Voltage mFeedSpeed = Volt.of(0);
     private Voltage mKf = Volt.of(0);
     private VoltageOut mFlywheelVoltageOut = new VoltageOut(0.0);
+
+    // Cached control request objects to avoid repeated allocation in periodic()
+    private final PositionVoltage mHoodPositionRequest = new PositionVoltage(0.0);
+    private final VoltageOut mHopperVoltageOut = new VoltageOut(0.0);
 
     private boolean mEnableLaunch = false;
     private boolean mVisionEnableLaunch = false;
@@ -281,13 +288,13 @@ public class LauncherSubSystem extends SubsystemBase {
             mLauncherState = LauncherStates.kClosedLoop;
         }
         mTargetSpeed = speed;
-        mFlywheelRequest = new VelocityVoltage(mTargetSpeed); //Saving RAM by only instantiating this on a change.
+        mFlywheelRequest.withVelocity(mTargetSpeed); // Reuse cached object instead of allocating new one
         mTargetAngle = angle.plus(Degrees.of(RobotPreferences.GetShooterAngleOffset()));
         mFeedSpeed = feedSpeed;
         if(mLauncherState != LauncherStates.kClosedLoop && mLauncherState != LauncherStates.kOpenLoop)
         {
             mLauncherState = LauncherStates.kClosedLoop;
-        } 
+        }
         mIsPreciseShot = true;
     }
 
@@ -319,7 +326,7 @@ public class LauncherSubSystem extends SubsystemBase {
         mTransfer.stopMotor();
         mLauncherState = LauncherStates.kIdle;
         mTargetSpeed = RPM.of(0);
-        mFlywheelRequest = new VelocityVoltage(RPM.of(0)); //Not needed, but to be safe.
+        mFlywheelRequest.withVelocity(RPM.of(0)); // Reuse cached object instead of allocating new one
         mTargetAngle = Angle.ofBaseUnits(0, Degrees);
     }
 
@@ -347,7 +354,7 @@ public class LauncherSubSystem extends SubsystemBase {
             total = total.plus((Voltage) mFlywheelEstimator.get(i));
         }
         mKf = total.div(mFlywheelEstimator.size());
-        mFlywheelVoltageOut = new VoltageOut(mKf.magnitude() * mTargetSpeed.in(RPM));
+        mFlywheelVoltageOut.withOutput(mKf.magnitude() * mTargetSpeed.in(RPM)); // Reuse cached object
     }
 
     /**
@@ -373,11 +380,11 @@ public class LauncherSubSystem extends SubsystemBase {
         //STATE MACHINE
         switch(mLauncherState){
             case kClosedLoop:
-                mHoodMotor.setControl(new PositionVoltage(mTargetAngle));
+                mHoodMotor.setControl(mHoodPositionRequest.withPosition(mTargetAngle));
                 //mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
                 mFlywheelLeader.setControl(mFlywheelRequest);
                 if(!mIsPreciseShot && mFlywheelLeader.getVelocity().getValue().in(RPM) > mTargetSpeed.in(RPM) * .5) {
-                    mHopper.setControl(new VoltageOut(mFeedSpeed));
+                    mHopper.setControl(mHopperVoltageOut.withOutput(mFeedSpeed));
                     mTransfer.setControl(mTransferMoveRequest);
                 }
                 else{
@@ -397,10 +404,10 @@ public class LauncherSubSystem extends SubsystemBase {
 
                 break;
             case kOpenLoop:
-                mHoodMotor.setControl(new PositionVoltage(mTargetAngle));
+                mHoodMotor.setControl(mHoodPositionRequest.withPosition(mTargetAngle));
                 //mHoodMotor.getClosedLoopController().setSetpoint(mTargetAngle.in(Degrees), ControlType.kPosition);
                 //mFlywheelLeader.setControl(mFlywheelVoltageOut);
-                mFlywheelLeader.setControl(mFlywheelRequest); 
+                mFlywheelLeader.setControl(mFlywheelRequest);
                 if(!isAtSpeed() && mFlywheelLeader.getVelocity().getValueAsDouble() > mTargetSpeed.in(RotationsPerSecond)){
                     estimatekF();
                     savekF();
@@ -408,12 +415,12 @@ public class LauncherSubSystem extends SubsystemBase {
                 if(!mEnableLaunch && !getSmartEnableLaunch()){
                     mLauncherState = LauncherStates.kClosedLoop;
                 }
-                mHopper.setControl(new VoltageOut(mFeedSpeed));
+                mHopper.setControl(mHopperVoltageOut.withOutput(mFeedSpeed));
                 mTransfer.setControl(mTransferMoveRequest);
                 //mTransfer.setControl(new VoltageOut(mFeedSpeed));
                 break;
             case kCleaningMode:
-                 mHoodMotor.setControl(new PositionVoltage(Constants.LauncherConstants.HOOD_HOME_POSITION));
+                 mHoodMotor.setControl(mHoodPositionRequest.withPosition(Constants.LauncherConstants.HOOD_HOME_POSITION));
                  //mHoodMotor.getClosedLoopController().setSetpoint(Constants.LauncherConstants.HOOD_HOME_POSITION.in(Degrees), ControlType.kPosition);
                  mTransfer.setVoltage(3.0);
                 //DO Nothing for cleaning mode, managed externally
@@ -449,21 +456,24 @@ public class LauncherSubSystem extends SubsystemBase {
             
         }
 
+        // Essential telemetry only - reduced to minimize network traffic and CPU usage
         SmartDashboard.putNumber("Launcher/RPM", getFlywheelVelocity().in(RPM));
-        SmartDashboard.putNumber("Launcher/Angle", mHoodMotor.getPosition().getValue().in(Degrees));
-        SmartDashboard.putString("Launcher/State", mLauncherState.name());
         SmartDashboard.putNumber("Launcher/Target RPM", mTargetSpeed.magnitude());
-        SmartDashboard.putNumber("Launcher/TargetAngle", mTargetAngle.in(Degrees));
-        SmartDashboard.putNumber("Launcher/kF", mKf.magnitude());
-        SmartDashboard.putNumber("Launcher/kF Samples", mFlywheelEstimator.size());
-        SmartDashboard.putNumber("Launcher/HoodMotorAmps", mHoodMotor.getSupplyCurrent().getValue().in(Amps));
-        SmartDashboard.putNumber("Launcher/Sim/SimSpeed", mFlywheelSimulation.getAngularVelocityRPM());
-        SmartDashboard.putNumber("Launcher/Sim/SimAmps", mFlywheelSimulation.getCurrentDrawAmps());
-        SmartDashboard.putNumber("Launcher/Sim/SimInputVolts", mFlywheelSimulation.getInputVoltage());
-        SmartDashboard.putNumber("Launcher/Sim/SimKrakenMotorVolts", mFlywheelLeaderSim.getMotorVoltage());
-        SmartDashboard.putNumber("Launcher/TransferRPM", mTransfer.getVelocity().getValue().in(RPM));
-        SmartDashboard.putNumber("Launcher/TransferCurrent", mTransfer.getStatorCurrent().getValue().in(Amps));
-        SmartDashboard.putNumber("Launcher/HopperAmps", mHopper.getStatorCurrent().getValue().in(Amps));
+        SmartDashboard.putNumber("Launcher/StateOrdinal", mLauncherState.ordinal()); // Use ordinal instead of .name() to avoid string allocation
+
+        // Uncomment below for detailed debugging (impacts performance at 50Hz):
+        // SmartDashboard.putNumber("Launcher/Angle", mHoodMotor.getPosition().getValue().in(Degrees));
+        // SmartDashboard.putNumber("Launcher/TargetAngle", mTargetAngle.in(Degrees));
+        // SmartDashboard.putNumber("Launcher/kF", mKf.magnitude());
+        // SmartDashboard.putNumber("Launcher/kF Samples", mFlywheelEstimator.size());
+        // SmartDashboard.putNumber("Launcher/HoodMotorAmps", mHoodMotor.getSupplyCurrent().getValue().in(Amps));
+        // SmartDashboard.putNumber("Launcher/Sim/SimSpeed", mFlywheelSimulation.getAngularVelocityRPM());
+        // SmartDashboard.putNumber("Launcher/Sim/SimAmps", mFlywheelSimulation.getCurrentDrawAmps());
+        // SmartDashboard.putNumber("Launcher/Sim/SimInputVolts", mFlywheelSimulation.getInputVoltage());
+        // SmartDashboard.putNumber("Launcher/Sim/SimKrakenMotorVolts", mFlywheelLeaderSim.getMotorVoltage());
+        // SmartDashboard.putNumber("Launcher/TransferRPM", mTransfer.getVelocity().getValue().in(RPM));
+        // SmartDashboard.putNumber("Launcher/TransferCurrent", mTransfer.getStatorCurrent().getValue().in(Amps));
+        // SmartDashboard.putNumber("Launcher/HopperAmps", mHopper.getStatorCurrent().getValue().in(Amps));
 
     }
 
@@ -509,9 +519,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
             @Override
             public Set<Subsystem> getRequirements() {
-                HashSet<Subsystem> reqs = new HashSet<>();
-                reqs.add(RobotContainer.launcher);
-                return reqs;
+                return LAUNCHER_REQUIREMENTS; // Use cached set to avoid allocation
             }
 
             @Override
@@ -556,9 +564,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
             @Override
             public Set<Subsystem> getRequirements() {
-                HashSet<Subsystem> reqs = new HashSet<>();
-                reqs.add(RobotContainer.launcher);
-                return reqs;
+                return LAUNCHER_REQUIREMENTS; // Use cached set to avoid allocation
             }
 
             @Override
@@ -573,9 +579,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
             @Override
             public Set<Subsystem> getRequirements() {
-                HashSet<Subsystem> reqs = new HashSet<>();
-                reqs.add(RobotContainer.launcher);
-                return reqs;
+                return LAUNCHER_REQUIREMENTS; // Use cached set to avoid allocation
             }
 
             @Override
@@ -590,9 +594,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
             @Override
             public Set<Subsystem> getRequirements() {
-                HashSet<Subsystem> reqs = new HashSet<>();
-                reqs.add(RobotContainer.launcher);
-                return reqs;
+                return LAUNCHER_REQUIREMENTS; // Use cached set to avoid allocation
             }
 
             @Override
@@ -608,9 +610,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
             @Override
             public Set<Subsystem> getRequirements() {
-                HashSet<Subsystem> reqs = new HashSet<>();
-                reqs.add(RobotContainer.launcher);
-                return reqs;
+                return LAUNCHER_REQUIREMENTS; // Use cached set to avoid allocation
             }
 
             @Override

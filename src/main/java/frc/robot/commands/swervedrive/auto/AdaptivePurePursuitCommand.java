@@ -165,7 +165,7 @@ public class AdaptivePurePursuitCommand extends Command {
         if (closestSegment <= currentSegment + 1 && closestSegment < path.size() - 1) {
             if (closestSegment > currentSegment) {
                 currentSegment = closestSegment;
-                System.out.println("Advanced to segment " + currentSegment + "/" + (path.size() - 1));
+                // System.out.println("Advanced to segment " + currentSegment + "/" + (path.size() - 1));
             }
         }
 
@@ -174,7 +174,7 @@ public class AdaptivePurePursuitCommand extends Command {
             PathWaypoint nextWaypoint = path.getWaypoint(currentSegment + 1);
             if (controller.shouldAdvanceSegment(currentPose, nextWaypoint)) {
                 currentSegment++;
-                System.out.println("Handoff advance to segment " + currentSegment + "/" + (path.size() - 1));
+                // System.out.println("Handoff advance to segment " + currentSegment + "/" + (path.size() - 1));
             }
         }
 
@@ -201,7 +201,6 @@ public class AdaptivePurePursuitCommand extends Command {
         PathWaypoint currentWaypoint = path.getWaypoint(
             Math.min(currentSegment + 1, path.size() - 1));
         Rotation2d targetHeading = currentWaypoint.getRotation();
-        Translation2d targetWaypointPos = currentWaypoint.getTranslation();
 
         // Calculate heading error and use PID to get omega (in radians)
         double headingError = targetHeading.getRadians() - currentPose.getRotation().getRadians();
@@ -227,27 +226,25 @@ public class AdaptivePurePursuitCommand extends Command {
         // Drive the robot with field-oriented control
         drivebase.driveFieldOriented(targetSpeeds);
 
-        // SmartDashboard telemetry
+        // SmartDashboard telemetry - reduced to essential values only
         SmartDashboard.putNumber("PP/CurrentSegment", currentSegment);
-        SmartDashboard.putNumber("PP/TotalSegments", path.size() - 1);
-        SmartDashboard.putNumber("PP/RobotX", currentPose.getX());
-        SmartDashboard.putNumber("PP/RobotY", currentPose.getY());
-        SmartDashboard.putNumber("PP/RobotHeading", Math.toDegrees(currentPose.getRotation().getRadians()));
-        SmartDashboard.putNumber("PP/TargetWaypointX", targetWaypointPos.getX());
-        SmartDashboard.putNumber("PP/TargetWaypointY", targetWaypointPos.getY());
-        SmartDashboard.putNumber("PP/CurrentHeadingRaw", currentPose.getRotation().getRadians());
-        SmartDashboard.putNumber("PP/TargetHeadingRaw", targetHeading.getRadians());
-        SmartDashboard.putNumber("PP/LookaheadX", lookaheadPoint.getX());
-        SmartDashboard.putNumber("PP/LookaheadY", lookaheadPoint.getY());
-        SmartDashboard.putNumber("PP/LookaheadDist", lookaheadDistance);
         SmartDashboard.putNumber("PP/DistanceToEnd", distanceToEnd);
-        SmartDashboard.putNumber("PP/CurrentSpeed", currentSpeed);
-        SmartDashboard.putNumber("PP/TargetVelocity", targetVelocity);
-        SmartDashboard.putNumber("PP/TargetHeading", Math.toDegrees(targetHeading.getRadians()));
         SmartDashboard.putNumber("PP/HeadingError", Math.toDegrees(headingError));
-        SmartDashboard.putNumber("PP/Omega", omega);
-        SmartDashboard.putNumber("PP/TransVelX", translationVelocity.getX());
-        SmartDashboard.putNumber("PP/TransVelY", translationVelocity.getY());
+        // Uncomment below for detailed debugging (impacts performance at 50Hz):
+        // SmartDashboard.putNumber("PP/TotalSegments", path.size() - 1);
+        // SmartDashboard.putNumber("PP/RobotX", currentPose.getX());
+        // SmartDashboard.putNumber("PP/RobotY", currentPose.getY());
+        // SmartDashboard.putNumber("PP/RobotHeading", Math.toDegrees(currentPose.getRotation().getRadians()));
+        // SmartDashboard.putNumber("PP/TargetWaypointX", targetWaypointPos.getX());
+        // SmartDashboard.putNumber("PP/TargetWaypointY", targetWaypointPos.getY());
+        // SmartDashboard.putNumber("PP/LookaheadX", lookaheadPoint.getX());
+        // SmartDashboard.putNumber("PP/LookaheadY", lookaheadPoint.getY());
+        // SmartDashboard.putNumber("PP/LookaheadDist", lookaheadDistance);
+        // SmartDashboard.putNumber("PP/CurrentSpeed", currentSpeed);
+        // SmartDashboard.putNumber("PP/TargetVelocity", targetVelocity);
+        // SmartDashboard.putNumber("PP/Omega", omega);
+        // SmartDashboard.putNumber("PP/TransVelX", translationVelocity.getX());
+        // SmartDashboard.putNumber("PP/TransVelY", translationVelocity.getY());
 
         // Check for path completion
         if (currentSegment >= path.size() - 1) {
