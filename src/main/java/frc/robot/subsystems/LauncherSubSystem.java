@@ -462,8 +462,8 @@ public class LauncherSubSystem extends SubsystemBase {
         SmartDashboard.putNumber("Launcher/StateOrdinal", mLauncherState.ordinal()); // Use ordinal instead of .name() to avoid string allocation
 
         // Uncomment below for detailed debugging (impacts performance at 50Hz):
-        // SmartDashboard.putNumber("Launcher/Angle", mHoodMotor.getPosition().getValue().in(Degrees));
-        // SmartDashboard.putNumber("Launcher/TargetAngle", mTargetAngle.in(Degrees));
+        SmartDashboard.putNumber("Launcher/Angle", mHoodMotor.getPosition().getValue().in(Degrees));
+        SmartDashboard.putNumber("Launcher/TargetAngle", mTargetAngle.in(Degrees));
         // SmartDashboard.putNumber("Launcher/kF", mKf.magnitude());
         // SmartDashboard.putNumber("Launcher/kF Samples", mFlywheelEstimator.size());
         // SmartDashboard.putNumber("Launcher/HoodMotorAmps", mHoodMotor.getSupplyCurrent().getValue().in(Amps));

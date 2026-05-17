@@ -324,8 +324,10 @@ public class PurePursuitController {
                 .getDistance(finalWaypoint.getTranslation());
 
             // Use the path's end translation tolerance as the deceleration radius
-            double decelerationRadius = path.getEndTranslationTolerance()
-                * Constants.PurePursuitConstants.WAYPOINT_DECEL_RADIUS_MULT;
+            double decelerationRadius = Math.max(
+                (path.getEndTranslationTolerance() * Constants.PurePursuitConstants.WAYPOINT_DECEL_RADIUS_MULT)
+                + Constants.PurePursuitConstants.WAYPOINT_DECEL_RADIUS_ADDER, 
+                Constants.PurePursuitConstants.MIN_DECEL_RADIUS);
 
             if (distanceToFinal < decelerationRadius) {
                 double decelerationFactor = distanceToFinal / decelerationRadius;

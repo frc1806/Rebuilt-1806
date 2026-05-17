@@ -208,10 +208,12 @@ public final class Constants
     // Completion tolerances (defaults when not in path JSON)
     public static final double DEFAULT_POSITION_TOLERANCE = 0.05; // meters
     public static final double DEFAULT_VELOCITY_TOLERANCE = 0.1; // m/s
-    public static final double DEFAULT_ROTATION_TOLERANCE = 5.0; // degrees
+    public static final double DEFAULT_ROTATION_TOLERANCE = 4.0; // degrees
 
     // Velocity profiling
-    public static final double WAYPOINT_DECEL_RADIUS_MULT = 1.0;
+    public static final double MIN_DECEL_RADIUS = 0.05;
+    public static final double WAYPOINT_DECEL_RADIUS_ADDER = 0.0;
+    public static final double WAYPOINT_DECEL_RADIUS_MULT = 0.0;
     public static final double MIN_VELOCITY = 0.2; // m/s
 
     // 2026 Field dimensions for alliance flipping
