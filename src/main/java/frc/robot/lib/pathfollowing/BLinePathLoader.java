@@ -389,4 +389,42 @@ public class BLinePathLoader {
         bluePathCache.clear();
         redPathCache.clear();
     }
+
+    /**
+     * Pre-loads specific paths into cache for faster access during autonomous.
+     * This eliminates file I/O lag when the match starts.
+     *
+     * @param pathNames List of path names to pre-load (without .json extension)
+     * @param shouldFlip Whether to load for red alliance (true) or blue alliance (false)
+     */
+    public static void preloadPaths(List<String> pathNames, boolean shouldFlip) {
+        for (String pathName : pathNames) {
+            try {
+                loadPath(pathName, shouldFlip); // This will cache the path
+            } catch (Exception e) {
+                System.err.println("BLinePathLoader: Failed to preload path '" + pathName + "': " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Returns the total number of cached paths across both alliances.
+     *
+     * @return Total cached path count
+     */
+    public static int getCachedPathCount() {
+        return bluePathCache.size() + redPathCache.size();
+    }
+
+    /**
+     * Checks if a specific path is already cached.
+     *
+     * @param pathName The name of the path to check
+     * @param shouldFlip Whether to check red alliance cache (true) or blue alliance cache (false)
+     * @return True if the path is cached
+     */
+    public static boolean isPathCached(String pathName, boolean shouldFlip) {
+        Map<String, ParsedPath> cache = shouldFlip ? redPathCache : bluePathCache;
+        return cache.containsKey(pathName);
+    }
 }

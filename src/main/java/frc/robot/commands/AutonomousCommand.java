@@ -14,7 +14,7 @@ public class AutonomousCommand extends Command{
     private Command mAutonomousCommand;
 
     public AutonomousCommand(Command autoCommand){
-        mAutonomousCommand = new WaitCommand(0.3).andThen(autoCommand);
+        mAutonomousCommand = new WaitCommand(0.05).andThen(autoCommand);
         addRequirements(autoCommand.getRequirements());
     }
 

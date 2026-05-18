@@ -34,6 +34,7 @@ import frc.robot.commands.swervedrive.ClimberL1GoToAngleCommand;
 import frc.robot.commands.swervedrive.RunClimberCommand;
 import frc.robot.commands.swervedrive.auto.AdaptivePurePursuitBuilder;
 import frc.robot.lib.pathfollowing.BLinePath;
+import frc.robot.lib.pathfollowing.BLinePathLoader;
 import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.LauncherSubSystem;
@@ -48,6 +49,7 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.io.File;
+import java.util.List;
 import swervelib.SwerveInputStream;
 
 /**
@@ -85,6 +87,12 @@ public class RobotContainer
   public static final LauncherSubSystem launcher = LauncherSubSystem.GetInstance();
   public static final Collector collector = Collector.GetInstance();
   public static final ClimberSubsystem climber = new ClimberSubsystem();
+
+  // Path pre-loading tracking variables
+  private Autonomous lastSelectedAuto = null;
+  private boolean pathsPreloaded = false;
+  private double robotStartTime = Timer.getFPGATimestamp();
+  private String pathCacheStatus = "Not loaded";
 
 
   /**
@@ -261,6 +269,46 @@ public class RobotContainer
 
     public Command getCommand(){
       return autonomousCommand;
+    }
+
+    /**
+     * Returns the list of path names used by this autonomous routine.
+     * Used for path pre-loading to reduce autonomous startup lag.
+     */
+    public List<String> getPathNames(){
+      switch(this){
+        case MICROWAVE_LEFT:
+        case MICROWAVE_LEFT_PATHS:
+          return List.of("MicrowaveLeft", "MicrowaveLeft2", "MicrowaveLeft3");
+        case MICROWAVE_RIGHT:
+        case MICROWAVE_RIGHT_PATHS:
+          return List.of("MicrowaveLeft"); // Uses mirrored Left paths
+        case KETTLE_LEFT:
+        case KETTLE_LEFT_PATHS:
+          return List.of("KettleLeft", "KettleLeft2");
+        case KETTLE_RIGHT:
+        case KETTLE_RIGHT_PATHS:
+          return List.of("KettleLeft"); // Uses mirrored Left paths
+        case PRELOAD_KETTLE_LEFT:
+          return List.of("PreloadKettleLeft");
+        case PRELOAD_KETTLE_RIGHT:
+          return List.of("PreloadKettleLeft"); // Uses mirrored Left path
+        case POP_SECRET:
+        case POP_SECRET_PATHS:
+          return List.of("PopSecret", "PopSecret2", "PopSecret3");
+        case BASIC_AUTONOMOUS:
+          return List.of("BasicPath");
+        case CLIMB_AUTO:
+          return List.of("CenterClimb");
+        case RIGHT_CLIMB:
+          return List.of("RightClimb");
+        case AMBITION:
+          return List.of("Ambition");
+        case LEFT_GRAB:
+          return List.of("LeftGrab");
+        default:
+          return List.of(); // No paths for DO_NOTHING, VISION_SHOOT_ONLY, etc.
+      }
     }
   }
 
@@ -704,5 +752,63 @@ public class RobotContainer
     matchTimer.writeToNetworkTables();
     stopRumbleOperatorController();
     stopRumbleDriverController();
+
+    // Path pre-loading: Load paths for selected autonomous after a few seconds
+    // or when autonomous selection changes
+    double timeSinceRobotStart = Timer.getFPGATimestamp() - robotStartTime;
+    Autonomous currentAuto = mAutonomousChooser.getSelected();
+
+    // Check if we should pre-load paths
+    boolean shouldPreload = false;
+    String preloadReason = "";
+
+    if (currentAuto != lastSelectedAuto && lastSelectedAuto != null) {
+      // Auto selection changed - clear cache and reload
+      shouldPreload = true;
+      preloadReason = "Auto changed";
+      BLinePathLoader.clearCache();
+      pathsPreloaded = false;
+      pathCacheStatus = "Clearing cache...";
+      SmartDashboard.putString("Path Cache Status", pathCacheStatus);
+    } else if (!pathsPreloaded && timeSinceRobotStart > 3.0) {
+      // Initial pre-load after 3 second startup delay
+      shouldPreload = true;
+      preloadReason = "Initial load";
+    }
+
+    if (shouldPreload && currentAuto != null) {
+      List<String> pathNames = currentAuto.getPathNames();
+      if (!pathNames.isEmpty()) {
+        // Get alliance color for correct path variant
+        boolean isRedAlliance = DriverStation.getAlliance()
+          .map(alliance -> alliance == DriverStation.Alliance.Red)
+          .orElse(false);
+
+        System.out.println("BLinePathLoader: Pre-loading " + pathNames.size() +
+          " path(s) for " + currentAuto.name() + " (" + preloadReason + ")");
+
+        double startTime = Timer.getFPGATimestamp();
+        BLinePathLoader.preloadPaths(pathNames, isRedAlliance);
+        double loadTime = Timer.getFPGATimestamp() - startTime;
+
+        pathsPreloaded = true;
+        lastSelectedAuto = currentAuto;
+
+        String timestamp = String.format("%.2fs", Timer.getFPGATimestamp());
+        pathCacheStatus = "Paths Cached for " + currentAuto.name() + " @ " + timestamp;
+
+        System.out.println("BLinePathLoader: Pre-loaded " + BLinePathLoader.getCachedPathCount() +
+          " path variant(s) in " + String.format("%.1fms", loadTime * 1000));
+      } else {
+        pathCacheStatus = currentAuto.name() + " (No paths)";
+        pathsPreloaded = true; // Mark as "done" so we don't keep checking
+      }
+    }
+
+    // Update dashboard
+    if (currentAuto != null) {
+      SmartDashboard.putString("Path Cache Status", pathCacheStatus);
+      SmartDashboard.putNumber("Cached Path Variants", BLinePathLoader.getCachedPathCount());
+    }
   }
 }
