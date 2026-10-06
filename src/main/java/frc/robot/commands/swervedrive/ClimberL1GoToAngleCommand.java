@@ -7,22 +7,22 @@ public class ClimberL1GoToAngleCommand extends Command {
     
     private double mAngle;
     public ClimberL1GoToAngleCommand(double angle){
-        addRequirements(RobotContainer.climber);
+        addRequirements(RobotContainer.intakeArm);
         mAngle = angle;
     }
 
     @Override
     public void execute(){
-        RobotContainer.climber.l1GoToAngle(mAngle);
+        RobotContainer.intakeArm.l1GoToAngle(mAngle);
     }
 
     @Override
     public boolean isFinished(){
-        return Math.abs(RobotContainer.climber.getL1Angle() - mAngle) < 1.0;
+        return Math.abs(RobotContainer.intakeArm.getL1Angle() - mAngle) < 1.0;
 
     }
 
     public void end(boolean interrupted){
-        RobotContainer.climber.manualControl(0.0);
+        RobotContainer.intakeArm.manualControl(0.0);
     }
 }

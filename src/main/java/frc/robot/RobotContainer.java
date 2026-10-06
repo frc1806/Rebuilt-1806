@@ -35,7 +35,7 @@ import frc.robot.commands.swervedrive.RunClimberCommand;
 import frc.robot.commands.swervedrive.auto.AdaptivePurePursuitBuilder;
 import frc.robot.lib.pathfollowing.BLinePath;
 import frc.robot.lib.pathfollowing.BLinePathLoader;
-import frc.robot.subsystems.ClimberSubsystem;
+import frc.robot.subsystems.IntakeArmSubsystem;
 import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.LauncherSubSystem;
 import frc.robot.subsystems.MatchTimer;
@@ -86,7 +86,7 @@ public class RobotContainer
 
   public static final LauncherSubSystem launcher = LauncherSubSystem.GetInstance();
   public static final Collector collector = Collector.GetInstance();
-  public static final ClimberSubsystem climber = new ClimberSubsystem();
+  public static final IntakeArmSubsystem intakeArm = new IntakeArmSubsystem();
 
   // Path pre-loading tracking variables
   private Autonomous lastSelectedAuto = null;
@@ -244,23 +244,27 @@ public class RobotContainer
       DO_NOTHING(),
       VISION_SHOOT_ONLY(),
       BASIC_AUTONOMOUS(),
-      CLIMB_AUTO(),
-      RIGHT_CLIMB(),
       AMBITION(),
-      LEFT_GRAB(),
+      KERNEL_LEFT(),
+      KERNEL_RIGHT(),
+      PRELOAD_KERNEL_LEFT(),
+      PRELOAD_KERNEL_RIGHT(),
+      KERNEL_LEFT_PATHS(),
+      KERNEL_RIGHT_PATHS(),
+      POP_SECRET_PATHS(),
+      POP_SECRET(),
+      /*LEFT_GRAB(),
       MICROWAVE_RIGHT(),
       MICROWAVE_LEFT(),
       KETTLE_RIGHT(),
       KETTLE_LEFT(),
-      POP_SECRET(),
       PRELOAD_KETTLE_LEFT(),
       PRELOAD_KETTLE_RIGHT(),
       KETTLE_LEFT_PATHS(),
       KETTLE_RIGHT_PATHS(),
       MICROWAVE_LEFT_PATHS(),
-      MICROWAVE_RIGHT_PATHS(),
-      POP_SECRET_PATHS()
-    ;
+      MICROWAVE_RIGHT_PATHS(),*/
+      ;
 
     private Command autonomousCommand;
     public void setAutonomousCommand(Command command){
@@ -277,7 +281,10 @@ public class RobotContainer
      */
     public List<String> getPathNames(){
       switch(this){
-        case MICROWAVE_LEFT:
+        case POP_SECRET:
+        case POP_SECRET_PATHS:
+        return List.of("PopSecret", "PopSecret2", "PopSecret3");
+        /*case MICROWAVE_LEFT:
         case MICROWAVE_LEFT_PATHS:
           return List.of("MicrowaveLeft", "MicrowaveLeft2", "MicrowaveLeft3");
         case MICROWAVE_RIGHT:
@@ -293,9 +300,6 @@ public class RobotContainer
           return List.of("PreloadKettleLeft");
         case PRELOAD_KETTLE_RIGHT:
           return List.of("PreloadKettleLeft"); // Uses mirrored Left path
-        case POP_SECRET:
-        case POP_SECRET_PATHS:
-          return List.of("PopSecret", "PopSecret2", "PopSecret3");
         case BASIC_AUTONOMOUS:
           return List.of("BasicPath");
         case CLIMB_AUTO:
@@ -305,7 +309,7 @@ public class RobotContainer
         case AMBITION:
           return List.of("Ambition");
         case LEFT_GRAB:
-          return List.of("LeftGrab");
+          return List.of("LeftGrab");*/
         default:
           return List.of(); // No paths for DO_NOTHING, VISION_SHOOT_ONLY, etc.
       }
@@ -349,20 +353,20 @@ public class RobotContainer
     Autonomous.VISION_SHOOT_ONLY.setAutonomousCommand(new AutonomousCommand(new WaitCommand(1.0).andThen(drivebase.driveFieldOriented(driveGoalAim).alongWith(launcher.launcherAimAtGoal()))));   
     //Path myPath = new BLinePath("SweepRight");
     //Command followCommand = pathBuilder.build(new BLinePath("SweepRight")).andThen(pathBuilder.build(new BLinePath("SweepRight2")).andThen(Commands.runOnce(drivebase::stop, drivebase)));
-    Command basicAuto = pathBuilder.build(new BLinePath("BasicPath")).alongWith(Commands.runOnce(collector::extend, collector)).andThen(Commands.runOnce(launcher::enableLaunching)).andThen(launcher.prepareShotCommand(PROTECTED_SHOT)).andThen(new WaitCommand(10)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching));
+    Command basicAuto = pathBuilder.build(new BLinePath("BasicPath")).alongWith(Commands.runOnce(intakeArm::intakeArmExtend, intakeArm)).andThen(Commands.runOnce(launcher::enableLaunching)).andThen(launcher.prepareShotCommand(PROTECTED_SHOT)).andThen(new WaitCommand(10)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching));
     Autonomous.BASIC_AUTONOMOUS.setAutonomousCommand(new AutonomousCommand(basicAuto));
     Command climbFollowCommand = pathBuilder.build(new BLinePath("CenterClimb"));
-    Command centerClimbAutoCommand = Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching))
-                                      .andThen(climbFollowCommand.alongWith(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_GRAB_ANGLE))).andThen(new ParallelDeadlineGroup(new WaitCommand(1.0), drivebase.driveCommand(() -> 0.2, () -> 0.0, () -> 0.0))
-                                      .andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_l1_HOOK_ANGLE)).andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE).alongWith(drivebase.driveCommand(() -> -0.2, () -> 0.0, () -> 0.0))))
-                                      .andThen(new ParallelDeadlineGroup(new WaitCommand(10.0), new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE)));
-    Autonomous.CLIMB_AUTO.setAutonomousCommand(new AutonomousCommand(centerClimbAutoCommand));
+    /*Command centerClimbAutoCommand = Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching))
+                                      .andThen(climbFollowCommand.alongWith(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_GRAB_ANGLE))).andThen(new ParallelDeadlineGroup(new WaitCommand(1.0), drivebase.driveCommand(() -> 0.2, () -> 0.0, () -> 0.0))
+                                      .andThen(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_l1_HOOK_ANGLE)).andThen(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_CLIMB_ANGLE).alongWith(drivebase.driveCommand(() -> -0.2, () -> 0.0, () -> 0.0))))
+                                      .andThen(new ParallelDeadlineGroup(new WaitCommand(10.0), new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_CLIMB_ANGLE)));
+    Autonomous.CLIMB_AUTO.setAutonomousCommand(new AutonomousCommand(centerClimbAutoCommand));*/
 
     Command rightClimbFollowCommand = pathBuilder.build(new BLinePath("RightClimb"));
     Command rightClimbAutoCommand = Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching))
-                                      .andThen(rightClimbFollowCommand.alongWith(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_GRAB_ANGLE))).andThen(new ParallelDeadlineGroup(new WaitCommand(1.0), drivebase.driveCommand(() -> 0.2, () -> 0.0, () -> 0.0))
-                                      .andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_l1_HOOK_ANGLE)).andThen(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE).alongWith(drivebase.driveCommand(() -> -0.2, () -> 0.0, () -> 0.0))))
-                                      .andThen(new ParallelDeadlineGroup(new WaitCommand(10.0), new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE)));
+                                      .andThen(rightClimbFollowCommand.alongWith(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_GRAB_ANGLE))).andThen(new ParallelDeadlineGroup(new WaitCommand(1.0), drivebase.driveCommand(() -> 0.2, () -> 0.0, () -> 0.0))
+                                      .andThen(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_l1_HOOK_ANGLE)).andThen(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_CLIMB_ANGLE).alongWith(drivebase.driveCommand(() -> -0.2, () -> 0.0, () -> 0.0))))
+                                      .andThen(new ParallelDeadlineGroup(new WaitCommand(10.0), new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_CLIMB_ANGLE)));
     Autonomous.RIGHT_CLIMB.setAutonomousCommand(new AutonomousCommand(rightClimbAutoCommand));
 
     Command ambitionFollowCommand = pathBuilder.build(new BLinePath("Ambition"));
@@ -572,7 +576,7 @@ public class RobotContainer
     }
     else
     {
-      climber.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY()));
+      intakeArm.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY()));
       //driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       //driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
       driverXbox.y().onTrue(launcher.prepareShotCommand(CLOSE_SHOT));
@@ -605,10 +609,10 @@ public class RobotContainer
       operatorXbox.a().onTrue(Commands.runOnce(collector::extend));
       operatorXbox.y().onTrue(Commands.runOnce(collector::retract));
       operatorXbox.x().onTrue(Commands.runOnce(launcher::zeroHood));
-      operatorXbox.povUp().onTrue(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_INTAKE_DEFLECT_ANGLE));
+      operatorXbox.povUp().onTrue(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_INTAKE_DEFLECT_ANGLE));
       operatorXbox.povDown().onTrue(new ClimberL1GoToAngleCommand(0));
-      operatorXbox.povLeft().onTrue(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_GRAB_ANGLE));
-      operatorXbox.povRight().onTrue(new ClimberL1GoToAngleCommand(Constants.ClimberConstants.CLIMBER_L1_CLIMB_ANGLE));
+      operatorXbox.povLeft().onTrue(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_GRAB_ANGLE));
+      operatorXbox.povRight().onTrue(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_CLIMB_ANGLE));
       operatorXbox.leftTrigger().onTrue(launcher.prepareDashboardShot());
       operatorXbox.leftTrigger().onFalse(Commands.runOnce(launcher::stop, launcher));
       operatorXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
@@ -675,7 +679,7 @@ public class RobotContainer
             driverXbox.a().or(operatorXbox.a()).whileTrue(new ParallelCommandGroup(Commands.run(collector::stop, collector), Commands.run(launcher::stop, launcher)));
           break;
         case kClimberTest:
-            climber.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY()));/*
+            intakeArm.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY()));/*
             drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
             climber.setDefaultCommand(climber.runClimberCommand(
               new DoubleSupplier() {

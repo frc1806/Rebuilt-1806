@@ -16,11 +16,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotMap;
 
-public class ClimberSubsystem extends SubsystemBase{
+public class IntakeArmSubsystem extends SubsystemBase{
 
     private TalonFX mClimberFrontLead;// mClimberFrontFollower;//, mClimberRearLead; //mClimberRearFollower;
 
-    public ClimberSubsystem(){
+    public IntakeArmSubsystem(){
         mClimberFrontLead = new TalonFX(RobotMap.CLIMBER_1);
         mClimberFrontLead.setNeutralMode(NeutralModeValue.Brake);
         //mClimberFrontFollower = new TalonFX(RobotMap.CLIMBER_2);
@@ -28,8 +28,8 @@ public class ClimberSubsystem extends SubsystemBase{
         //mClimberRearFollower = new TalonFX(RobotMap.CLIMBER_4);
 
         CurrentLimitsConfigs climberCurrentLimitConfig = new CurrentLimitsConfigs();
-        climberCurrentLimitConfig.StatorCurrentLimit = Constants.ClimberConstants.CLIMBER_STATOR_CURRENT_LIMIT;
-        climberCurrentLimitConfig.SupplyCurrentLimit = Constants.ClimberConstants.CLIMBER_SUPPLY_CURRENT_LIMIT;
+        climberCurrentLimitConfig.StatorCurrentLimit = Constants.IntakeArmConstants.INTAKE_ARM_STATOR_CURRENT_LIMIT;
+        climberCurrentLimitConfig.SupplyCurrentLimit = Constants.IntakeArmConstants.INTAKE_ARM_SUPPLY_CURRENT_LIMIT;
 
         //Follower frontFollower = new Follower(mClimberFrontLead.getDeviceID(), MotorAlignmentValue.Opposed);
 
@@ -50,9 +50,9 @@ public class ClimberSubsystem extends SubsystemBase{
         //mClimberRearLead.getConfigurator().apply(leaderOutputConfigs);
 
         Slot0Configs l1Slot0Configs = new Slot0Configs();
-        l1Slot0Configs.kP = Constants.ClimberConstants.CLIMBER_L1_KP;
-        l1Slot0Configs.kI = Constants.ClimberConstants.CLIMBER_L1_KI;
-        l1Slot0Configs.kD = Constants.ClimberConstants.CLIMBER_L1_KD;
+        l1Slot0Configs.kP = Constants.IntakeArmConstants.INTAKE_ARM_KP;
+        l1Slot0Configs.kI = Constants.IntakeArmConstants.INTAKE_ARM_KI;
+        l1Slot0Configs.kD = Constants.IntakeArmConstants.INTAKE_ARM_KD;
         mClimberFrontLead.getConfigurator().apply(l1Slot0Configs);
 
         //mClimberFrontFollower.setControl(frontFollower);
@@ -61,7 +61,7 @@ public class ClimberSubsystem extends SubsystemBase{
 
     @Override
     public void periodic(){
-        NetworkTableInstance.getDefault().getTable("Robot/Climber").putValue("L1 Angle", NetworkTableValue.makeDouble(getL1Angle()));
+        NetworkTableInstance.getDefault().getTable("Robot/Climber").putValue("Intake Arm Angle", NetworkTableValue.makeDouble(getIntakeArmAngle()));
         
     }
 
@@ -75,18 +75,24 @@ public class ClimberSubsystem extends SubsystemBase{
         //mClimberRearLead.set(rearOutput * 0.5);
     }
 
-    public double getL1Angle(){
-        return mClimberFrontLead.getPosition().getValueAsDouble() * Constants.ClimberConstants.CLIMBER_L1_DEG_PER_ROT;
+    public double getIntakeArmAngle(){
+        return mClimberFrontLead.getPosition().getValueAsDouble() * Constants.IntakeArmConstants.INTAKE_ARM_DEG_PER_ROT;
     }
 
-    public void l1GoToAngle(double angle){
-        mClimberFrontLead.setControl(new PositionVoltage(angle * (1/ Constants.ClimberConstants.CLIMBER_L1_DEG_PER_ROT)));
+    public void zeroIntakeArm(){
+        mClimberFrontLead.setPosition(0.0);
+    }
+
+    
+    public void intakeArmGoToAngle(double angle){
+        mClimberFrontLead.setControl(new PositionVoltage(angle * (1/ Constants.IntakeArmConstants.INTAKE_ARM_DEG_PER_ROT)));
         //mClimberRearLead.set(0);
     }
 
-    public void zeroL1(){
-        mClimberFrontLead.setPosition(0.0);
+    public void intakeArmExtend(){
+        intakeArmGoToAngle(Constants.IntakeArmConstants.INTAKE_ARM_INTAKING);
     }
+
 
     public void stop(){
         mClimberFrontLead.stopMotor();

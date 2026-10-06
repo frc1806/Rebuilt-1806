@@ -34,7 +34,7 @@ public class AutonomousCommand extends Command{
         RobotContainer.launcher.stop();
         RobotContainer.drivebase.stop();
         RobotContainer.collector.stop();
-        RobotContainer.climber.stop();
+        RobotContainer.intakeArm.stop();
         RobotContainer.launcher.disableLaunching();
         RobotContainer.snapAnglesHelper.clearSnapAngleMemory();
     }

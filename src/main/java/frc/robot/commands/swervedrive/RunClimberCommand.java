@@ -10,17 +10,17 @@ public class RunClimberCommand extends Command{
     DoubleSupplier frontHookDoubleSupplier;
 
     public RunClimberCommand(DoubleSupplier frontHookOutput){
-        addRequirements(RobotContainer.climber);
+        addRequirements(RobotContainer.intakeArm);
         frontHookDoubleSupplier = frontHookOutput;
     }
 
     @Override
     public void execute(){
-        RobotContainer.climber.manualControl(frontHookDoubleSupplier.getAsDouble());
+        RobotContainer.intakeArm.manualControl(frontHookDoubleSupplier.getAsDouble());
     }
 
     @Override
     public void end(boolean interrupted){
-        RobotContainer.climber.manualControl(0);
+        RobotContainer.intakeArm.manualControl(0);
     }
 }

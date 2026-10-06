@@ -178,23 +178,29 @@ public final class Constants
     public static final double INTAKE_SPEED_KD = 0.0;
     public static final double INTAKE_SPEED_KS = 0.008;
     public static final double INTAKE_SPEED_KV = 0.00012;
+    
+    public static final double COLLECTOR_MOTOR_CURRENT_LIMIT = 60;
 
   }
 
-  public static class ClimberConstants
+  public static class IntakeArmConstants
   {
-    public static final double CLIMBER_STATOR_CURRENT_LIMIT = 120.0;
-    public static final double CLIMBER_SUPPLY_CURRENT_LIMIT = 80.0;
-    public static final double CLIMBER_L1_GEAR_RATIO = (22.0/14.0)*5.0*9.0;
-    public static final double CLIMBER_L1_DEG_PER_ROT = 360.0 / CLIMBER_L1_GEAR_RATIO;
-    public static final double CLIMBER_L1_KP = 1.0;
-    public static final double CLIMBER_L1_KI = 0.05;
-    public static final double CLIMBER_L1_KD = 0;
+    public static final double INTAKE_ARM_STATOR_CURRENT_LIMIT = 120.0;
+    public static final double INTAKE_ARM_SUPPLY_CURRENT_LIMIT = 80.0;
+    public static final double INTAKE_ARM_GEAR_RATIO = (22.0/14.0)*5.0*9.0;
+    public static final double INTAKE_ARM_DEG_PER_ROT = 360.0 / INTAKE_ARM_GEAR_RATIO;
+    public static final double INTAKE_ARM_KP = 1.0;
+    public static final double INTAKE_ARM_KI = 0.05;
+    public static final double INTAKE_ARM_KD = 0;
 
-    public static final double CLIMBER_L1_INTAKE_DEFLECT_ANGLE = 150.0;
+    public static final double INTAKE_ARM_INTAKING = 90.0;
+    public static final double INTAKE_ARM_UP = 0.0;
+    public static final double INTAKE_ARM_SHOOTING = 45.0;
+
+    /*public static final double CLIMBER_L1_INTAKE_DEFLECT_ANGLE = 150.0;
     public static final double CLIMBER_L1_GRAB_ANGLE = 150.0;
     public static final double CLIMBER_l1_HOOK_ANGLE = 150.0;
-    public static final double CLIMBER_L1_CLIMB_ANGLE = 11.0;
+    public static final double CLIMBER_L1_CLIMB_ANGLE = 11.0;*/
 
   }
 
