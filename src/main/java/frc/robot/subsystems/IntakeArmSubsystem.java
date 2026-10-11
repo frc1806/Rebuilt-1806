@@ -93,6 +93,14 @@ public class IntakeArmSubsystem extends SubsystemBase{
         intakeArmGoToAngle(Constants.IntakeArmConstants.INTAKE_ARM_INTAKING);
     }
 
+    public void intakeArmRetract(){
+        intakeArmGoToAngle(Constants.IntakeArmConstants.INTAKE_ARM_UP);
+    }
+
+    public void intakeArmGoToShootAngle(){
+        intakeArmGoToAngle(Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING);
+    }
+
 
     public void stop(){
         mClimberFrontLead.stopMotor();

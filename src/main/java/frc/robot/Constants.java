@@ -193,9 +193,9 @@ public final class Constants
     public static final double INTAKE_ARM_KI = 0.05;
     public static final double INTAKE_ARM_KD = 0;
 
-    public static final double INTAKE_ARM_INTAKING = 90.0;
-    public static final double INTAKE_ARM_UP = 0.0;
-    public static final double INTAKE_ARM_SHOOTING = 45.0;
+    public static final double INTAKE_ARM_INTAKING = 90.0; //degrees
+    public static final double INTAKE_ARM_UP = 0.0; //degrees
+    public static final double INTAKE_ARM_SHOOTING = 45.0; //degrees
 
     /*public static final double CLIMBER_L1_INTAKE_DEFLECT_ANGLE = 150.0;
     public static final double CLIMBER_L1_GRAB_ANGLE = 150.0;
