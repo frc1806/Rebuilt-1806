@@ -362,7 +362,7 @@ public class RobotContainer
                                       .andThen(new ParallelDeadlineGroup(new WaitCommand(10.0), new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_CLIMB_ANGLE)));
     Autonomous.CLIMB_AUTO.setAutonomousCommand(new AutonomousCommand(centerClimbAutoCommand));*/
 
-    Command rightClimbFollowCommand = pathBuilder.build(new BLinePath("RightClimb"));
+   /* Command rightClimbFollowCommand = pathBuilder.build(new BLinePath("RightClimb"));
     Command rightClimbAutoCommand = Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(launcher::disableLaunching))
                                       .andThen(rightClimbFollowCommand.alongWith(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_GRAB_ANGLE))).andThen(new ParallelDeadlineGroup(new WaitCommand(1.0), drivebase.driveCommand(() -> 0.2, () -> 0.0, () -> 0.0))
                                       .andThen(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_l1_HOOK_ANGLE)).andThen(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_CLIMB_ANGLE).alongWith(drivebase.driveCommand(() -> -0.2, () -> 0.0, () -> 0.0))))
@@ -372,14 +372,15 @@ public class RobotContainer
     Command ambitionFollowCommand = pathBuilder.build(new BLinePath("Ambition"));
     Command ambitionAutoCommand = Commands.runOnce(collector::extend).andThen(new ParallelDeadlineGroup(ambitionFollowCommand, Commands.runOnce(collector::intake)).andThen(Commands.runOnce(collector::stopIntake)).andThen(Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop))));
 
-    Autonomous.AMBITION.setAutonomousCommand(new AutonomousCommand(ambitionAutoCommand));
+    Autonomous.AMBITION.setAutonomousCommand(new AutonomousCommand(ambitionAutoCommand));*/
 
-    Command leftGrabFollowCommand = pathBuilder.build(new BLinePath("LeftGrab"));
+    /*Command leftGrabFollowCommand = pathBuilder.build(new BLinePath("LeftGrab"));
     Command leftGrabFollowCommand2 = pathBuilder.build(new BLinePath("LeftGrab2"));
     Command leftGrabAutonoCommand = Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)).andThen(Commands.runOnce(collector::extend).andThen(new ParallelDeadlineGroup(leftGrabFollowCommand, Commands.runOnce(collector::intake)).andThen(Commands.runOnce(collector::stopIntake)).andThen(leftGrabFollowCommand2).andThen(Commands.runOnce(launcher::enableLaunching).andThen(new ParallelDeadlineGroup(new WaitCommand(.25), launcher.prepareShotCommand(CLOSE_SHOT))).andThen(new WaitCommand(7)).andThen(Commands.runOnce(launcher::stop)))));
     Autonomous.LEFT_GRAB.setAutonomousCommand(new AutonomousCommand(leftGrabAutonoCommand));
-
+*/
     // Microwave Right: Use mirrored Left paths
+    /*
     Command microwaveRightFollowCommand = pathBuilderMirror.build(new BLinePath("MicrowaveLeft"));
     Command microwaveRight2FollowCommand = pathBuilderNoResetMirror.build(new BLinePath("MicrowaveLeft2"));
     Command microwaveRight3FollowCommand = pathBuilderNoResetMirror.build(new BLinePath("MicrowaveLeft3"));
@@ -391,8 +392,8 @@ public class RobotContainer
       .andThen(Commands.runOnce(launcher::stop, launcher))))
       .andThen(new ParallelDeadlineGroup(microwaveRight3FollowCommand, Commands.run(collector::extend, collector).andThen(Commands.run(collector::intake, collector))));
     Autonomous.MICROWAVE_RIGHT.setAutonomousCommand(new AutonomousCommand(microwaveRightAutoCommand));
-
-    Command microwaveLeftFollowCommand = pathBuilder.build(new BLinePath("MicrowaveLeft"));
+*/
+    /*Command microwaveLeftFollowCommand = pathBuilder.build(new BLinePath("MicrowaveLeft"));
     Command microwaveLeft2FollowCommand = pathBuilderNoReset.build(new BLinePath("MicrowaveLeft2"));
     Command microwaveLeft3FollowCommand = pathBuilderNoReset.build(new BLinePath("MicrowaveLeft3"));
     Command microwaveLeftAutoCommand = Commands.runOnce(collector::extend)
@@ -482,9 +483,9 @@ public class RobotContainer
               .andThen(Commands.runOnce(launcher::stop, launcher));
       Autonomous.PRELOAD_KETTLE_RIGHT.setAutonomousCommand(new AutonomousCommand(preloadKettleRightAutoCommand));
 
+*/
 
-
-
+/*
       // Simplified path-only autos
       Command kettleLeftPathsCommand = pathBuilder.build(new BLinePath("KettleLeft"))
         .andThen(pathBuilderNoReset.build(new BLinePath("KettleLeft2")));
@@ -509,6 +510,7 @@ public class RobotContainer
         .andThen(pathBuilderNoReset.build(new BLinePath("PopSecret2")))
         .andThen(pathBuilderNoReset.build(new BLinePath("PopSecret3")));
       Autonomous.POP_SECRET_PATHS.setAutonomousCommand(new AutonomousCommand(popSecretPathsCommand));
+      */
   }
 
   /**
@@ -606,13 +608,13 @@ public class RobotContainer
       driverXbox.x().and(()-> drivebase.isRedAlliance()).and(()->!Constants.DrivebaseConstants.RED_ALLIANCE_ZONE.isRobotInZone()).onTrue(getDriveFeedAimAutoLockCommand().alongWith(launcher.launcherAimForFeed()));
       //driverXbox.x().whileTrue(Commands.runOnce(snapAnglesHelper::clearSnapAngleMemory).andThen(driveFeedAimCommand.alongWith(launcher.launcherAimForFeed())));
 
-      operatorXbox.a().onTrue(Commands.runOnce(collector::extend));
-      operatorXbox.y().onTrue(Commands.runOnce(collector::retract));
+      operatorXbox.a().onTrue(Commands.runOnce(intakeArm::intakeArmExtend));
+      operatorXbox.y().onTrue(Commands.runOnce(intakeArm::intakeArmRetract));
       operatorXbox.x().onTrue(Commands.runOnce(launcher::zeroHood));
-      operatorXbox.povUp().onTrue(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_INTAKE_DEFLECT_ANGLE));
-      operatorXbox.povDown().onTrue(new ClimberL1GoToAngleCommand(0));
-      operatorXbox.povLeft().onTrue(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_GRAB_ANGLE));
-      operatorXbox.povRight().onTrue(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_CLIMB_ANGLE));
+      // operatorXbox.povUp().onTrue(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_INTAKE_DEFLECT_ANGLE));
+      // operatorXbox.povDown().onTrue(new ClimberL1GoToAngleCommand(0));
+      // operatorXbox.povLeft().onTrue(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_GRAB_ANGLE));
+      // operatorXbox.povRight().onTrue(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_CLIMB_ANGLE));
       operatorXbox.leftTrigger().onTrue(launcher.prepareDashboardShot());
       operatorXbox.leftTrigger().onFalse(Commands.runOnce(launcher::stop, launcher));
       operatorXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
@@ -712,9 +714,9 @@ public class RobotContainer
         case kIntakeTest:
           drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
           driverXbox.leftTrigger().whileTrue(Commands.run(collector::intake, collector));
-          driverXbox.a().onTrue(Commands.runOnce(collector::extend, collector));
-          driverXbox.b().onTrue(Commands.runOnce(collector::retract, collector));
-          driverXbox.y().whileTrue(Commands.run(collector::shake, collector));
+          driverXbox.a().onTrue(Commands.runOnce(intakeArm::intakeArmExtend, intakeArm));
+          driverXbox.b().onTrue(Commands.runOnce(intakeArm::intakeArmGoToShootAngle, intakeArm));
+          driverXbox.y().whileTrue(Commands.run(intakeArm::intakeArmRetract, intakeArm));
           driverXbox.povUp().onTrue(Commands.runOnce(collector::setBreakMode));
           driverXbox.povDown().onTrue(Commands.runOnce(collector::setCoastMode));
           break;
