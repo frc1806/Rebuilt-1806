@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -21,16 +20,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.AutonomousCommand;
-import frc.robot.commands.WaitForHoodRetract;
-import frc.robot.commands.odometrytriggers.WaitForXTripline;
-import frc.robot.commands.swervedrive.ClimberL1GoToAngleCommand;
 import frc.robot.commands.swervedrive.RunClimberCommand;
 import frc.robot.commands.swervedrive.auto.AdaptivePurePursuitBuilder;
 import frc.robot.lib.pathfollowing.BLinePath;
@@ -528,6 +522,7 @@ public class RobotContainer
 
     Command driveFieldOrientedDirectAngle      = drivebase.driveFieldOriented(driveDirectAngle);
     Command driveFieldOrientedDirectAngleSlow = drivebase.driveFieldOriented(driveDirectAngleSlow);
+    Command driveFieldOrientedAngularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
     /*Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
     Command driveRobotOrientedAngularVelocity  = drivebase.driveFieldOriented(driveRobotOriented);
     Command driveSetpointGen = drivebase.driveWithSetpointGeneratorFieldRelative(
@@ -539,7 +534,7 @@ public class RobotContainer
 
 
 
-    drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
+    drivebase.setDefaultCommand(driveFieldOrientedAngularVelocity);
     collector.setDefaultCommand(Commands.runOnce(collector::stopIntake, collector));
 
     //collector.setDefaultCommand(Commands.run(collector::stop, collector));
@@ -717,8 +712,8 @@ public class RobotContainer
           driverXbox.a().onTrue(Commands.runOnce(intakeArm::intakeArmExtend, intakeArm));
           driverXbox.b().onTrue(Commands.runOnce(intakeArm::intakeArmGoToShootAngle, intakeArm));
           driverXbox.y().whileTrue(Commands.run(intakeArm::intakeArmRetract, intakeArm));
-          driverXbox.povUp().onTrue(Commands.runOnce(collector::setBreakMode));
-          driverXbox.povDown().onTrue(Commands.runOnce(collector::setCoastMode));
+          //driverXbox.povUp().onTrue(Commands.runOnce(collector::setBreakMode));
+          //driverXbox.povDown().onTrue(Commands.runOnce(collector::setCoastMode));
           break;
         case kDriveTest:
           drivebase.setDefaultCommand(drivebase.driveFieldOriented(driveDirectAngle));
