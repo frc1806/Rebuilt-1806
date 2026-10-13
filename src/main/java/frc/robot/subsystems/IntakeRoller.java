@@ -34,7 +34,7 @@ import frc.robot.Constants.CollectorConstants;
 
 
 
-public class Collector extends SubsystemBase {
+public class IntakeRoller extends SubsystemBase {
 
 
 
@@ -52,8 +52,8 @@ private VoltageOut mCollectorVoltageOutGo = new VoltageOut(12.0);
 private NetworkTable mRobotTable = NetworkTableInstance.getDefault().getTable("Robot");
 
 
-private static Collector S_COLLECTOR = new Collector();
-public static Collector GetInstance(){
+private static IntakeRoller S_COLLECTOR = new IntakeRoller();
+public static IntakeRoller GetInstance(){
     return S_COLLECTOR;
 }
 
@@ -70,7 +70,7 @@ enum SliderStates{
     private SliderStates mSliderState = SliderStates.kIdle;
 
 
-private Collector(){
+private IntakeRoller(){
 
     /*TalonFXConfiguration rollerConfig = new TalonFXConfiguration().withCurrentLimits(new CurrentLimitsConfigs().withStatorCurrentLimit(Constants.CollectorConstants.STATOR_CURRENT_LIMIT)
             .withSupplyCurrentLimit(Constants.CollectorConstants.SUPPLY_CURRENT_LIMIT)).withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
