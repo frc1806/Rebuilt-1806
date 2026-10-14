@@ -1,4 +1,6 @@
 package frc.robot.subsystems;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.OpenLoopRampsConfigs;
@@ -9,20 +11,28 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.sim.TalonFXSimState;
 
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableValue;
+import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotMap;
 
 public class IntakeArmSubsystem extends SubsystemBase{
 
-    private TalonFX mClimberFrontLead;// mClimberFrontFollower;//, mClimberRearLead; //mClimberRearFollower;
+    private TalonFX mIntakeArmMotor;// mClimberFrontFollower;//, mClimberRearLead; //mClimberRearFollower;
+    private SingleJointedArmSim mArmSim;
+    private TalonFXSimState mIntakeArmSim;
+    private double mTargetAngle;
 
     public IntakeArmSubsystem(){
-        mClimberFrontLead = new TalonFX(RobotMap.CLIMBER_1);
-        mClimberFrontLead.setNeutralMode(NeutralModeValue.Brake);
+        mIntakeArmMotor = new TalonFX(RobotMap.CLIMBER_1);
+        mIntakeArmMotor.setNeutralMode(NeutralModeValue.Brake);
         //mClimberFrontFollower = new TalonFX(RobotMap.CLIMBER_2);
         //mClimberRearLead = new TalonFX(RobotMap.CLIMBER_3);
         //mClimberRearFollower = new TalonFX(RobotMap.CLIMBER_4);
@@ -35,7 +45,7 @@ public class IntakeArmSubsystem extends SubsystemBase{
 
         //Follower reaFollower = new Follower(mClimberRearLead.getDeviceID(), MotorAlignmentValue.Opposed);
 
-        mClimberFrontLead.getConfigurator().apply(climberCurrentLimitConfig);
+        mIntakeArmMotor.getConfigurator().apply(climberCurrentLimitConfig);
         //mClimberFrontFollower.getConfigurator().apply(climberCurrentLimitConfig);
        //mClimberRearLead.getConfigurator().apply(climberCurrentLimitConfig);
         //mClimberRearFollower.getConfigurator().apply(climberCurrentLimitConfig);
@@ -46,46 +56,62 @@ public class IntakeArmSubsystem extends SubsystemBase{
         OpenLoopRampsConfigs mFrontLeadOpenLoopRampsConfigs = new OpenLoopRampsConfigs();
         mFrontLeadOpenLoopRampsConfigs.VoltageOpenLoopRampPeriod = 0.25;
 
-        mClimberFrontLead.getConfigurator().apply(leaderOutputConfigs);
+        mIntakeArmMotor.getConfigurator().apply(leaderOutputConfigs);
         //mClimberRearLead.getConfigurator().apply(leaderOutputConfigs);
 
         Slot0Configs l1Slot0Configs = new Slot0Configs();
         l1Slot0Configs.kP = Constants.IntakeArmConstants.INTAKE_ARM_KP;
         l1Slot0Configs.kI = Constants.IntakeArmConstants.INTAKE_ARM_KI;
         l1Slot0Configs.kD = Constants.IntakeArmConstants.INTAKE_ARM_KD;
-        mClimberFrontLead.getConfigurator().apply(l1Slot0Configs);
+        mIntakeArmMotor.getConfigurator().apply(l1Slot0Configs);
 
         //mClimberFrontFollower.setControl(frontFollower);
         //mClimberRearFollower.setControl(reaFollower);
+        mArmSim = new SingleJointedArmSim(
+            DCMotor.getKrakenX60(1), 
+            Constants.IntakeArmConstants.INTAKE_ARM_GEAR_RATIO,
+            SingleJointedArmSim.estimateMOI(Units.inchesToMeters(15.0), Units.lbsToKilograms(10.0)),
+            Units.inchesToMeters(15.0),
+            Units.degreesToRadians(0),
+            Units.degreesToRadians(120.0),
+            true,
+            0,
+            Constants.IntakeArmConstants.INTAKE_ARM_DEG_PER_ROT,
+            0.0);
+        mArmSim.setState(Units.degreesToRadians(120.0), 0.0);
+            mIntakeArmSim = mIntakeArmMotor.getSimState();
+            mIntakeArmSim.setSupplyVoltage(Volts.of(12));
+            mTargetAngle = 0;
     }
 
     @Override
     public void periodic(){
         NetworkTableInstance.getDefault().getTable("Robot/Climber").putValue("Intake Arm Angle", NetworkTableValue.makeDouble(getIntakeArmAngle()));
-        
+        NetworkTableInstance.getDefault().getTable("Robot/Climber").putValue("Intake Arm Target Angle", NetworkTableValue.makeDouble(mTargetAngle));
     }
 
     public void manualControl(double frontOutput){
         if(Math.abs(frontOutput) > 0.25){
-            mClimberFrontLead.set(((Math.abs(frontOutput)-.25)) * (frontOutput <0?-1:1) * 0.5);
+            mIntakeArmMotor.set(((Math.abs(frontOutput)-.25)) * (frontOutput <0?-1:1) * 0.5);
         }else{
-            mClimberFrontLead.set(0.0);
+            mIntakeArmMotor.set(0.0);
         }
 
         //mClimberRearLead.set(rearOutput * 0.5);
     }
 
     public double getIntakeArmAngle(){
-        return mClimberFrontLead.getPosition().getValueAsDouble() * Constants.IntakeArmConstants.INTAKE_ARM_DEG_PER_ROT;
+        return mIntakeArmMotor.getPosition().getValueAsDouble() * Constants.IntakeArmConstants.INTAKE_ARM_DEG_PER_ROT;
     }
 
     public void zeroIntakeArm(){
-        mClimberFrontLead.setPosition(0.0);
+        mIntakeArmMotor.setPosition(0.0);
     }
 
     
     public void intakeArmGoToAngle(double angle){
-        mClimberFrontLead.setControl(new PositionVoltage(angle * (1/ Constants.IntakeArmConstants.INTAKE_ARM_DEG_PER_ROT)));
+        mIntakeArmMotor.setControl(new PositionVoltage(angle * (1/ Constants.IntakeArmConstants.INTAKE_ARM_DEG_PER_ROT)));
+        mTargetAngle = angle;
         //mClimberRearLead.set(0);
     }
 
@@ -103,6 +129,16 @@ public class IntakeArmSubsystem extends SubsystemBase{
 
 
     public void stop(){
-        mClimberFrontLead.stopMotor();
+        mIntakeArmMotor.stopMotor();
+    }
+
+    @Override
+    public void simulationPeriodic(){
+            mArmSim.setInput(-mIntakeArmSim.getMotorVoltage());
+            mArmSim.update(0.020);
+            mIntakeArmSim.setRawRotorPosition((Units.degreesToRotations(120.0) - (Units.radiansToRotations(mArmSim.getAngleRads())) * Constants.IntakeArmConstants.INTAKE_ARM_GEAR_RATIO));
+            mIntakeArmSim.setRotorVelocity(-(Units.radiansPerSecondToRotationsPerMinute(mArmSim.getVelocityRadPerSec()) * Constants.IntakeArmConstants.INTAKE_ARM_GEAR_RATIO) / 60.0);
+            NetworkTableInstance.getDefault().getTable("Robot/Climber").putValue("Sim Intake Arm Angle", NetworkTableValue.makeDouble(120.0 - (Units.radiansToDegrees(mArmSim.getAngleRads())*(1/ Constants.IntakeArmConstants.INTAKE_ARM_DEG_PER_ROT))));
+            mIntakeArmMotor.setPosition((Units.degreesToRotations(120.0) - (Units.radiansToRotations(mArmSim.getAngleRads())) * Constants.IntakeArmConstants.INTAKE_ARM_GEAR_RATIO));
     }
 }

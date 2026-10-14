@@ -43,9 +43,11 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.RobotMap;
 import frc.robot.RobotPreferences;
+import frc.robot.commands.RaiseIntakeArmWhileShooting;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.swat.lib.Shot;
 import frc.robot.swat.lib.VisionShotGenerator;
@@ -124,12 +126,13 @@ public class LauncherSubSystem extends SubsystemBase {
     private boolean mIsPreciseShot = true;
 
     private static final AngularVelocity kVelocityTolerance = RPM.of(Constants.LauncherConstants.FLYWHEEL_RPM_TOLERANCE);
+    private static final AngularVelocity kVelocityToleranceSimulation = RPM.of(1000.0);
 
     //Simulation
     private TalonFXSimState mFlywheelLeaderSim;
     private TalonFXSimState mFlywheelFollowerSim;
     private TalonFXSimState mFlywheelFollowerTwoSim;
-    private FlywheelSim mFlywheelSimulation = new FlywheelSim(LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(3), 0.0002, 1.0/Constants.LauncherConstants.FLYWHEEL_GEAR_RATIO ), DCMotor.getKrakenX60(3));
+    private FlywheelSim mFlywheelSimulation = new FlywheelSim(LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(3), 0.00025, 1.0/Constants.LauncherConstants.FLYWHEEL_GEAR_RATIO ), DCMotor.getKrakenX60(3));
 
     //Constructor is private for singleton pattern
     private LauncherSubSystem(){
@@ -282,7 +285,7 @@ public class LauncherSubSystem extends SubsystemBase {
      */
 
     public void shoot(AngularVelocity speed, Angle angle, Voltage feedSpeed){
-        if(!speed.isNear(mTargetSpeed, Constants.LauncherConstants.FLYWHEEL_RPM_TOLERANCE))
+        if(!speed.isNear(mTargetSpeed, (Robot.isSimulation()?1000.0:Constants.LauncherConstants.FLYWHEEL_RPM_TOLERANCE)))
         {
             mFlywheelEstimator.clear();
             mLauncherState = LauncherStates.kClosedLoop;
@@ -332,7 +335,7 @@ public class LauncherSubSystem extends SubsystemBase {
 
     public boolean isAtSpeed(){
             final AngularVelocity currentVelocity = getFlywheelVelocity();
-            return currentVelocity.isNear(mTargetSpeed, kVelocityTolerance) && mTargetSpeed.gt(RPM.of(0));
+            return currentVelocity.isNear(mTargetSpeed, (Robot.isSimulation()?kVelocityToleranceSimulation:kVelocityTolerance)) && mTargetSpeed.gt(RPM.of(0));
     }
 
     public boolean isAtAngle(){
@@ -464,6 +467,7 @@ public class LauncherSubSystem extends SubsystemBase {
         // Uncomment below for detailed debugging (impacts performance at 50Hz):
         SmartDashboard.putNumber("Launcher/Angle", mHoodMotor.getPosition().getValue().in(Degrees));
         SmartDashboard.putNumber("Launcher/TargetAngle", mTargetAngle.in(Degrees));
+        SmartDashboard.putNumber("Launcher/LaunchingTime", getLaunchingTime());
         // SmartDashboard.putNumber("Launcher/kF", mKf.magnitude());
         // SmartDashboard.putNumber("Launcher/kF Samples", mFlywheelEstimator.size());
         // SmartDashboard.putNumber("Launcher/HoodMotorAmps", mHoodMotor.getSupplyCurrent().getValue().in(Amps));
@@ -571,7 +575,7 @@ public class LauncherSubSystem extends SubsystemBase {
             public void execute(){
                 shoot(VisionShotGenerator.GetGoalShotForDistance(mDrivebase.getDistanceToTarget()));
             };
-        };
+        }.alongWith(new RaiseIntakeArmWhileShooting());
     }
 
     public Command launcherAimForDistance(double distanceToTarget){
@@ -585,8 +589,8 @@ public class LauncherSubSystem extends SubsystemBase {
             @Override
             public void execute(){
                 shoot(VisionShotGenerator.GetGoalShotForDistance(distanceToTarget));
-            };
-        };
+            }
+        }.alongWith(new RaiseIntakeArmWhileShooting());
     }
 
         public Command launcherAimForDistanceNoHood(double distanceToTarget){

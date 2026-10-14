@@ -385,12 +385,12 @@ public class RobotContainer
     Command microwaveRight3FollowCommand = pathBuilderNoResetMirror.build(new BLinePath("MicrowaveLeft3"));
     Command microwaveRightAutoCommand = Commands.runOnce(intakeArm::intakeArmExtend, intakeArm)
       .andThen(new WaitForIntakeArmOut())
-      .andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.run(intakeArm::intakeArmExtend, intakeArm).andThen(Commands.run(collector::intake, collector)), new SequentialCommandGroup(new WaitForXTripline(7.0), launcher.launcherAimForDistance(2.7)))
+      .andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitForXTripline(7.0), launcher.launcherAimForDistance(2.7)))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
-      .andThen(new ParallelDeadlineGroup(microwaveRight2FollowCommand, Commands.run(intakeArm::intakeArmExtend, intakeArm).andThen(Commands.run(collector::intake, collector)), launcher.launcherAimForDistance(2.7))
+      .andThen(new ParallelDeadlineGroup(microwaveRight2FollowCommand, Commands.run(collector::intake, collector), launcher.launcherAimForDistance(2.7))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(Commands.runOnce(launcher::stop, launcher))))
-      .andThen(new ParallelDeadlineGroup(microwaveRight3FollowCommand, Commands.run(intakeArm::intakeArmExtend, intakeArm).andThen(Commands.run(collector::intake, collector))));
+      .andThen(new ParallelDeadlineGroup(microwaveRight3FollowCommand, Commands.run(collector::intake, collector)));
     Autonomous.MICROWAVE_RIGHT.setAutonomousCommand(new AutonomousCommand(microwaveRightAutoCommand));
 
     Command microwaveLeftFollowCommand = pathBuilder.build(new BLinePath("MicrowaveLeft"));
@@ -398,9 +398,9 @@ public class RobotContainer
     Command microwaveLeft3FollowCommand = pathBuilderNoReset.build(new BLinePath("MicrowaveLeft3"));
     Command microwaveLeftAutoCommand = Commands.runOnce(intakeArm::intakeArmExtend)
       .andThen(new WaitForIntakeArmOut())
-      .andThen(new ParallelDeadlineGroup(microwaveLeftFollowCommand,Commands.run(intakeArm::intakeArmExtend, intakeArm).andThen(Commands.run(collector::intake, collector)), new SequentialCommandGroup(new WaitForXTripline(7.0), launcher.launcherAimForDistance(2.7)))
+      .andThen(new ParallelDeadlineGroup(microwaveLeftFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitForXTripline(7.0), launcher.launcherAimForDistance(2.7)))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
-      .andThen(new ParallelDeadlineGroup(microwaveLeft2FollowCommand, Commands.run(intakeArm::intakeArmExtend, intakeArm).andThen(Commands.run(collector::intake, collector)), launcher.launcherAimForDistance(2.7))
+      .andThen(new ParallelDeadlineGroup(microwaveLeft2FollowCommand, Commands.run(collector::intake, collector), launcher.launcherAimForDistance(2.7))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(Commands.runOnce(launcher::stop, launcher))))
       .andThen(new ParallelDeadlineGroup(microwaveLeft3FollowCommand, Commands.run(intakeArm::intakeArmExtend, intakeArm).andThen(Commands.run(collector::intake, collector))));;
@@ -409,17 +409,17 @@ public class RobotContainer
     // Kettle Right: Use mirrored Left paths
     Command kettleRightFollowCommand = pathBuilderMirror.build(new BLinePath("KettleLeft"));
     Command kettleRight2FollowCommand = pathBuilderNoResetMirror.build(new BLinePath("KettleLeft2"));
-    Command kettleRightAutoCommand = Commands.run(collector::intake, collector).andThen(new WaitForIntakeArmOut()).andThen(
+    Command kettleRightAutoCommand = Commands.run(intakeArm::intakeArmExtend, intakeArm).andThen(new WaitForIntakeArmOut()).andThen(
       kettleRightFollowCommand
-      .deadlineFor(new ParallelCommandGroup(Commands.run(collector::intake, collector),new WaitForXTripline(5.5)
-         .andThen(Commands.run(collector::intake, collector).alongWith(new SequentialCommandGroup(new WaitForXTripline(5.0), launcher.launcherAimForDistanceNoHood(4.125))))))
+      .deadlineFor(new ParallelCommandGroup(Commands.run(collector::intake, collector),
+         new SequentialCommandGroup(new WaitForXTripline(5.5), new WaitForXTripline(5.0), launcher.launcherAimForDistanceNoHood(4.125))))
       )
       .andThen(new ParallelDeadlineGroup(new WaitCommand(4.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(Commands.runOnce(launcher::stop, launcher))
       .andThen(new WaitForHoodRetract())
       .andThen(kettleRight2FollowCommand
       .deadlineFor(
-        new WaitForXTripline(5.5).andThen(Commands.runOnce(intakeArm::intakeArmExtend, intakeArm))
+        new WaitForXTripline(5.5)
          .andThen(Commands.run(collector::intake, collector).alongWith(new SequentialCommandGroup(new WaitForXTripline(5.0), launcher.launcherAimForDistanceNoHood(4.125))))
       )
       .andThen(new ParallelDeadlineGroup(new WaitCommand(4.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
@@ -430,18 +430,18 @@ public class RobotContainer
 
     Command kettleLeftFollowCommand = pathBuilder.build(new BLinePath("KettleLeft"));
     Command kettleLeft2FollowCommand = pathBuilderNoReset.build(new BLinePath("KettleLeft2"));
-    Command kettleLeftAutoCommand = Commands.run(collector::intake, collector).andThen(new WaitForIntakeArmOut()).andThen(
+    Command kettleLeftAutoCommand = Commands.run(intakeArm::intakeArmExtend, intakeArm).andThen(new WaitForIntakeArmOut()).andThen(
     kettleLeftFollowCommand
-      .deadlineFor(new ParallelCommandGroup(Commands.run(collector::intake, collector), new WaitForXTripline(5.5).andThen((new SequentialCommandGroup(new WaitForXTripline(5.0), launcher.launcherAimForDistanceNoHood(4.125))))
+      .deadlineFor(new ParallelCommandGroup(Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitForXTripline(5.5).andThen((new SequentialCommandGroup(new WaitForXTripline(5.0), launcher.launcherAimForDistanceNoHood(4.125)))))
       )))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(4.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(Commands.runOnce(launcher::stop, launcher))
       .andThen(new WaitForHoodRetract())
-      .andThen(kettleLeft2FollowCommand)
+      .andThen(kettleLeft2FollowCommand
       .deadlineFor(
-        new WaitForXTripline(5.5).andThen(Commands.runOnce(intakeArm::intakeArmExtend, intakeArm))
+        new WaitForXTripline(5.5)
          .andThen(Commands.run(collector::intake, collector).alongWith(new SequentialCommandGroup(new WaitForXTripline(5.0), launcher.launcherAimForDistanceNoHood(4.125))))
-  
+      )
       .andThen(new ParallelDeadlineGroup(new WaitCommand(4.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(Commands.runOnce(launcher::stop, launcher))
       .andThen(new WaitForHoodRetract())
@@ -452,7 +452,8 @@ public class RobotContainer
       Command popSecret2FollowCommand = pathBuilderNoReset.build(new BLinePath("PopSecret2"));
       Command popSecret3FollowCommand = pathBuilderNoReset.build(new BLinePath("PopSecret3"));
       Command popSecretAutoCommand = 
-              popSecretFollowCommand.deadlineFor(Commands.runOnce(intakeArm::intakeArmExtend, intakeArm), launcher.launcherAimForDistance(3.0))
+              popSecretFollowCommand.deadlineFor(launcher.launcherAimForDistance(3.0))
+              .andThen(Commands.runOnce(intakeArm::intakeArmExtend, intakeArm).andThen(new WaitForIntakeArmOut()))
               .andThen(new ParallelDeadlineGroup(new WaitCommand(4.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
               .andThen(Commands.runOnce(launcher::stop, launcher))
               .andThen(popSecret2FollowCommand.deadlineFor(Commands.run(collector::intake, collector)))
@@ -590,7 +591,7 @@ public class RobotContainer
       driverXbox.back().whileTrue(Commands.none());
       //driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
       driverXbox.leftBumper().whileTrue(Commands.run(collector::outtake, collector));
-      driverXbox.rightBumper().whileTrue(driveFieldOrientedDirectAngleSlow);
+      driverXbox.rightBumper().whileTrue(driveFieldOrientedDirectAngle);
 
       driverXbox.povUp().onTrue(Commands.runOnce(launcher::adjustShooterOffsetLower));
       driverXbox.povDown().onTrue(Commands.runOnce(launcher::adjustShooterOffsetHigher));

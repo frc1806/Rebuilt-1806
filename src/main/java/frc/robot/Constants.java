@@ -197,6 +197,8 @@ public final class Constants
     public static final double INTAKE_ARM_UP = 0.0; //degrees
     public static final double INTAKE_ARM_SHOOTING = 45.0; //degrees
 
+    public static final double INTAKE_ARM_SHOOTING_START_RAISE_TIME = 1.0;
+    public static final double INTAKE_ARM_SHOOTING_END_RAISE_TIME = 5.0;
     /*public static final double CLIMBER_L1_INTAKE_DEFLECT_ANGLE = 150.0;
     public static final double CLIMBER_L1_GRAB_ANGLE = 150.0;
     public static final double CLIMBER_l1_HOOK_ANGLE = 150.0;
