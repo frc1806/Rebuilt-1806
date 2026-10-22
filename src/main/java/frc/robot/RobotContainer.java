@@ -391,9 +391,9 @@ public class RobotContainer
     Command microwaveRight3FollowCommand = pathBuilderNoResetMirror.build(new BLinePath("MicrowaveLeft3"));
     Command microwaveRightAutoCommand = Commands.runOnce(intakeArm::intakeArmExtend, intakeArm)
       .andThen(new WaitForIntakeArmOut())
-      .andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitForXTripline(7.0), launcher.launcherAimForDistance(2.7)))
+      .andThen(new ParallelDeadlineGroup(microwaveRightFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitForXTripline(7.0), launcher.launcherAimForDistanceNoHood(2.7)))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
-      .andThen(new ParallelDeadlineGroup(microwaveRight2FollowCommand, Commands.run(collector::intake, collector), launcher.launcherAimForDistance(2.7))
+      .andThen(new ParallelDeadlineGroup(microwaveRight2FollowCommand, Commands.run(collector::intake, collector), launcher.launcherAimForDistanceNoHood(2.7))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(Commands.runOnce(launcher::stop, launcher))))
       .andThen(new ParallelDeadlineGroup(microwaveRight3FollowCommand, Commands.run(collector::intake, collector)));
@@ -404,9 +404,9 @@ public class RobotContainer
     Command microwaveLeft3FollowCommand = pathBuilderNoReset.build(new BLinePath("MicrowaveLeft3"));
     Command microwaveLeftAutoCommand = Commands.runOnce(intakeArm::intakeArmExtend)
       .andThen(new WaitForIntakeArmOut())
-      .andThen(new ParallelDeadlineGroup(microwaveLeftFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitForXTripline(7.0), launcher.launcherAimForDistance(2.7)))
+      .andThen(new ParallelDeadlineGroup(microwaveLeftFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitForXTripline(7.0), launcher.launcherAimForDistanceNoHood(2.7)))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
-      .andThen(new ParallelDeadlineGroup(microwaveLeft2FollowCommand, Commands.run(collector::intake, collector), launcher.launcherAimForDistance(2.7))
+      .andThen(new ParallelDeadlineGroup(microwaveLeft2FollowCommand, Commands.run(collector::intake, collector), launcher.launcherAimForDistanceNoHood(2.7))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(Commands.runOnce(launcher::stop, launcher))))
       .andThen(new ParallelDeadlineGroup(microwaveLeft3FollowCommand, Commands.run(intakeArm::intakeArmExtend, intakeArm).andThen(Commands.run(collector::intake, collector))));;
@@ -633,7 +633,7 @@ public class RobotContainer
       operatorXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
       operatorXbox.leftBumper().and(driverXbox.a().negate().and(driverXbox.x().negate().and(driverXbox.b().negate().and(driverXbox.y().negate())))).whileTrue(launcher.launcherAimForDistanceNoHood(2.0));
 
-      operatorXbox.setRumble(RumbleType.kBothRumble, 1.0);
+      //operatorXbox.setRumble(RumbleType.kBothRumble, 1.0);
       //collector.isIntakeExdendedButIn().onTrue(Commands.runOnce(this::rumbleOperatorController)).onFalse(Commands.runOnce(this::stopRumbleOperatorController));
       matchTimer.isHubAboutToDisable().whileTrue(Commands.run(this::updateRumbleHubAboutToDisable)).onFalse(Commands.runOnce(this::stopRumbleDriverController));
       matchTimer.isHubAboutToEnable().whileTrue(Commands.run(this::updateRumbleHubAboutToEnable)).onFalse(Commands.runOnce(this::rumbleDriverController));

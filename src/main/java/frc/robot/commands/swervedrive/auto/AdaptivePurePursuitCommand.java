@@ -70,7 +70,7 @@ public class AdaptivePurePursuitCommand extends Command {
         this.controller = controller;
 
         // Heading PID controller (matching BLine's rotation PID: kP=3.0)
-        this.headingController = new PIDController(3.0, 0.0, 0.0);
+        this.headingController = new PIDController(5.0, 0.0, 0.0);
         this.headingController.enableContinuousInput(-Math.PI, Math.PI);
 
         addRequirements(drivebase);
