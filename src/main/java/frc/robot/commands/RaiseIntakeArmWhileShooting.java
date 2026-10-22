@@ -15,16 +15,22 @@ public class RaiseIntakeArmWhileShooting extends Command {
     @Override
     public void execute(){
         mLaunchingTime = RobotContainer.launcher.getLaunchingTime();
-        if(mLaunchingTime > 5.0)
+    if (mLaunchingTime > Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING_START_RAISE_TIME && mLaunchingTime <= Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING_END_RAISE_TIME)
         {
-            RobotContainer.intakeArm.intakeArmRetract();
-        }
-        else if (mLaunchingTime > Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING_START_RAISE_TIME && mLaunchingTime <= Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING_END_RAISE_TIME)
-        {
-            RobotContainer.intakeArm.intakeArmGoToAngle(Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING 
-                                                - (Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING * 
-                                                ((mLaunchingTime - Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING_START_RAISE_TIME)/ (Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING_END_RAISE_TIME - Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING_START_RAISE_TIME ))
-                                                ));
+            // RobotContainer.intakeArm.intakeArmGoToAngle(Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING 
+            //                                     - ((Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING - Constants.IntakeArmConstants.INTAKE_ARM_UP) * 
+            //                                     ((mLaunchingTime - Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING_START_RAISE_TIME)/ (Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING_END_RAISE_TIME - Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING_START_RAISE_TIME ))
+            //                                     ));
+            RobotContainer.intakeArm.intakeArmGoToAngle(
+                Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING 
+                + (
+                     Constants.IntakeArmConstants.INTAKE_ARM_WIGGLE_ANGLE_BIDRECTIONAL 
+                     * Math.sin(
+                     (RobotContainer.launcher.getLaunchingTime() * (2 * Math.PI)) 
+                     / Constants.IntakeArmConstants.INTAKE_ARM_WIGGLE_CYCLE_SPEED
+                     )
+                     )
+                );
         }
         else
         {

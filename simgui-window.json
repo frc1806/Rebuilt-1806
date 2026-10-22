@@ -27,17 +27,17 @@
     "###/FMSInfo": {
       "Collapsed": "0",
       "Pos": "152,-1",
-      "Size": "181,167"
+      "Size": "169,167"
     },
     "###FMS": {
       "Collapsed": "0",
       "Pos": "6,675",
-      "Size": "169,184"
+      "Size": "175,184"
     },
     "###Joysticks": {
       "Collapsed": "0",
       "Pos": "312,581",
-      "Size": "796,90"
+      "Size": "796,234"
     },
     "###NetworkTables": {
       "Collapsed": "0",

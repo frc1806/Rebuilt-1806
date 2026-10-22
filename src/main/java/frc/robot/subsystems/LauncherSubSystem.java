@@ -506,7 +506,7 @@ public class LauncherSubSystem extends SubsystemBase {
                     shoot(speed, angle, feedSpeed);
                 }
             }, this)
-        );
+        ).alongWith(new RaiseIntakeArmWhileShooting());
     }
 
 /**

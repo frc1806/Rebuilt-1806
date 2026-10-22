@@ -29,10 +29,12 @@ public class IntakeArmSubsystem extends SubsystemBase{
     private SingleJointedArmSim mArmSim;
     private TalonFXSimState mIntakeArmSim;
     private double mTargetAngle;
+    private double mIntakeOutVariableOffset;
 
     public IntakeArmSubsystem(){
         mIntakeArmMotor = new TalonFX(RobotMap.CLIMBER_1);
         mIntakeArmMotor.setNeutralMode(NeutralModeValue.Brake);
+        mIntakeOutVariableOffset = 0.0;
         //mClimberFrontFollower = new TalonFX(RobotMap.CLIMBER_2);
         //mClimberRearLead = new TalonFX(RobotMap.CLIMBER_3);
         //mClimberRearFollower = new TalonFX(RobotMap.CLIMBER_4);
@@ -116,7 +118,7 @@ public class IntakeArmSubsystem extends SubsystemBase{
     }
 
     public void intakeArmExtend(){
-        intakeArmGoToAngle(Constants.IntakeArmConstants.INTAKE_ARM_INTAKING);
+        intakeArmGoToAngle(Constants.IntakeArmConstants.INTAKE_ARM_INTAKING + mIntakeOutVariableOffset);
     }
 
     public void intakeArmRetract(){
@@ -127,8 +129,15 @@ public class IntakeArmSubsystem extends SubsystemBase{
         intakeArmGoToAngle(Constants.IntakeArmConstants.INTAKE_ARM_SHOOTING);
     }
 
+    public void intakeArmOffsetUp(){
+        mIntakeOutVariableOffset = mIntakeOutVariableOffset - 2.0;
+    }
 
-    public void stop(){
+    public void intakeArmOffsetDown(){
+        mIntakeOutVariableOffset = mIntakeOutVariableOffset + 2.0;
+    }
+
+     public void stop(){
         mIntakeArmMotor.stopMotor();
     }
 

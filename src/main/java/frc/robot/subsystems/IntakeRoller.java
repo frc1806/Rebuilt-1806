@@ -6,10 +6,12 @@ import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
@@ -96,15 +98,16 @@ private IntakeRoller(){
     collectorCurrentLimitConfig.StatorCurrentLimit = Constants.CollectorConstants.STATOR_CURRENT_LIMIT;
     collectorCurrentLimitConfig.SupplyCurrentLimit = Constants.CollectorConstants.COLLECTOR_MOTOR_CURRENT_LIMIT;
     MotorOutputConfigs collectorOutputConfig = new MotorOutputConfigs();
-    collectorOutputConfig.Inverted= InvertedValue.Clockwise_Positive;
+    collectorOutputConfig.Inverted= InvertedValue.CounterClockwise_Positive;
     collectorOutputConfig.NeutralMode = NeutralModeValue.Coast;
     collectorMotorConfig.withMotorOutput(collectorOutputConfig);
     mCollectorMotor.getConfigurator().apply(collectorMotorConfig);
 
-    collectorOutputConfig.Inverted = InvertedValue.CounterClockwise_Positive;
+    collectorOutputConfig.Inverted = InvertedValue.Clockwise_Positive;
     collectorMotorConfig.withMotorOutput(collectorOutputConfig);
     mCollectorMotorTwo.getConfigurator().apply(collectorMotorConfig);
 
+    mCollectorMotorTwo.setControl(new Follower(mCollectorMotor.getDeviceID(), MotorAlignmentValue.Opposed));
     /*TalonFXConfiguration sliderMotorConfig = new TalonFXConfiguration();
     CurrentLimitsConfigs sliderCurrentLimitConfig = new CurrentLimitsConfigs();
     sliderCurrentLimitConfig.StatorCurrentLimit = 120;

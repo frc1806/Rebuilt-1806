@@ -186,19 +186,21 @@ public final class Constants
   public static class IntakeArmConstants
   {
     public static final double INTAKE_ARM_STATOR_CURRENT_LIMIT = 120.0;
-    public static final double INTAKE_ARM_SUPPLY_CURRENT_LIMIT = 80.0;
+    public static final double INTAKE_ARM_SUPPLY_CURRENT_LIMIT = 60.0;
     public static final double INTAKE_ARM_GEAR_RATIO = (22.0/14.0)*5.0*9.0;
     public static final double INTAKE_ARM_DEG_PER_ROT = 360.0 / INTAKE_ARM_GEAR_RATIO;
     public static final double INTAKE_ARM_KP = 1.0;
     public static final double INTAKE_ARM_KI = 0.05;
     public static final double INTAKE_ARM_KD = 0;
 
-    public static final double INTAKE_ARM_INTAKING = 90.0; //degrees
-    public static final double INTAKE_ARM_UP = 0.0; //degrees
-    public static final double INTAKE_ARM_SHOOTING = 45.0; //degrees
+    public static final double INTAKE_ARM_INTAKING = 120.0; //degrees
+    public static final double INTAKE_ARM_WIGGLE_ANGLE_BIDRECTIONAL = 22.5; //degrees, both ways
+    public static final double INTAKE_ARM_WIGGLE_CYCLE_SPEED = .75; //seconds
+    public static final double INTAKE_ARM_UP = 33.0; //degrees
+    public static final double INTAKE_ARM_SHOOTING = 80.0; //degrees
 
-    public static final double INTAKE_ARM_SHOOTING_START_RAISE_TIME = 1.0;
-    public static final double INTAKE_ARM_SHOOTING_END_RAISE_TIME = 5.0;
+    public static final double INTAKE_ARM_SHOOTING_START_RAISE_TIME = 0.75; //seconds
+    public static final double INTAKE_ARM_SHOOTING_END_RAISE_TIME = 5.0; //seconds, unused
     /*public static final double CLIMBER_L1_INTAKE_DEFLECT_ANGLE = 150.0;
     public static final double CLIMBER_L1_GRAB_ANGLE = 150.0;
     public static final double CLIMBER_l1_HOOK_ANGLE = 150.0;
@@ -209,7 +211,7 @@ public final class Constants
   public static class PurePursuitConstants
   {
     // Lookahead parameters
-    public static final double MIN_LOOKAHEAD_DISTANCE = 0.2; // meters
+    public static final double MIN_LOOKAHEAD_DISTANCE = 0.3; // meters
     public static final double LOOKAHEAD_VELOCITY_GAIN = 0.23; // dimensionless
     public static final double MAX_LOOKAHEAD_DISTANCE = 1.3; // meters
 
@@ -220,8 +222,8 @@ public final class Constants
 
     // Velocity profiling
     public static final double MIN_DECEL_RADIUS = 0.05;
-    public static final double WAYPOINT_DECEL_RADIUS_ADDER = 0.0;
-    public static final double WAYPOINT_DECEL_RADIUS_MULT = 0.0;
+    public static final double WAYPOINT_DECEL_RADIUS_ADDER = 0.05;
+    public static final double WAYPOINT_DECEL_RADIUS_MULT = 0.01;
     public static final double MIN_VELOCITY = 0.2; // m/s
 
     // 2026 Field dimensions for alliance flipping

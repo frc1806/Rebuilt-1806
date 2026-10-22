@@ -39,6 +39,7 @@ import frc.robot.subsystems.IntakeRoller;
 import frc.robot.subsystems.LauncherSubSystem;
 import frc.robot.subsystems.MatchTimer;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+import frc.robot.swat.lib.AngularVelocityAutoHoldHelper;
 import frc.robot.swat.lib.Shot;
 import frc.robot.swat.lib.SnapAnglesHelper;
 import frc.robot.swat.lib.SnapAnglesHelper.FieldSnapAngles;
@@ -93,17 +94,18 @@ public class RobotContainer
   private double robotStartTime = Timer.getFPGATimestamp();
   private String pathCacheStatus = "Not loaded";
 
-
+  AngularVelocityAutoHoldHelper mAngularVelocityAutoHoldHelper = new AngularVelocityAutoHoldHelper();
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
    */
   SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
                                                                 () -> driverXbox.getLeftY() * -1,
                                                                 () -> driverXbox.getLeftX() * -1)
-                                                            .withControllerRotationAxis(driverXbox::getRightX)
+                                                            .withControllerRotationAxis(() -> -driverXbox.getRightX())
                                                             .deadband(OperatorConstants.DEADBAND)
                                                             .scaleTranslation(1.0)
-                                                            .allianceRelativeControl(true);
+                                                            .allianceRelativeControl(true).headingWhile(getLockAngleTrigger())
+                                                            .withControllerHeadingAxis(mAngularVelocityAutoHoldHelper.getXDoubleSupplier(), mAngularVelocityAutoHoldHelper.getYDoubleSupplier());
   /**
    * Clone's the angular velocity input stream and converts it to a fieldRelative input stream.
    */
@@ -200,6 +202,10 @@ public class RobotContainer
   .withMirror();
 
   private SendableChooser<TestModes> mTestModeChooser = new SendableChooser<>();
+
+  private Trigger getLockAngleTrigger(){
+    return new Trigger(() -> Math.abs(driverXbox.getRightX()) < OperatorConstants.DEADBAND).and(driverXbox.rightBumper().negate());
+  }
 
 
   private Command getDriveGoalAimCommand(){
@@ -527,7 +533,7 @@ public class RobotContainer
 
     Command driveFieldOrientedDirectAngle      = drivebase.driveFieldOriented(driveDirectAngle);
     Command driveFieldOrientedDirectAngleSlow = drivebase.driveFieldOriented(driveDirectAngleSlow);
-    Command driveFieldOrientedAngularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
+    Command driveFieldOrientedAngularVelocity = drivebase.driveFieldOriented(driveAngularVelocity).alongWith(Commands.run(snapAnglesHelper::clearSnapAngleMemory));
     /*Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
     Command driveRobotOrientedAngularVelocity  = drivebase.driveFieldOriented(driveRobotOriented);
     Command driveSetpointGen = drivebase.driveWithSetpointGeneratorFieldRelative(
@@ -540,6 +546,8 @@ public class RobotContainer
 
 
     drivebase.setDefaultCommand(driveFieldOrientedAngularVelocity);
+
+    getLockAngleTrigger().onTrue(Commands.runOnce(mAngularVelocityAutoHoldHelper::lockAutoHoldAngle));
     collector.setDefaultCommand(Commands.runOnce(collector::stopIntake, collector));
 
     //collector.setDefaultCommand(Commands.run(collector::stop, collector));
@@ -578,7 +586,7 @@ public class RobotContainer
     }
     else
     {
-      intakeArm.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY()));
+      //intakeArm.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY()));
       //driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       //driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
       driverXbox.y().onTrue(launcher.prepareShotCommand(CLOSE_SHOT));
@@ -592,6 +600,8 @@ public class RobotContainer
       //driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
       driverXbox.leftBumper().whileTrue(Commands.run(collector::outtake, collector));
       driverXbox.rightBumper().whileTrue(driveFieldOrientedDirectAngle);
+      operatorXbox.povUp().onTrue(Commands.runOnce(intakeArm::intakeArmOffsetUp));
+      operatorXbox.povDown().onTrue(Commands.runOnce(intakeArm::intakeArmOffsetDown));
 
       driverXbox.povUp().onTrue(Commands.runOnce(launcher::adjustShooterOffsetLower));
       driverXbox.povDown().onTrue(Commands.runOnce(launcher::adjustShooterOffsetHigher));
@@ -609,8 +619,10 @@ public class RobotContainer
       //driverXbox.x().whileTrue(Commands.runOnce(snapAnglesHelper::clearSnapAngleMemory).andThen(driveFeedAimCommand.alongWith(launcher.launcherAimForFeed())));
 
       operatorXbox.a().onTrue(Commands.runOnce(intakeArm::intakeArmExtend));
-      operatorXbox.y().onTrue(Commands.runOnce(intakeArm::intakeArmRetract));
+      operatorXbox.y().onTrue(Commands.runOnce(intakeArm::intakeArmGoToShootAngle));
       operatorXbox.x().onTrue(Commands.runOnce(launcher::zeroHood));
+      operatorXbox.rightBumper().whileTrue(new RunClimberCommand(() -> operatorXbox.getLeftY()));
+//operatorXbox.axisGreaterThan(1, 0.5)
       // operatorXbox.povUp().onTrue(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_INTAKE_DEFLECT_ANGLE));
       // operatorXbox.povDown().onTrue(new ClimberL1GoToAngleCommand(0));
       // operatorXbox.povLeft().onTrue(new ClimberL1GoToAngleCommand(Constants.IntakeArmConstants.CLIMBER_L1_GRAB_ANGLE));
@@ -681,9 +693,9 @@ public class RobotContainer
             driverXbox.a().or(operatorXbox.a()).whileTrue(new ParallelCommandGroup(Commands.run(collector::stop, collector), Commands.run(launcher::stop, launcher)));
           break;
         case kClimberTest:
-            intakeArm.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY()));/*
+            /*intakeArm.setDefaultCommand(new RunClimberCommand(() -> operatorXbox.getLeftY()));/*
             drivebase.setDefaultCommand(Commands.run(drivebase::stop, drivebase));
-            climber.setDefaultCommand(climber.runClimberCommand(
+            intakeArm.setDefaultCommand(intakeArm.runClimberCommand(
               new DoubleSupplier() {
               @Override
               public double getAsDouble() {
