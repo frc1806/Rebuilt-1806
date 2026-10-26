@@ -104,7 +104,7 @@ public class RobotContainer
                                                             .withControllerRotationAxis(() -> -driverXbox.getRightX())
                                                             .deadband(OperatorConstants.DEADBAND)
                                                             .scaleTranslation(1.0)
-                                                            .allianceRelativeControl(true).headingWhile(getLockAngleTrigger())
+                                                            .allianceRelativeControl(true).headingWhile(false)
                                                             .withControllerHeadingAxis(mAngularVelocityAutoHoldHelper.getXDoubleSupplier(), mAngularVelocityAutoHoldHelper.getYDoubleSupplier());
   /**
    * Clone's the angular velocity input stream and converts it to a fieldRelative input stream.
@@ -267,6 +267,7 @@ public class RobotContainer
       KETTLE_LEFT(),
       KETTLE_LEFT_PATHS(),
       KETTLE_RIGHT_PATHS(),
+      CTTD_ELIM()
       //PRELOAD_KETTLE_LEFT(),
       //PRELOAD_KETTLE_RIGHT(),
       ;
@@ -402,14 +403,14 @@ public class RobotContainer
     Command microwaveLeftFollowCommand = pathBuilder.build(new BLinePath("MicrowaveLeft"));
     Command microwaveLeft2FollowCommand = pathBuilderNoReset.build(new BLinePath("MicrowaveLeft2"));
     Command microwaveLeft3FollowCommand = pathBuilderNoReset.build(new BLinePath("MicrowaveLeft3"));
-    Command microwaveLeftAutoCommand = Commands.runOnce(intakeArm::intakeArmExtend)
+    Command microwaveLeftAutoCommand = new WaitCommand(0.5).andThen(Commands.runOnce(intakeArm::intakeArmExtend)
       .andThen(new WaitForIntakeArmOut())
       .andThen(new ParallelDeadlineGroup(microwaveLeftFollowCommand, Commands.run(collector::intake, collector), new SequentialCommandGroup(new WaitForXTripline(7.0), launcher.launcherAimForDistanceNoHood(2.7)))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(new ParallelDeadlineGroup(microwaveLeft2FollowCommand, Commands.run(collector::intake, collector), launcher.launcherAimForDistanceNoHood(2.7))
       .andThen(new ParallelDeadlineGroup(new WaitCommand(3.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal()))
       .andThen(Commands.runOnce(launcher::stop, launcher))))
-      .andThen(new ParallelDeadlineGroup(microwaveLeft3FollowCommand, Commands.run(intakeArm::intakeArmExtend, intakeArm).andThen(Commands.run(collector::intake, collector))));;
+      .andThen(new ParallelDeadlineGroup(microwaveLeft3FollowCommand, Commands.run(intakeArm::intakeArmExtend, intakeArm).andThen(Commands.run(collector::intake, collector)))));;
     Autonomous.MICROWAVE_LEFT.setAutonomousCommand(new AutonomousCommand(microwaveLeftAutoCommand));
 
     // Kettle Right: Use mirrored Left paths
@@ -469,6 +470,8 @@ public class RobotContainer
               .andThen(new WaitCommand(10).deadlineFor(Commands.run(collector::intake, collector)));
       Autonomous.POP_SECRET.setAutonomousCommand(new AutonomousCommand(popSecretAutoCommand));
 
+
+
       /*Command preloadKettleLeftFollowCommand = pathBuilderNoReset.build(new BLinePath("PreloadKettleLeft"));
       Command preloadKettleLeftAutoCommand=
               drivebase.driveFieldOriented(driveGoalAim).alongWith(launcher.launcherAimAtGoal())
@@ -516,6 +519,11 @@ public class RobotContainer
         .andThen(pathBuilderNoReset.build(new BLinePath("PopSecret3")));
       Autonomous.POP_SECRET_PATHS.setAutonomousCommand(new AutonomousCommand(popSecretPathsCommand));
       */
+
+      Command cttdElimFollowCommand = pathBuilder.build(new BLinePath("CTTDElim1"));
+      Command cttdElimAutoCommand = cttdElimFollowCommand.andThen(
+          new SequentialCommandGroup(Commands.runOnce(intakeArm::intakeArmExtend, intakeArm),new WaitForIntakeArmOut(), new ParallelDeadlineGroup(new WaitCommand(20.0), drivebase.driveFieldOriented(driveGoalAim), launcher.launcherAimAtGoal())));
+      Autonomous.CTTD_ELIM.setAutonomousCommand(cttdElimAutoCommand);
   }
 
   /**
@@ -590,7 +598,7 @@ public class RobotContainer
       //driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       //driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
       driverXbox.y().onTrue(launcher.prepareShotCommand(CLOSE_SHOT));
-      driverXbox.y().or(driverXbox.b().or(driverXbox.a())).or(driverXbox.x()).or(operatorXbox.leftBumper()).onFalse(Commands.runOnce(launcher::stop, launcher));
+      driverXbox.y().or(driverXbox.b().or(driverXbox.a())).or(driverXbox.x()).or(operatorXbox.leftBumper().or(driverXbox.rightBumper())).onFalse(Commands.runOnce(launcher::stop, launcher));
       driverXbox.b().onTrue(launcher.prepareShotCommand(PROTECTED_SHOT));
       driverXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
       driverXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
@@ -599,7 +607,7 @@ public class RobotContainer
       driverXbox.back().whileTrue(Commands.none());
       //driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
       driverXbox.leftBumper().whileTrue(Commands.run(collector::outtake, collector));
-      driverXbox.rightBumper().whileTrue(driveFieldOrientedDirectAngle);
+      //driverXbox.rightBumper().whileTrue(driveFieldOrientedDirectAngle);
       operatorXbox.povUp().onTrue(Commands.runOnce(intakeArm::intakeArmOffsetUp));
       operatorXbox.povDown().onTrue(Commands.runOnce(intakeArm::intakeArmOffsetDown));
 
@@ -631,7 +639,7 @@ public class RobotContainer
       operatorXbox.leftTrigger().onFalse(Commands.runOnce(launcher::stop, launcher));
       operatorXbox.rightTrigger().onTrue(Commands.runOnce(launcher::enableLaunching));
       operatorXbox.rightTrigger().onFalse(Commands.runOnce(launcher::disableLaunching));
-      operatorXbox.leftBumper().and(driverXbox.a().negate().and(driverXbox.x().negate().and(driverXbox.b().negate().and(driverXbox.y().negate())))).whileTrue(launcher.launcherAimForDistanceNoHood(2.0));
+      operatorXbox.leftBumper().or(driverXbox.rightBumper()).and(driverXbox.a().negate().and(driverXbox.x().negate().and(driverXbox.b().negate().and(driverXbox.y().negate())))).whileTrue(launcher.launcherAimForDistanceNoHood(2.0));
 
       //operatorXbox.setRumble(RumbleType.kBothRumble, 1.0);
       //collector.isIntakeExdendedButIn().onTrue(Commands.runOnce(this::rumbleOperatorController)).onFalse(Commands.runOnce(this::stopRumbleOperatorController));
